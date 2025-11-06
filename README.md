@@ -1,10 +1,8 @@
 # GraFlo <img src="https://raw.githubusercontent.com/growgraph/graflo/main/docs/assets/favicon.ico" alt="graflo logo" style="height: 32px; width:32px;"/>
 
-A framework for transforming **tabular** (CSV, SQL) and **hierarchical** data (JSON, XML) into property graphs and ingesting them into graph databases (ArangoDB, Neo4j).
+A framework for transforming **tabular** (CSV, SQL) and **hierarchical** data (JSON, XML) into property graphs and ingesting them into graph databases (ArangoDB, Neo4j, **TigerGraph**).
 
 > **⚠️ Package Renamed**: This package was formerly known as `graphcast`.
-
-[Rest of your existing README content...]
 
 ![Python](https://img.shields.io/badge/python-3.11-blue.svg) 
 [![PyPI version](https://badge.fury.io/py/graflo.svg)](https://badge.fury.io/py/graflo)
@@ -45,7 +43,8 @@ Resources are your data sources that can be:
     - Specify edge constraints and properties
     - Apply advanced filtering and transformations
 - **Parallel processing**: Use as many cores as you have
-- **Database support**: Ingest into ArangoDB and Neo4j using the same API (database agnostic)
+- **Database support**: Ingest into ArangoDB, Neo4j, and **TigerGraph** using the same API (database agnostic)
+- **Server-side filtering**: Efficient querying with server-side filtering support (TigerGraph REST++ API)
 
 ## Documentation
 Full documentation is available at: [growgraph.github.io/graflo](https://growgraph.github.io/graflo)
@@ -117,10 +116,16 @@ Spin up Arango from [arango docker folder](./docker/arango) by
 docker-compose --env-file .env up arango
 ```
 
-and Neo4j from [neo4j docker folder](./docker/arango) by
+Neo4j from [neo4j docker folder](./docker/neo4j) by
 
 ```shell
 docker-compose --env-file .env up neo4j
+```
+
+and TigerGraph from [tigergraph docker folder](./docker/tigergraph) by
+
+```shell
+docker-compose --env-file .env up tigergraph
 ```
 
 To run unit tests

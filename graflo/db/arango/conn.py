@@ -26,7 +26,6 @@ import logging
 from typing import Optional
 
 from arango import ArangoClient
-from suthing import ArangoConnectionConfig
 
 from graflo.architecture.edge import Edge
 from graflo.architecture.onto import (
@@ -37,11 +36,13 @@ from graflo.architecture.schema import Schema
 from graflo.architecture.vertex import VertexConfig
 from graflo.db.arango.query import fetch_fields_query
 from graflo.db.arango.util import render_filters
-from graflo.db.connection import Connection
+from graflo.db.conn import Connection
 from graflo.db.util import get_data_from_cursor
 from graflo.filter.onto import Clause
 from graflo.onto import AggregationType, DBFlavor
 from graflo.util.transform import pick_unique_dict
+
+from ..connection.onto import ArangoConnectionConfig
 
 logger = logging.getLogger(__name__)
 
@@ -117,11 +118,11 @@ class ArangoConnection(Connection):
             clean_start: If True, delete all existing collections before initialization
         """
         if clean_start:
-            self.delete_collections([], [], delete_all=True)
-        self.define_collections(schema)
+            self.delete_graph_structure([], [], delete_all=True)
+        self.define_schema(schema)
         self.define_indexes(schema)
 
-    def define_collections(self, schema: Schema):
+    def define_schema(self, schema: Schema):
         """Define ArangoDB collections based on schema.
 
         Args:
@@ -289,14 +290,20 @@ class ArangoConnection(Connection):
             else:
                 return None
 
-    def delete_collections(self, cnames=(), gnames=(), delete_all=False):
-        """Delete collections and graphs from ArangoDB.
+    def delete_graph_structure(self, vertex_types=(), graph_names=(), delete_all=False):
+        """Delete graph structure (collections and graphs) from ArangoDB.
+
+        In ArangoDB:
+        - Collections: Container for vertices (vertex collections) and edges (edge collections)
+        - Graphs: Named graphs that connect vertex and edge collections
 
         Args:
-            cnames: Collection names to delete
-            gnames: Graph names to delete
+            vertex_types: Collection names to delete (vertex or edge collections)
+            graph_names: Graph names to delete
             delete_all: If True, delete all non-system collections and graphs
         """
+        cnames = vertex_types
+        gnames = graph_names
         logger.info("collections (non system):")
         logger.info([c for c in self.conn.collections() if c["name"][0] != "_"])
 
@@ -578,6 +585,7 @@ class ArangoConnection(Connection):
         limit: int | None = None,
         return_keys: list | None = None,
         unset_keys: list | None = None,
+        **kwargs,
     ):
         """Fetch documents from a collection.
 
@@ -619,6 +627,94 @@ class ArangoConnection(Connection):
         )
         cursor = self.execute(q)
         return get_data_from_cursor(cursor)
+
+    # TODO test
+    def fetch_edges(
+        self,
+        from_type: str,
+        from_id: str,
+        edge_type: str | None = None,
+        to_type: str | None = None,
+        to_id: str | None = None,
+        filters: list | dict | Clause | None = None,
+        limit: int | None = None,
+        return_keys: list | None = None,
+        unset_keys: list | None = None,
+        **kwargs,
+    ):
+        """Fetch edges from ArangoDB using AQL.
+
+        Args:
+            from_type: Source vertex collection name
+            from_id: Source vertex ID (can be _key or _id)
+            edge_type: Optional edge collection name to filter by
+            to_type: Optional target vertex collection name to filter by
+            to_id: Optional target vertex ID to filter by
+            filters: Additional query filters
+            limit: Maximum number of edges to return
+            return_keys: Keys to return (projection)
+            unset_keys: Keys to exclude (projection)
+            **kwargs: Additional parameters
+
+        Returns:
+            list: List of fetched edges
+        """
+        # Convert from_id to _id format if needed
+        if not from_id.startswith(from_type):
+            # Assume it's a _key, convert to _id
+            from_vertex_id = f"{from_type}/{from_id}"
+        else:
+            from_vertex_id = from_id
+
+        # Build AQL query to fetch edges
+        # Start with basic edge traversal
+        if edge_type:
+            edge_collection = edge_type
+        else:
+            # If no edge_type specified, we need to search all edge collections
+            # This is a simplified version - in practice you might want to list all edge collections
+            raise ValueError("edge_type is required for ArangoDB edge fetching")
+
+        filter_clause = render_filters(filters, doc_name="e")
+        filter_parts = []
+
+        if to_type:
+            filter_parts.append(f"e._to LIKE '{to_type}/%'")
+        if to_id:
+            if not to_id.startswith(to_type):
+                to_vertex_id = f"{to_type}/{to_id}"
+            else:
+                to_vertex_id = to_id
+            filter_parts.append(f"e._to == '{to_vertex_id}'")
+
+        additional_filters = " && ".join(filter_parts)
+        if filter_clause and additional_filters:
+            filter_clause = f"{filter_clause} && {additional_filters}"
+        elif additional_filters:
+            filter_clause = additional_filters
+
+        query = f"""
+            FOR e IN {edge_collection}
+                FILTER e._from == '{from_vertex_id}'
+                {f"FILTER {filter_clause}" if filter_clause else ""}
+                {f"LIMIT {limit}" if limit else ""}
+                RETURN e
+        """
+
+        cursor = self.execute(query)
+        result = list(get_data_from_cursor(cursor))
+
+        # Apply projection
+        if return_keys is not None:
+            result = [
+                {k: doc.get(k) for k in return_keys if k in doc} for doc in result
+            ]
+        elif unset_keys is not None:
+            result = [
+                {k: v for k, v in doc.items() if k not in unset_keys} for doc in result
+            ]
+
+        return result
 
     def aggregate(
         self,

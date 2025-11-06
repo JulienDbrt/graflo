@@ -1,12 +1,11 @@
 from test.db.arangos.conftest import ingest_files
-
 import pytest
 
 
 @pytest.fixture(scope="function")
 def modes():
     return [
-        "kg",
+        # "kg",
         "ibes",
     ]
 

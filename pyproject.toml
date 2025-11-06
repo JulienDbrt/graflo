@@ -5,7 +5,8 @@ requires = ["hatchling"]
 [dependency-groups]
 dev = [
   "pre-commit>=4.2.0",
-  "pytest>=8.0.0,<9"
+  "pytest>=8.0.0,<9",
+  "ty>=0.0.1a24"
 ]
 docs = [
   "mkdocs-gen-files>=0.5.0",
@@ -30,6 +31,7 @@ dependencies = [
   "pandas-stubs==2.3.0.250703",
   "pandas>=2.0.3,<3",
   "python-arango>=8.1.2,<9",
+  "pytigergraph>=1.9.0",
   "suthing>=0.4.1,<0.5",
   "xmltodict>=0.14.2,<0.15"
 ]
@@ -37,7 +39,7 @@ description = "A framework for transforming tabular (CSV, SQL) and hierarchical 
 name = "graflo"
 readme = "README.md"
 requires-python = "~=3.11.0"
-version = "1.1.1"
+version = "1.2.0"
 
 [project.scripts]
 ingest = "graflo.cli.ingest:ingest"

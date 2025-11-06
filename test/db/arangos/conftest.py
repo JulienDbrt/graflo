@@ -7,6 +7,7 @@ from suthing import ConfigFactory, FileHandle
 from graflo.db import ConnectionManager
 from graflo.filter.onto import ComparisonOperator
 from graflo.onto import AggregationType
+from test.conftest import fetch_schema_obj
 
 
 @pytest.fixture(scope="function")
@@ -43,7 +44,7 @@ def conn_conf(test_db_port):
 def create_db(conn_conf, test_db_name):
     with ConnectionManager(connection_config=conn_conf) as db_client:
         db_client.create_database(test_db_name)
-        db_client.delete_collections([], [], delete_all=True)
+        db_client.delete_graph_structure([], [], delete_all=True)
 
 
 def verify_from_db(conn_conf, current_path, test_db_name, mode, reset):
@@ -99,7 +100,10 @@ def ingest_files(
 ):
     _ = create_db
     for m in modes:
-        ingest_atomic(conn_conf, current_path, test_db_name, mode=m, n_cores=n_cores)
+        schema_o = fetch_schema_obj(m)
+        ingest_atomic(
+            conn_conf, current_path, test_db_name, schema_o, mode=m, n_cores=n_cores
+        )
         verify_from_db(
             conn_conf,
             current_path,
