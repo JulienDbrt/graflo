@@ -135,7 +135,7 @@ class Actor(ABC):
             dict: Dictionary with stringified values
         """
         return {
-            k: ", ".join(list(v)) if isinstance(v, (tuple, list)) else v
+            k: ", ".join(list(v)) if isinstance(v, (tuple, list)) else str(v)
             for k, v in items.items()
         }
 
@@ -360,7 +360,6 @@ class EdgeActor(Actor):
                     vertex_list,
                     tuple(self.vertex_config.index(vertex).fields),
                 )
-                # vvv = pick_unique_dict(vvv)
                 ctx.acc_vertex[vertex][lindex] = vvv
         return ctx
 
@@ -506,18 +505,26 @@ class DescendActor(Actor):
 
     Attributes:
         key: Optional key for accessing nested data
+        any_key: If True, processes all keys in a dictionary instead of a specific key
         _descendants: List of child actor wrappers
     """
 
-    def __init__(self, key: str | None, descendants_kwargs: list, **kwargs):
+    def __init__(
+        self, key: str | None, descendants_kwargs: list, any_key: bool = False, **kwargs
+    ):
         """Initialize the descend actor.
 
         Args:
-            key: Optional key for accessing nested data
+            key: Optional key for accessing nested data. If provided, only this key
+                will be processed. Mutually exclusive with `any_key`.
+            any_key: If True, processes all keys in a dictionary instead of a specific key.
+                When enabled, iterates over all key-value pairs in the document dictionary.
+                Mutually exclusive with `key`.
             descendants_kwargs: List of child actor configurations
             **kwargs: Additional initialization parameters
         """
         self.key = key
+        self.any_key = any_key
         self._descendants: list[ActorWrapper] = []
         for descendant_kwargs in descendants_kwargs:
             self._descendants += [ActorWrapper(**descendant_kwargs, **kwargs)]
@@ -530,6 +537,8 @@ class DescendActor(Actor):
         """
         sd = self.__dict__
         sm = {k: sd[k] for k in ["key"]}
+        if self.any_key:
+            sm["any_key"] = True
         return {**sm}
 
     def add_descendant(self, d: ActorWrapper):
@@ -633,18 +642,33 @@ class DescendActor(Actor):
         if not doc:
             return ctx
 
+        doc_expanded = []
         if self.key is not None:
             if isinstance(doc, dict) and self.key in doc:
-                doc = doc[self.key]
+                aux = (
+                    doc[self.key]
+                    if isinstance(doc[self.key], list)
+                    else [doc[self.key]]
+                )
+                doc_expanded = [(self.key, item) for item in aux]
             else:
                 return ctx
+        elif self.any_key:
+            if isinstance(doc, dict):
+                for key, items in doc.items():
+                    aux = items if isinstance(items, list) else [items]
+                    doc_expanded += [(key, item) for item in aux]
+        else:
+            doc_expanded = (
+                [(None, item) for item in doc]
+                if isinstance(doc, list)
+                else [(None, doc)]
+            )
 
-        doc_level = doc if isinstance(doc, list) else [doc]
+        logger.debug(f"{len(doc_expanded)}")
 
-        logger.debug(f"{len(doc_level)}")
-
-        for idoc, sub_doc in enumerate(doc_level):
-            logger.debug(f"docs: {idoc + 1}/{len(doc_level)}")
+        for idoc, (key, sub_doc) in enumerate(doc_expanded):
+            logger.debug(f"docs: {idoc + 1}/{len(doc_expanded)}")
             if isinstance(sub_doc, dict):
                 nargs: tuple = tuple()
                 kwargs["doc"] = sub_doc
@@ -652,7 +676,7 @@ class DescendActor(Actor):
                 nargs = (sub_doc,)
 
             # down the tree
-            extra_step = (idoc,) if self.key is None else (self.key, idoc)
+            extra_step = (idoc,) if key is None else (key, idoc)
             for j, anw in enumerate(self.descendants):
                 logger.debug(
                     f"{type(anw.actor).__name__}: {j + 1}/{len(self.descendants)}"
