@@ -91,7 +91,7 @@ The ingestion process is straightforward:
 ```python
 from suthing import FileHandle
 from graflo import Caster, Patterns, Schema
-from graflo.backend.connection.onto import Neo4jConfig
+from graflo.db.connection.onto import Neo4jConfig
 
 schema = Schema.from_dict(FileHandle.load("schema.yaml"))
 
@@ -106,17 +106,19 @@ conn_conf = Neo4jConfig.from_docker_env()
 #     bolt_port=7688,
 # )
 
-patterns = Patterns.from_dict({
-    "patterns": {
-        "people": {"regex": "^relations.*\.csv$"},
-    }
-})
+from graflo.util.onto import FilePattern
+import pathlib
+
+patterns = Patterns()
+patterns.add_file_pattern(
+    "people",
+    FilePattern(regex="^relations.*\.csv$", sub_path=pathlib.Path("."), resource_name="people")
+)
 
 caster = Caster(schema)
-caster.ingest_files(
-    path=".",
-    conn_conf=conn_conf,
-    patterns=patterns,
+caster.ingest(
+    output_config=conn_conf,  # Target database config
+    patterns=patterns,  # Source data patterns
     clean_start=True
 )
 ```

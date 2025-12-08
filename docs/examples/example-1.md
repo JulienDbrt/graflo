@@ -75,35 +75,51 @@ Transforming the data and ingesting it into an ArangoDB takes a few lines of cod
 ```python
 from suthing import FileHandle
 from graflo import Caster, Patterns, Schema
-from graflo.backend.connection.onto import ArangoConfig
+from graflo.db.connection.onto import ArangoConfig
 
 schema = Schema.from_dict(FileHandle.load("schema.yaml"))
 
-# Load config from docker/arango/.env (recommended)
+# Option 1: Load config from docker/arango/.env (recommended)
 conn_conf = ArangoConfig.from_docker_env()
 
-# Or create config directly
+# Option 2: Load from environment variables
+# Set: ARANGO_URI, ARANGO_USERNAME, ARANGO_PASSWORD, ARANGO_DATABASE
+# conn_conf = ArangoConfig.from_env()
+
+# Option 3: Create config directly
 # conn_conf = ArangoConfig(
 #     uri="http://localhost:8535",
 #     username="root",
 #     password="123",
-#     database="_system",
+#     database="mygraph",  # For ArangoDB, 'database' maps to schema/graph
 # )
 
-patterns = Patterns.from_dict(
-    {
-        "patterns": {
-            "people": {"regex": "^people.*\.csv$"},
-            "departments": {"regex": "^dep.*\.csv$"},
-        }
-    }
+# Create Patterns with file patterns
+from graflo.util.onto import FilePattern
+import pathlib
+
+patterns = Patterns()
+patterns.add_file_pattern(
+    "people",
+    FilePattern(regex="^people.*\.csv$", sub_path=pathlib.Path("."), resource_name="people")
+)
+patterns.add_file_pattern(
+    "departments",
+    FilePattern(regex="^dep.*\.csv$", sub_path=pathlib.Path("."), resource_name="departments")
 )
 
+# Or use resource_mapping for simpler initialization
+# patterns = Patterns(
+#     _resource_mapping={
+#         "people": "./people.csv",
+#         "departments": "./departments.csv",
+#     }
+# )
+
 caster = Caster(schema)
-caster.ingest_files(
-    path=".",
-    conn_conf=conn_conf,
-    patterns=patterns,
+caster.ingest(
+    output_config=conn_conf,  # Target database config
+    patterns=patterns,  # Source data patterns
 )
 
 ```

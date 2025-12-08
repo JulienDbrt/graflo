@@ -13,7 +13,7 @@ Key Features:
     - Filter expression system
 
 Example:
-    >>> from graflo.backend.manager import ConnectionManager
+    >>> from graflo.db.manager import ConnectionManager
     >>> with ConnectionManager(config) as conn:
     ...     conn.init_db(schema, clean_start=True)
     ...     conn.upsert_docs_batch(docs, "users")
@@ -36,10 +36,10 @@ from .data_source import (
     SQLDataSource,
     TableFileDataSource,
 )
-from .backend import ConnectionManager, ConnectionType
+from .db import ConnectionManager, ConnectionType
 from .filter.onto import ComparisonOperator, LogicalOperator
 from .onto import AggregationType
-from .util.onto import Patterns
+from .util.onto import FilePattern, Patterns, ResourcePattern, TablePattern
 
 __all__ = [
     "AbstractDataSource",
@@ -54,14 +54,17 @@ __all__ = [
     "DataSourceRegistry",
     "DataSourceType",
     "FileDataSource",
+    "FilePattern",
     "Index",
     "JsonFileDataSource",
     "JsonlFileDataSource",
     "LogicalOperator",
     "PaginationConfig",
     "Patterns",
+    "ResourcePattern",
     "Schema",
     "SQLConfig",
     "SQLDataSource",
     "TableFileDataSource",
+    "TablePattern",
 ]
