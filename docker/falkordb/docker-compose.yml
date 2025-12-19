@@ -1,0 +1,13 @@
+services:
+    falkordb:
+        image: ${IMAGE_VERSION}
+        restart: "no"
+        profiles: ["test.falkordb"]
+        ports:
+        -   "${FALKORDB_PORT}:6379"
+        container_name: ${CONTAINER_NAME}
+        volumes:
+        -   falkordb_data:/data
+
+volumes:
+    falkordb_data:

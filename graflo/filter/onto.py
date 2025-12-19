@@ -194,7 +194,9 @@ class LeafClause(AbsClause):
         value = f"{self.value[0]}" if len(self.value) == 1 else f"{self.value}"
         if len(self.value) == 1:
             if isinstance(self.value[0], str):
-                value = f'"{self.value[0]}"'
+                # Escape backslashes first, then double quotes
+                escaped = self.value[0].replace("\\", "\\\\").replace('"', '\\"')
+                value = f'"{escaped}"'
             elif self.value[0] is None:
                 value = "null"
             else:
