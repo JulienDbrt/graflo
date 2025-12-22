@@ -425,33 +425,42 @@ class MemgraphConnection(Connection):
         return sanitized
 
     def define_vertex_indices(self, vertex_config: VertexConfig):
-        """Create indices for a vertex type.
+        """Create indices for vertex labels based on configuration.
+
+        Iterates through all vertices defined in the configuration and creates
+        indices for each specified field. Memgraph supports indices on node
+        properties for faster lookups.
 
         Parameters
         ----------
         vertex_config : VertexConfig
-            Vertex configuration containing index definitions
+            Vertex configuration containing vertices and their index definitions.
+            Each vertex may have multiple indices, each covering one or more fields.
+
+        Notes
+        -----
+        - Index creation is idempotent (existing indices are skipped)
+        - Uses Memgraph syntax: ``CREATE INDEX ON :Label(property)``
+        - Errors are logged but don't stop processing of other indices
         """
         assert self.conn is not None, "Connection is closed"
-        label = vertex_config.name
 
-        for idx in vertex_config.indices:
-            for field in idx.fields:
-                try:
-                    # Memgraph uses CREATE INDEX ON :Label(property)
-                    query = f"CREATE INDEX ON :{label}({field})"
-                    cursor = self.conn.cursor()
-                    cursor.execute(query)
-                    cursor.close()
-                    logger.debug(f"Created index on {label}.{field}")
-                except Exception as e:
-                    # Index might already exist
-                    if "already exists" in str(e).lower():
-                        logger.debug(f"Index on {label}.{field} already exists")
-                    else:
-                        logger.warning(
-                            f"Failed to create index on {label}.{field}: {e}"
-                        )
+        for label in vertex_config.vertex_set:
+            for index_obj in vertex_config.indexes(label):
+                for field in index_obj.fields:
+                    try:
+                        query = f"CREATE INDEX ON :{label}({field})"
+                        cursor = self.conn.cursor()
+                        cursor.execute(query)
+                        cursor.close()
+                        logger.debug(f"Created index on {label}.{field}")
+                    except Exception as e:
+                        if "already exists" in str(e).lower():
+                            logger.debug(f"Index on {label}.{field} already exists")
+                        else:
+                            logger.warning(
+                                f"Failed to create index on {label}.{field}: {e}"
+                            )
 
     def define_edge_indices(self, edges: list[Edge]):
         """Create indices for edge types.
@@ -556,23 +565,53 @@ class MemgraphConnection(Connection):
 
         Performs atomic upsert (update-or-insert) operations on a batch of
         documents. Uses Cypher MERGE with ON MATCH/ON CREATE for efficiency.
+        Existing properties not in the document are preserved on update.
 
         Parameters
         ----------
         docs : list[dict]
-            Documents to upsert. Each document must contain all match_keys.
+            Documents to upsert. Each document must contain all match_keys
+            with non-None values. Invalid documents are skipped with a warning.
         class_name : str
-            Node label (e.g., "Person", "Product")
+            Node label to create/update (e.g., "Person", "Product")
         match_keys : list[str]
-            Properties used to identify existing nodes.
+            Property keys used to identify existing nodes for update.
+            Supports composite keys (multiple fields).
         **kwargs
             Additional options:
-            - dry (bool): If True, build query but don't execute
+            - dry (bool): If True, build query but don't execute (for debugging)
 
         Raises
         ------
         ValueError
-            If any document is missing a required match_key
+            If any document is missing a required match_key or has None value.
+
+        Notes
+        -----
+        - Documents are sanitized before insertion (invalid keys/values removed)
+        - NaN, Inf, and null bytes are automatically filtered with warnings
+        - The operation is atomic per batch (all succeed or fail together)
+
+        Examples
+        --------
+        Insert or update Person nodes::
+
+            db.upsert_docs_batch(
+                [
+                    {"id": "1", "name": "Alice", "age": 30},
+                    {"id": "2", "name": "Bob", "age": 25},
+                ],
+                class_name="Person",
+                match_keys=["id"]
+            )
+
+        With composite key::
+
+            db.upsert_docs_batch(
+                [{"tenant": "acme", "user_id": "u1", "email": "a@b.com"}],
+                class_name="User",
+                match_keys=["tenant", "user_id"]
+            )
         """
         assert self.conn is not None, "Connection is closed"
         dry = kwargs.pop("dry", False)
@@ -601,7 +640,7 @@ class MemgraphConnection(Connection):
 
     def insert_edges_batch(
         self,
-        docs_edges: list,
+        docs_edges: list[list[dict]],
         source_class: str,
         target_class: str,
         relation_name: str,
@@ -615,26 +654,60 @@ class MemgraphConnection(Connection):
     ):
         """Insert a batch of edges using Cypher MERGE.
 
+        Creates relationships between existing nodes by matching source and
+        target nodes using the specified match keys, then creating or updating
+        the relationship between them.
+
         Parameters
         ----------
-        docs_edges : list
-            List of [source_doc, target_doc, edge_props] tuples
+        docs_edges : list[list[dict]]
+            Edge specifications as list of [source_doc, target_doc, edge_props]:
+            ``[[{source_props}, {target_props}, {edge_props}], ...]``
+            - source_props: Properties to match the source node
+            - target_props: Properties to match the target node
+            - edge_props: Properties to set on the relationship (optional)
         source_class : str
-            Source node label
+            Label of source nodes (e.g., "Person")
         target_class : str
-            Target node label
+            Label of target nodes (e.g., "Company")
         relation_name : str
-            Relationship type name
+            Relationship type name (e.g., "WORKS_AT")
         collection_name : str, optional
-            Not used for Memgraph
+            Not used for Memgraph (kept for interface compatibility)
         match_keys_source : tuple[str, ...]
-            Keys to match source nodes
+            Property keys used to identify source nodes (default: ("_key",))
         match_keys_target : tuple[str, ...]
-            Keys to match target nodes
+            Property keys used to identify target nodes (default: ("_key",))
         filter_uniques : bool
-            Whether to filter duplicate edges
+            Not used for Memgraph (kept for interface compatibility)
+        uniq_weight_fields : list[str], optional
+            Not used for Memgraph (kept for interface compatibility)
+        uniq_weight_collections : list[str], optional
+            Not used for Memgraph (kept for interface compatibility)
         **kwargs
-            Additional options
+            Additional options (currently unused)
+
+        Notes
+        -----
+        - Edges are created with MERGE, preventing duplicates
+        - If source or target node doesn't exist, the edge is silently skipped
+        - Edge properties are merged on update (existing props preserved)
+
+        Examples
+        --------
+        Create relationships between Person and Company nodes::
+
+            db.insert_edges_batch(
+                [
+                    [{"id": "alice"}, {"id": "acme"}, {"role": "engineer"}],
+                    [{"id": "bob"}, {"id": "acme"}, {"role": "manager"}],
+                ],
+                source_class="Person",
+                target_class="Company",
+                relation_name="WORKS_AT",
+                match_keys_source=("id",),
+                match_keys_target=("id",),
+            )
         """
         assert self.conn is not None, "Connection is closed"
 
@@ -693,25 +766,55 @@ class MemgraphConnection(Connection):
         unset_keys: list[str] | None = None,
         **kwargs,
     ) -> list[dict]:
-        """Fetch nodes from the database.
+        """Fetch nodes from the database with optional filtering and projection.
+
+        Retrieves nodes matching the specified label and optional filter
+        conditions. Supports field projection to return only specific properties.
 
         Parameters
         ----------
         class_name : str
-            Node label to fetch
+            Node label to fetch (e.g., "Person", "Product")
         filters : list | dict, optional
-            Query filters
+            Query filters in graflo expression format.
+            Examples: ``["==", "Alice", "name"]`` or ``["AND", [...], [...]]``
         limit : int, optional
-            Maximum number of results
+            Maximum number of results to return. If None or <= 0, returns all.
         return_keys : list[str], optional
-            Keys to return (projection)
+            Properties to include in results (projection). If None, returns
+            all properties. Example: ``["id", "name"]``
         unset_keys : list[str], optional
-            Keys to exclude (not used in Memgraph)
+            Not used for Memgraph (kept for interface compatibility)
+        **kwargs
+            Additional options (currently unused)
 
         Returns
         -------
         list[dict]
-            List of node property dictionaries
+            List of node property dictionaries. Each dict contains the
+            requested properties (or all properties if no projection).
+
+        Examples
+        --------
+        Fetch all Person nodes::
+
+            results = db.fetch_docs("Person")
+
+        Fetch with filter and projection::
+
+            results = db.fetch_docs(
+                "Person",
+                filters=["==", "Alice", "name"],
+                return_keys=["id", "name", "email"],
+                limit=10
+            )
+
+        Fetch with complex filter::
+
+            results = db.fetch_docs(
+                "Product",
+                filters=["AND", [">", 100, "price"], ["==", "active", "status"]]
+            )
         """
         assert self.conn is not None, "Connection is closed"
 
@@ -764,29 +867,64 @@ class MemgraphConnection(Connection):
         limit: int | None = None,
         **kwargs,
     ) -> list[dict]:
-        """Fetch edges from the database.
+        """Fetch relationships from the database with optional filtering.
+
+        Retrieves relationships of the specified type between source and target
+        node labels. Returns source/target identifiers along with relationship
+        properties.
 
         Parameters
         ----------
         source_class : str
-            Source node label
+            Label of source nodes (e.g., "Person")
         target_class : str
-            Target node label
+            Label of target nodes (e.g., "Company")
         relation_name : str
-            Relationship type
+            Relationship type to fetch (e.g., "WORKS_AT")
         match_keys_source : tuple[str, ...]
-            Source node identifier keys
+            Property keys to return for source node identification.
+            Default: ("_key",)
         match_keys_target : tuple[str, ...]
-            Target node identifier keys
+            Property keys to return for target node identification.
+            Default: ("_key",)
         filters : list | dict, optional
-            Query filters
+            Query filters applied to relationship properties.
+            Example: ``["==", "engineer", "role"]``
         limit : int, optional
-            Maximum number of results
+            Maximum number of results to return. If None or <= 0, returns all.
+        **kwargs
+            Additional options (currently unused)
 
         Returns
         -------
         list[dict]
-            List of edge dictionaries with source, target, and properties
+            List of dictionaries containing:
+            - ``source_<key>``: Source node identifier properties
+            - ``target_<key>``: Target node identifier properties
+            - ``props``: Relationship property dictionary
+
+        Examples
+        --------
+        Fetch all WORKS_AT relationships::
+
+            edges = db.fetch_edges(
+                source_class="Person",
+                target_class="Company",
+                relation_name="WORKS_AT",
+                match_keys_source=("id",),
+                match_keys_target=("id",),
+            )
+            # Returns: [{"source_id": "alice", "target_id": "acme", "props": {...}}, ...]
+
+        Fetch with filter::
+
+            edges = db.fetch_edges(
+                source_class="Person",
+                target_class="Company",
+                relation_name="WORKS_AT",
+                filters=["==", "engineer", "role"],
+                limit=10
+            )
         """
         assert self.conn is not None, "Connection is closed"
 
@@ -825,26 +963,83 @@ class MemgraphConnection(Connection):
         aggregated_field: str | None = None,
         filters: list | dict | None = None,
         **kwargs,
-    ) -> Any:
-        """Perform aggregation on nodes.
+    ) -> int | float | list | dict[str, int] | None:
+        """Perform aggregation operations on nodes.
+
+        Computes aggregate statistics over nodes matching the specified label
+        and optional filters. Supports counting, min/max, average, and distinct
+        value extraction.
 
         Parameters
         ----------
         class_name : str
-            Node label to aggregate
+            Node label to aggregate (e.g., "Person", "Product")
         agg_type : AggregationType
-            Type of aggregation
+            Type of aggregation to perform:
+            - COUNT: Count matching nodes (with optional GROUP BY)
+            - MAX: Maximum value of a field
+            - MIN: Minimum value of a field
+            - AVERAGE: Average value of a field
+            - SORTED_UNIQUE: Distinct values sorted ascending
         discriminant : str, optional
-            Field to group by (for COUNT with GROUP BY)
+            Field to group by when using COUNT. Returns a dictionary mapping
+            each distinct value to its count. Example: ``"status"``
         aggregated_field : str, optional
-            Field to aggregate (required for non-COUNT)
+            Field to aggregate. Required for MAX, MIN, AVERAGE, SORTED_UNIQUE.
+            Example: ``"price"``
         filters : list | dict, optional
-            Query filters
+            Query filters to apply before aggregation.
+            Example: ``["==", "active", "status"]``
+        **kwargs
+            Additional options (currently unused)
 
         Returns
         -------
-        Any
-            Aggregation result (dict if discriminant is used, scalar otherwise)
+        int | float | list | dict[str, int] | None
+            - COUNT without discriminant: int (total count)
+            - COUNT with discriminant: dict mapping values to counts
+            - MAX/MIN/AVERAGE: numeric value or None if no data
+            - SORTED_UNIQUE: list of distinct values
+
+        Raises
+        ------
+        ValueError
+            If aggregated_field is missing for non-COUNT aggregations,
+            or if an unsupported aggregation type is specified.
+
+        Examples
+        --------
+        Count all Person nodes::
+
+            count = db.aggregate("Person", AggregationType.COUNT)
+            # Returns: 42
+
+        Count by status (GROUP BY)::
+
+            by_status = db.aggregate(
+                "Product",
+                AggregationType.COUNT,
+                discriminant="status"
+            )
+            # Returns: {"active": 100, "inactive": 25, "draft": 5}
+
+        Get maximum price::
+
+            max_price = db.aggregate(
+                "Product",
+                AggregationType.MAX,
+                aggregated_field="price"
+            )
+            # Returns: 999.99
+
+        Get distinct categories::
+
+            categories = db.aggregate(
+                "Product",
+                AggregationType.SORTED_UNIQUE,
+                aggregated_field="category"
+            )
+            # Returns: ["electronics", "furniture", "toys"]
         """
         assert self.conn is not None, "Connection is closed"
 

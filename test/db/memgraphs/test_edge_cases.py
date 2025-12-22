@@ -82,6 +82,18 @@ class TestCypherInjection:
     Validates that the connector properly sanitizes user inputs to prevent
     Cypher injection attacks. Tests cover multiple injection vectors including
     property values, label names, and match keys.
+
+    The connector should either:
+    - Parameterize all user inputs (preferred)
+    - Properly escape special characters
+    - Reject dangerous inputs with clear errors
+
+    References
+    ----------
+    - OWASP Injection Prevention Cheat Sheet:
+      https://cheatsheetseries.owasp.org/cheatsheets/Injection_Prevention_Cheat_Sheet.html
+    - Neo4j/Cypher Security Best Practices:
+      https://neo4j.com/developer/cypher/guide-sql-injection/
     """
 
     def test_injection_via_node_property_value(
