@@ -6,6 +6,7 @@ from .onto import (
     DBType,
     FalkordbConfig,
     MemgraphConfig,
+    NebulaConfig,
     Neo4jConfig,
     PostgresConfig,
     TigergraphConfig,
@@ -18,5 +19,6 @@ DB_TYPE_MAPPING: Dict[DBType, Type[DBConfig]] = {
     DBType.TIGERGRAPH: TigergraphConfig,
     DBType.FALKORDB: FalkordbConfig,
     DBType.MEMGRAPH: MemgraphConfig,
+    DBType.NEBULA: NebulaConfig,
     DBType.POSTGRES: PostgresConfig,
 }

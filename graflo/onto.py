@@ -107,6 +107,7 @@ class DBFlavor(BaseEnum):
         TIGERGRAPH: TigerGraph database
         FALKORDB: FalkorDB database (Redis-based graph database using Cypher)
         MEMGRAPH: Memgraph database (in-memory graph database using Cypher)
+        NEBULA: NebulaGraph database
     """
 
     ARANGO = "arango"
@@ -114,6 +115,7 @@ class DBFlavor(BaseEnum):
     TIGERGRAPH = "tigergraph"
     FALKORDB = "falkordb"
     MEMGRAPH = "memgraph"
+    NEBULA = "nebula"
 
 
 class ExpressionFlavor(BaseEnum):
