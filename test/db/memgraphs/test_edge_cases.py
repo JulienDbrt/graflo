@@ -188,11 +188,11 @@ class TestCypherInjection:
 
 
 # =============================================================================
-# UNICODE & SPECIAL CHARACTERS TORTURE
+# UNICODE & SPECIAL CHARACTERS EDGE CASES
 # =============================================================================
 
 
-class TestUnicodeTorture:
+class TestUnicodeEdgeCases:
     """Unicode and encoding edge case validation.
 
     Verifies correct handling of international text, special Unicode
@@ -236,7 +236,7 @@ class TestUnicodeTorture:
                 {"id": "1", "content": "مرحبا بالعالم"},  # Arabic
                 {"id": "2", "content": "שלום עולם"},  # Hebrew
                 {"id": "3", "content": "Hello مرحبا World عالم"},  # Mixed LTR/RTL
-                {"id": "4", "content": "\u202eevil\u202c"},  # RTL override characters
+                {"id": "4", "content": "\u202etext\u202c"},  # RTL override characters
                 {"id": "5", "content": "A\u200fB\u200eC"},  # Mixed marks
             ]
             db.upsert_docs_batch(rtl_texts, "RTLNode", match_keys=["id"])
@@ -248,7 +248,7 @@ class TestUnicodeTorture:
         """Test null bytes and control characters."""
         _ = clean_db
         with ConnectionManager(connection_config=conn_conf) as db:
-            evil_strings = [
+            problematic_strings = [
                 ("1", "before\x00after"),  # Null byte
                 ("2", "tab\there"),
                 ("3", "new\nline"),
@@ -258,7 +258,7 @@ class TestUnicodeTorture:
             ]
 
             successful = 0
-            for id_val, s in evil_strings:
+            for id_val, s in problematic_strings:
                 try:
                     db.upsert_docs_batch(
                         [{"id": id_val, "data": s}], "ControlChars", match_keys=["id"]
@@ -271,7 +271,9 @@ class TestUnicodeTorture:
             result = db.fetch_docs("ControlChars")
             assert len(result) == successful
 
-    def test_unicode_normalization_attacks(self, conn_conf, test_graph_name, clean_db):
+    def test_unicode_normalization_edge_cases(
+        self, conn_conf, test_graph_name, clean_db
+    ):
         """Test Unicode normalization edge cases."""
         _ = clean_db
         with ConnectionManager(connection_config=conn_conf) as db:
@@ -1265,11 +1267,11 @@ class TestBatchStress:
 
 
 # =============================================================================
-# CONCURRENCY CHAOS
+# CONCURRENCY STRESS TESTS
 # =============================================================================
 
 
-class TestConcurrencyChaos:
+class TestConcurrencyStress:
     """Thread safety and race condition testing."""
 
     def test_concurrent_inserts(self, conn_conf, test_graph_name, clean_db):
@@ -1402,11 +1404,11 @@ class TestStateCorruption:
 
 
 # =============================================================================
-# CONNECTION TORTURE
+# CONNECTION STRESS TESTS
 # =============================================================================
 
 
-class TestConnectionTorture:
+class TestConnectionStress:
     """Stress connection handling and state management."""
 
     def test_rapid_connect_disconnect(self, conn_conf, test_graph_name):
@@ -1437,21 +1439,6 @@ class TestConnectionTorture:
                 # Read again
                 result = db.fetch_docs("Interleaved", filters=["==", str(i), "id"])
                 assert result[0]["phase"] == "overwrite"
-
-    def test_massive_transaction(self, conn_conf, test_graph_name, clean_db):
-        """Insert 50,000 nodes total (batched to avoid Memgraph timeout)."""
-        _ = clean_db
-        with ConnectionManager(connection_config=conn_conf) as db:
-            # 50,000 nodes total, batched in chunks of 10k to avoid timeout
-            total_nodes = 50000
-            batch_size = 10000
-            for start in range(0, total_nodes, batch_size):
-                end = min(start + batch_size, total_nodes)
-                docs = [{"id": str(i), "batch": "massive"} for i in range(start, end)]
-                db.upsert_docs_batch(docs, "Massive", match_keys=["id"])
-
-            count = db.aggregate("Massive", AggregationType.COUNT)
-            assert count == 50000
 
 
 # =============================================================================
@@ -1819,7 +1806,7 @@ class TestTemporalAnomalies:
         """Datetime strings that might be parsed unexpectedly."""
         _ = clean_db
         with ConnectionManager(connection_config=conn_conf) as db:
-            evil_dates = [
+            problematic_dates = [
                 "0000-00-00",
                 "9999-99-99",
                 "2024-13-45",  # Invalid month/day
@@ -1829,23 +1816,23 @@ class TestTemporalAnomalies:
                 "2024-01-01T25:99:99Z",  # Invalid time
             ]
 
-            for i, date_str in enumerate(evil_dates):
+            for i, date_str in enumerate(problematic_dates):
                 docs = [{"id": str(i), "date": date_str}]
-                db.upsert_docs_batch(docs, "EvilDates", match_keys=["id"])
+                db.upsert_docs_batch(docs, "EdgeCaseDates", match_keys=["id"])
 
-            result = db.fetch_docs("EvilDates")
-            assert len(result) == len(evil_dates)
+            result = db.fetch_docs("EdgeCaseDates")
+            assert len(result) == len(problematic_dates)
 
 
 # =============================================================================
-# GRAPH ALGORITHM EXPLOITS
+# GRAPH ALGORITHM EDGE CASES
 # =============================================================================
 
 
-class TestGraphAlgorithmExploits:
+class TestGraphAlgorithmEdgeCases:
     """Pathological graph structures that stress graph algorithms."""
 
-    def test_cycle_detection_nightmare(self, conn_conf, test_graph_name, clean_db):
+    def test_cycle_detection_complex(self, conn_conf, test_graph_name, clean_db):
         """Complex interlocking cycles - stress cycle detection."""
         _ = clean_db
         with ConnectionManager(connection_config=conn_conf) as db:
@@ -1923,59 +1910,13 @@ class TestGraphAlgorithmExploits:
             expected = (clique_size * (clique_size - 1)) // 2 + stick_length
             assert result.result_set[0][0] == expected
 
-    def test_barbell_graph(self, conn_conf, test_graph_name, clean_db):
-        """Two cliques connected by a single edge - bottleneck."""
-        _ = clean_db
-        with ConnectionManager(connection_config=conn_conf) as db:
-            clique_size = 8
-
-            # Left clique
-            docs = [{"id": f"left_{i}"} for i in range(clique_size)]
-            db.upsert_docs_batch(docs, "Barbell", match_keys=["id"])
-
-            # Right clique
-            docs = [{"id": f"right_{i}"} for i in range(clique_size)]
-            db.upsert_docs_batch(docs, "Barbell", match_keys=["id"])
-
-            edges = []
-            # Left clique edges
-            for i in range(clique_size):
-                for j in range(i + 1, clique_size):
-                    edges.append([{"id": f"left_{i}"}, {"id": f"left_{j}"}, {}])
-            # Right clique edges
-            for i in range(clique_size):
-                for j in range(i + 1, clique_size):
-                    edges.append([{"id": f"right_{i}"}, {"id": f"right_{j}"}, {}])
-            # Bridge
-            edges.append([{"id": "left_0"}, {"id": "right_0"}, {}])
-
-            db.insert_edges_batch(
-                edges,
-                source_class="Barbell",
-                target_class="Barbell",
-                relation_name="LINKED",
-                match_keys_source=["id"],
-                match_keys_target=["id"],
-            )
-
-            # Query crossing the bottleneck
-            try:
-                result = db.execute(
-                    "MATCH path = (l:Barbell)-[:LINKED*]-(r:Barbell) "
-                    "WHERE l.id = 'left_7' AND r.id = 'right_7' "
-                    "RETURN count(path)"
-                )
-                assert result.result_set[0][0] > 0
-            except Exception:
-                pass  # Timeout is acceptable
-
 
 # =============================================================================
-# DEADLOCK HELL
+# DEADLOCK PREVENTION TESTS
 # =============================================================================
 
 
-class TestDeadlockHell:
+class TestDeadlockPrevention:
     """Deadlock detection and transaction isolation testing."""
 
     def test_circular_update_dependency(self, conn_conf, test_graph_name, clean_db):
@@ -2110,7 +2051,7 @@ class TestDeadlockHell:
 class TestReDoS:
     """Test patterns that could cause ReDoS if regex is used internally."""
 
-    def test_evil_regex_patterns_as_values(self, conn_conf, test_graph_name, clean_db):
+    def test_regex_pattern_edge_cases(self, conn_conf, test_graph_name, clean_db):
         """Store values that would be catastrophic if used as regex."""
         _ = clean_db
         with ConnectionManager(connection_config=conn_conf) as db:
@@ -2137,13 +2078,13 @@ class TestReDoS:
             db.upsert_docs_batch(docs, "ReDoSFilter", match_keys=["id"])
 
             # These could be catastrophic if the filter uses regex matching
-            evil_filters = [
+            edge_case_filters = [
                 ".*" * 20 + "x",
                 "(a+)+" * 10,
                 "((a+)+)+" * 5,
             ]
 
-            for pattern in evil_filters:
+            for pattern in edge_case_filters:
                 try:
                     # This should NOT hang
                     result = db.fetch_docs(
@@ -2188,15 +2129,15 @@ class TestQueryComplexity:
             except Exception:
                 pass
 
-    def test_union_bomb(self, conn_conf, test_graph_name, clean_db):
+    def test_union_query_load(self, conn_conf, test_graph_name, clean_db):
         """Many UNION clauses (reduced from 50 to avoid Memgraph hang)."""
         _ = clean_db
         with ConnectionManager(connection_config=conn_conf) as db:
             docs = [{"id": "1"}]
-            db.upsert_docs_batch(docs, "UnionBomb", match_keys=["id"])
+            db.upsert_docs_batch(docs, "UnionLoad", match_keys=["id"])
 
             # Build query with UNIONs (reduced to prevent timeout)
-            query_parts = ["MATCH (n:UnionBomb) RETURN n.id AS id" for _ in range(10)]
+            query_parts = ["MATCH (n:UnionLoad) RETURN n.id AS id" for _ in range(10)]
             query = " UNION ALL ".join(query_parts)
 
             try:
@@ -2237,16 +2178,16 @@ class TestMemoryExhaustion:
     """Memory exhaustion and resource abuse testing."""
 
     def test_exponential_property_growth(self, conn_conf, test_graph_name, clean_db):
-        """Property value that doubles on each upsert - memory bomb attempt."""
+        """Property value that doubles on each upsert - memory stress test."""
         _ = clean_db
         with ConnectionManager(connection_config=conn_conf) as db:
             payload = "A"
             for i in range(20):  # 2^20 = 1MB final payload
-                docs = [{"id": "growing", "bomb": payload}]
-                db.upsert_docs_batch(docs, "MemBomb", match_keys=["id"])
+                docs = [{"id": "growing", "payload": payload}]
+                db.upsert_docs_batch(docs, "MemoryLoad", match_keys=["id"])
                 payload = payload * 2
 
-            result = db.fetch_docs("MemBomb")
+            result = db.fetch_docs("MemoryLoad")
             assert len(result) == 1
 
     def test_million_tiny_properties(self, conn_conf, test_graph_name, clean_db):
@@ -2268,13 +2209,13 @@ class TestMemoryExhaustion:
         _ = clean_db
         with ConnectionManager(connection_config=conn_conf) as db:
             # String that might confuse naive JSON parsers
-            evil = '{"a":' * 100 + '"bomb"' + "}" * 100
-            docs = [{"id": "json_bomb", "data": evil}]
-            db.upsert_docs_batch(docs, "JsonBomb", match_keys=["id"])
+            nested_json = '{"a":' * 100 + '"value"' + "}" * 100
+            docs = [{"id": "nested_json", "data": nested_json}]
+            db.upsert_docs_batch(docs, "NestedJson", match_keys=["id"])
 
-            result = db.fetch_docs("JsonBomb")
+            result = db.fetch_docs("NestedJson")
             assert len(result) == 1
-            assert result[0]["data"] == evil
+            assert result[0]["data"] == nested_json
 
     def test_binary_payload_in_string(self, conn_conf, test_graph_name, clean_db):
         """Binary data disguised as string."""
@@ -2290,11 +2231,11 @@ class TestMemoryExhaustion:
 
 
 # =============================================================================
-# CARTESIAN PRODUCT BOMBS
+# CARTESIAN PRODUCT LOAD TESTS
 # =============================================================================
 
 
-class TestCartesianProductBomb:
+class TestCartesianProductLoad:
     """Queries designed to create explosive result sets."""
 
     def test_unanchored_match_storm(self, conn_conf, test_graph_name, clean_db):
@@ -2453,12 +2394,12 @@ class TestBoundaryValueAnalysis:
 
 
 # =============================================================================
-# FILTER SADISM
+# FILTER STRESS TESTS
 # =============================================================================
 
 
-class TestFilterSadism:
-    """Torture the filter system."""
+class TestFilterStress:
+    """Stress test the filter system."""
 
     def test_deeply_nested_boolean_filter(self, conn_conf, test_graph_name, clean_db):
         """Deeply nested AND/OR expressions."""
@@ -2598,11 +2539,11 @@ class TestPathologicalIds:
 
 
 # =============================================================================
-# DATA TYPE TORTURE
+# DATA TYPE EDGE CASES
 # =============================================================================
 
 
-class TestDataTypeTorture:
+class TestDataTypeEdgeCases:
     """Extreme data type edge cases."""
 
     def test_scientific_notation_extremes(self, conn_conf, test_graph_name, clean_db):

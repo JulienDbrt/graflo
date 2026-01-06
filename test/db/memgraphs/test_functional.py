@@ -1105,14 +1105,14 @@ class TestDataQuality:
         """
         _ = clean_db
         with ConnectionManager(connection_config=conn_conf) as db:
-            date_chaos = [
+            date_variations = [
                 {"id": "1", "date": "2024-01-15"},  # ISO
                 {"id": "2", "date": "15/01/2024"},  # DD/MM/YYYY
                 {"id": "3", "date": "01/15/2024"},  # MM/DD/YYYY
                 {"id": "4", "date": "15 Jan 2024"},  # Text
                 {"id": "5", "date": 1705276800},  # Unix timestamp
             ]
-            db.upsert_docs_batch(date_chaos, "Event", match_keys=["id"])
+            db.upsert_docs_batch(date_variations, "Event", match_keys=["id"])
 
             # Memgraph can't compare mixed types, so just verify data exists
             result = db.execute("MATCH (e:Event) RETURN e.id, e.date")

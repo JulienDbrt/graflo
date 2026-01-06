@@ -625,6 +625,17 @@ class MemgraphConnection(Connection):
         if not sanitized_docs:
             return
 
+        # Auto-create index on match_keys for MERGE performance (idempotent)
+        cursor = self.conn.cursor()
+        for key in match_keys:
+            try:
+                cursor.execute(f"CREATE INDEX ON :{class_name}({key})")
+                logger.debug(f"Created index on {class_name}.{key}")
+            except Exception as e:
+                if "already exists" not in str(e).lower():
+                    logger.debug(f"Index on {class_name}.{key}: {e}")
+        cursor.close()
+
         # Build the MERGE clause with match keys
         index_str = ", ".join([f"{k}: row.{k}" for k in match_keys])
         q = f"""
