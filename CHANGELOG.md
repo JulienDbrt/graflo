@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0]
+
+### Added
+
+- **`RenameHints.to_ops`**: the rename ops a set of hints stands for.
+- **`land_rdf_facts`** (`graflo.hq.rdf_landing`): binds the classes of an RDF facts file to the
+  resources of a manifest, or infers schema, resources and bindings from the ontology when it has none.
+- **`RdfInferenceManager.create_bindings(data_file=…)`**: connectors read the data from a file other
+  than the ontology.
+- **`render_type_sheet`** (`graflo.architecture.schema.context`): a schema as a byte-deterministic,
+  closed-world type sheet for a language-model prompt.
+- **`instance_json_schema`**: the flat JSON Schema of one extraction (vertices, edges, unmapped;
+  enums from the schema), valid as an OpenAI strict, `json_object` or Ollama output format.
+- **`iter_elements`** / **`ElementText`**: one retrieval text per vertex, edge and property, with
+  synonyms, IRIs and units; versioned by `ELEMENT_TEXT_VERSION`.
+- **`coerce_value`** (`graflo.architecture.schema.coerce`): a raw value coerced to its field's
+  `FieldType`, stripping the declared unit; failures raise a typed `CoercionError`.
+- **`subschema`** accepts an edge id as a seed and admits the edge with both endpoints.
+
+### Changed
+
+- Value inference reads `YYYY-MM-DDTHH:MM` (no seconds) as `DATETIME`.
+- **Breaking: an edge is keyed by its endpoints and relation**, plus only the properties its first
+  `identities` entry names; its other properties are written, never matched on. An edge without
+  `identities` no longer merges on all its declared properties, so parallel edges told apart by
+  a property need `identities: [[source, target, <property>]]`. A PostgreSQL edge key over other
+  columns is rebuilt at schema definition or on the first write.
+
+### Fixed
+
+- **`DBWriter.write(..., resource_name=None)`** no longer adds edges between every blank vertex and
+  every document of an adjoining type; a resource-less container (`migrate_graph` included) keeps
+  exactly the edges it carries.
+- **A Neo4j password given without a username** authenticates as `neo4j` instead of being
+  dropped, which connected unauthenticated and was refused by the server.
+- **Neo4j, Memgraph and FalkorDB edge writes** no longer fail when a record lacks a property its
+  edge's identity names. As on PostgreSQL, absence is part of the key: the edge matches an
+  existing one lacking the same properties.
+
 ## [1.16.5]
 
 ### Added

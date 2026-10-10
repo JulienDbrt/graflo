@@ -986,7 +986,11 @@ def _postgres_edge_kwargs(
                             "target": "org",
                             "relation": "works_at",
                             "properties": ["since", "grade"],
-                            "identities": identities or [["source", "target", "since"]],
+                            "identities": (
+                                [["source", "target", "since"]]
+                                if identities is None
+                                else identities
+                            ),
                         }
                     ]
                 },
@@ -1036,6 +1040,13 @@ def test_postgres_edges_upsert_when_the_model_asks_for_it(monkeypatch):
 
     assert call["relationship_merge_properties"] == ("since",)
     assert call["on_duplicate"] == "upsert"
+
+
+def test_edges_without_an_identity_are_keyed_on_their_endpoints(monkeypatch):
+    """Their properties are written, never matched on."""
+    call = _postgres_edge_kwargs(monkeypatch, "upsert", identities=[])
+
+    assert call.get("relationship_merge_properties") is None
 
 
 def test_postgres_edges_keyed_by_relation_conflict_on_their_endpoints(monkeypatch):
@@ -1101,3 +1112,60 @@ def test_owner_docs_sharing_an_identity_reach_the_backend_as_one_doc(monkeypatch
 
     [(docs, _, _)] = _RecordingConnectionManager.db.upsert_calls
     assert docs == [{"id": "x", "a": 1, "b": 2}, {"id": "y", "a": 5}]
+
+
+def test_a_resource_less_write_keeps_only_its_explicit_edges(tmp_path):
+    """No blank-sibling join without a resource: it would pair unrelated docs."""
+    from graflo.architecture.contract.manifest import GraphManifest
+    from graflo.connections.graflo_backend import GraFloBackendConfig
+    from graflo.db import ConnectionManager
+    from graflo.hq.graph_engine import GraphEngine
+
+    schema = Schema.model_validate(
+        {
+            "metadata": {"name": "plant"},
+            "core_schema": {
+                "vertex_config": {
+                    "vertices": [
+                        {"name": "note", "properties": ["body"], "blank": True},
+                        {
+                            "name": "machine",
+                            "properties": ["serial"],
+                            "identity": ["serial"],
+                        },
+                    ]
+                },
+                "edge_config": {
+                    "edges": [
+                        {"source": "note", "target": "machine", "relation": "about"}
+                    ]
+                },
+            },
+        }
+    )
+    conn_conf = GraFloBackendConfig(output_dir=tmp_path)
+    manifest = GraphManifest(
+        graph_schema=schema, ingestion_model=IngestionModel(resources=[])
+    )
+    GraphEngine(target_db_flavor=DBType.GRAFLO_BACKEND).define_schema(
+        manifest=manifest, target_db_config=conn_conf
+    )
+    ingestion_model = IngestionModel(resources=[])
+    ingestion_model.finish_init(schema.core_schema)
+
+    gc = GraphContainer(
+        vertices={
+            "note": [{"id": "n1", "body": "a"}, {"id": "n2", "body": "b"}],
+            "machine": [{"serial": "S-1"}, {"serial": "S-2"}],
+        },
+        edges={("note", "machine", "about"): [({"id": "n1"}, {"serial": "S-2"}, {})]},
+    )
+    asyncio.run(
+        DBWriter(schema=schema, ingestion_model=ingestion_model).write(
+            gc=gc, conn_conf=conn_conf, resource_name=None
+        )
+    )
+
+    with ConnectionManager(connection_config=conn_conf) as conn:
+        edges = conn.fetch_all_edges("note", "machine", "about")
+    assert len(edges) == 1
