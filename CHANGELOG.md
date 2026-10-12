@@ -5,6 +5,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.0]
+
+### Added
+
+- **`write_container`** (`graflo.hq.container_write`): defines a schema on the target (reusing an
+  existing definition) and upserts a `GraphContainer` by identity, without an ingestion resource;
+  `PendingEdge` endpoints known only by a secondary identity are looked up once the container is
+  written, so an endpoint the container carries is found (an ambiguous match is skipped by
+  default). Returns a `ContainerWriteReport`.
+- **`PendingEdge`, `EdgeEndpoint`** (`graflo.architecture.graph_types`): an edge waiting for a
+  secondary-identity lookup at write time.
+
+### Fixed
+
+- **`subschema()`** admits the edges between its seeds before any non-seed vertex, and admits a
+  non-seed vertex only together with the edges joining it to what is already in the slice; trimming
+  to the token ceiling drops non-seed vertices (with their edges) before the edges between seeds. A
+  tight budget no longer elides how the seeds relate, or admits a type the slice cannot connect.
+
+## [1.17.1]
+
+### Changed
+
+- **Breaking: a PostgreSQL edge table name longer than 63 bytes** is shortened with a hash
+  before `_edges`, and every edge table carries a comment naming its source, target and relation.
+  Edge tables with such names written by earlier releases must be recreated.
+- **`DBWriter`** keeps its connections for the run, reusing them across batches, instead of
+  opening one per vertex type and edge per batch; `close()` releases them, and ingestion calls it.
+- **Neo4j** edge writes run in a managed write transaction, which retries transient errors such as
+  deadlocks; vertex and edge writes return only once committed.
+- **NebulaGraph** describes a tag on first use instead of reading the whole tag catalogue on
+  every connection; **Memgraph** creates its MERGE index once per connection, not per batch.
+- **PostgreSQL** creates, truncates and drops each table in its own transaction.
+- **Neo4j** creates a vertex identity, and any vertex index declared `unique: true`, as a
+  uniqueness constraint; a composite constraint the server refuses falls back to an index with a
+  warning. **Memgraph** adds a uniqueness constraint over the identity and drops unique
+  constraints with the vertices they cover.
+- **`Caster.close()`**, also on leaving a `with` block, releases the cast pools and the writer's
+  connections for callers driving `process_batch` or `process_resource` themselves.
+- Edge inference and blank-edge joins visit only the edges between the vertex types a document or
+  batch carries, not every declared edge.
+
+### Fixed
+
+- **Neo4j, FalkorDB and file-backend edge writes** lock per edge type, as documented, instead of
+  serializing every edge type on one lock; Memgraph still writes one edge type at a time. A write
+  waiting on a lock no longer holds a `max_concurrent` slot.
+- **ArangoDB edge upserts** (`edges_on_duplicate: upsert`) keep distinct relations and
+  weight-distinguished edges between the same two vertices instead of keeping only the first,
+  and store `relation` on the edge.
+- **An ingestion run whose bulk finalize fails** still closes its cast pool and connections.
+- **PostgreSQL live drift** no longer reports every edge type as both missing and undeclared.
+- **PostgreSQL `clear_data`** truncates the remaining tables after one that does not exist.
+- **Neo4j, Memgraph and FalkorDB edge writes** use the relation name a `DatabaseProfile` edge spec
+  sets, as reads and index definitions already did.
+- **PostgreSQL** defines an edge table another role owns, with a warning, instead of failing on its
+  comment; a table already carrying its comment is not commented again.
+- **NebulaGraph** warns once per connection about a tag it cannot describe, not on every batch.
+
 ## [1.17.0]
 
 ### Added

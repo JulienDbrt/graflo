@@ -187,6 +187,19 @@ def edge_property_index_query(relation: str, field: str) -> str:
     return f"CREATE EDGE INDEX ON :{relation}({field})"
 
 
+def _create_unique_constraint(conn: Any, label: str, fields: list[str]) -> None:
+    """Constrain *fields* of *label* unique together; an existing one is kept."""
+    props = ", ".join(f"n.{f}" for f in fields)
+    query = f"CREATE CONSTRAINT ON (n:{label}) ASSERT {props} IS UNIQUE"
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query)
+        cursor.close()
+    except Exception as e:
+        if "already exists" not in str(e).lower():
+            raise
+
+
 class MemgraphConnection(Connection):
     """Memgraph connector implementing the graflo Connection interface.
 
@@ -281,6 +294,8 @@ class MemgraphConnection(Connection):
         self.conn = mgclient.connect(**connect_kwargs)
         self.conn.autocommit = True
         self._database_name = config.database or "memgraph"
+        # (label, key) pairs whose MERGE index this connection already ensured.
+        self._merge_indexed: set[tuple[str, str]] = set()
 
     def execute(self, query: str, **kwargs) -> QueryResult:
         """Execute a raw OpenCypher query against the database.
@@ -510,12 +525,12 @@ class MemgraphConnection(Connection):
             logger.warning(
                 "Schema is None: identity indexes cannot be ensured without schema"
             )
+        db_vertex = (
+            schema.resolve_db_aware(DBType.MEMGRAPH).vertex_config
+            if schema is not None
+            else None
+        )
         for label in vertex_config.vertex_set:
-            db_vertex = (
-                schema.resolve_db_aware(DBType.MEMGRAPH).vertex_config
-                if schema is not None
-                else None
-            )
             index_list = list(
                 schema.db_profile.vertex_secondary_indexes(label)
                 if schema is not None
@@ -546,6 +561,48 @@ class MemgraphConnection(Connection):
                             logger.warning(
                                 f"Failed to create index on {storage_label}.{field}: {e}"
                             )
+                if index_obj.unique and index_obj.fields:
+                    # A constraint gives MERGE no index, so it comes on top of them.
+                    _create_unique_constraint(
+                        self.conn, storage_label, index_obj.fields
+                    )
+
+    def _drop_unique_constraints(self, labels: set[str] | None) -> None:
+        """Drop the unique constraints on *labels* (all labels when ``None``).
+
+        They outlive the nodes, and a later schema reusing a label with another
+        identity would be refused by them.
+        """
+        if self.conn is None:
+            raise RuntimeError("Connection is closed")
+        cursor = self.conn.cursor()
+        try:
+            cursor.execute("SHOW CONSTRAINT INFO")
+            columns = [c.name for c in cursor.description or []]
+            rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        except Exception as e:
+            logger.warning("Could not list constraints: %s", e)
+            rows = []
+        finally:
+            cursor.close()
+        for row in rows:
+            label = row.get("label")
+            if row.get("constraint type") != "unique" or not label:
+                continue
+            if labels is not None and label not in labels:
+                continue
+            properties = row.get("properties") or []
+            if isinstance(properties, str):
+                properties = [properties]
+            props = ", ".join(f"n.{p}" for p in properties)
+            try:
+                cursor = self.conn.cursor()
+                cursor.execute(
+                    f"DROP CONSTRAINT ON (n:{label}) ASSERT {props} IS UNIQUE"
+                )
+                cursor.close()
+            except Exception as e:
+                logger.debug("DROP CONSTRAINT on %s: %s", label, e)
 
     def define_edge_indexes(self, edges: list[Edge], schema: Schema | None = None):
         """Create an edge-type property index for each declared edge index field.
@@ -611,6 +668,7 @@ class MemgraphConnection(Connection):
             cursor = self.conn.cursor()
             cursor.execute("MATCH (n) DETACH DELETE n")
             cursor.close()
+            self._drop_unique_constraints(None)
             logger.info("Deleted all nodes and relationships")
             return
 
@@ -627,6 +685,7 @@ class MemgraphConnection(Connection):
                     logger.debug(f"Deleted all nodes with label '{label}'")
                 except Exception as e:
                     logger.warning(f"Failed to delete nodes with label '{label}': {e}")
+            self._drop_unique_constraints(set(vertex_types_list))
 
     def ensure_target_namespace(self, schema: Schema, *, create: bool) -> None:
         """Memgraph uses a single database per instance; record schema name only."""
@@ -775,16 +834,21 @@ class MemgraphConnection(Connection):
         if not sanitized_docs:
             return
 
-        # Auto-create index on match_keys for MERGE performance (idempotent)
-        cursor = self.conn.cursor()
-        for key in match_keys:
-            try:
-                cursor.execute(f"CREATE INDEX ON :{class_name}({key})")
-                logger.debug(f"Created index on {class_name}.{key}")
-            except Exception as e:
-                if "already exists" not in str(e).lower():
-                    logger.debug(f"Index on {class_name}.{key}: {e}")
-        cursor.close()
+        # Auto-create index on match_keys for MERGE performance, once per
+        # connection: the statement is DDL, and Memgraph takes a unique-access
+        # lock for it even when the index exists.
+        missing = [k for k in match_keys if (class_name, k) not in self._merge_indexed]
+        if missing:
+            cursor = self.conn.cursor()
+            for key in missing:
+                try:
+                    cursor.execute(f"CREATE INDEX ON :{class_name}({key})")
+                    logger.debug(f"Created index on {class_name}.{key}")
+                except Exception as e:
+                    if "already exists" not in str(e).lower():
+                        logger.debug(f"Index on {class_name}.{key}: {e}")
+                self._merge_indexed.add((class_name, key))
+            cursor.close()
 
         # Build the MERGE clause with match keys
         index_str = ", ".join([f"{k}: row.{k}" for k in match_keys_list])
