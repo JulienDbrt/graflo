@@ -61,7 +61,9 @@ from .ops import (
     AddVerticesOp,
     ChangeFieldTypesOp,
     DeclareEdgeInversesOp,
+    EdgeDescriptionTarget,
     EdgeFieldSemanticsTarget,
+    EdgeIdentitiesEntry,
     EdgeIndexEntry,
     EdgeSelector,
     FieldSemanticsTarget,
@@ -79,11 +81,13 @@ from .ops import (
     RenameResourcesOp,
     RenameVertexPropertiesOp,
     RenameVerticesOp,
+    ReplaceEdgeIdentitiesOp,
     ReplaceIdentityOp,
     ReplaceResourcesOp,
     RetractEdgeInversesOp,
     SetBindingsOp,
     SetDbProfileOp,
+    SetEdgeDescriptionsOp,
     SetEdgeDirectedOp,
     SetEdgeSemanticsOp,
     SetFieldSemanticsOp,
@@ -699,9 +703,35 @@ def _edge_property_ops(
         ops.append(AddEdgePropertiesOp(additions=additions))
     if type_changes:
         ops.append(ChangeFieldTypesOp(edges=type_changes))
+    # Keys change between the additions they may name and the removals of
+    # properties an old key named.
+    rekeyed = [
+        EdgeIdentitiesEntry(
+            source=source,
+            target=target_name,
+            relation=relation,
+            identities=[list(key) for key in new_edge.identities],
+        )
+        for (source, target_name, relation), new_edge in sorted(
+            target_edges.items(), key=lambda item: _edge_sort_key(item[0])
+        )
+        if (old_edge := base_edges.get((source, target_name, relation))) is not None
+        and _identity_keys(old_edge) != _identity_keys(new_edge)
+    ]
+    if rekeyed:
+        ops.append(ReplaceEdgeIdentitiesOp(edges=rekeyed))
     if removals:
         ops.append(RemoveEdgePropertiesOp(removals=removals))
     return ops
+
+
+def _identity_keys(edge: Edge) -> set[tuple[str, ...]]:
+    return {tuple(key) for key in edge.identities}
+
+
+def _edge_sort_key(key: tuple[str, str, str | None]) -> tuple[str, str, str]:
+    source, target, relation = key
+    return source, target, relation or ""
 
 
 def _edge_fields_differ(old: Edge, new: Edge) -> bool:
@@ -777,10 +807,20 @@ def _semantics_ops(
 
     base_edges = _edges_after_renames(base, hints)
     groups: dict[str, tuple[Any, list[EdgeSelector]]] = {}
+    edge_descriptions: list[EdgeDescriptionTarget] = []
     for key, new_edge in _edges(target).items():
         old_edge = base_edges.get(key)
         if old_edge is None:
             continue
+        if old_edge.description != new_edge.description:
+            edge_descriptions.append(
+                EdgeDescriptionTarget(
+                    source=key[0],
+                    target=key[1],
+                    relation=key[2],
+                    description=new_edge.description,
+                )
+            )
         old_fields = {f.name: f for f in old_edge.properties}
         for field in new_edge.properties:
             old_field = old_fields.get(field.name)
@@ -806,6 +846,8 @@ def _semantics_ops(
         groups.setdefault(canon, (new_edge.semantics, []))[1].append(
             EdgeSelector(source=key[0], target=key[1], relation=key[2])
         )
+    if edge_descriptions:
+        ops.append(SetEdgeDescriptionsOp(edges=edge_descriptions))
     if field_targets:
         ops.append(SetFieldSemanticsOp(targets=field_targets))
     for canon in sorted(groups):

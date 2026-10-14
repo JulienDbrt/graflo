@@ -5,23 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.18.2] - 2026-10-14
 
 ### Added
 
+- **`set_edge_descriptions`** sets or clears the description of existing edges, with its inverse;
+  `diff_manifests` emits it, so a changed edge description no longer leaves a replay residual.
+- `resolve_db_secrets_from_env`: fills any database config's missing username and password
+  from `{PROXY}_USERNAME` / `_PASSWORD`, a graph target included.
 - **Deprecation helpers** (`graflo._compat`): `deprecated`, `warn_deprecated` and `rename_key` name
   the deprecating and removing versions. CI fails on a public-API break against the last release
   unless the version is a new major.
 - **`merge3.keep_both`**: a conflict resolution that keeps both sides when one side renames — the
   other side's edits are applied first and carried by the rename.
+- **`graflo.db.sql.table_shape`** says what a table's keys decide: `relation`, `entity`, or `either`
+  (two foreign keys and a key of its own, which the schema cannot settle). `own_key` and
+  `referenced_tables` come with it.
 
 ### Changed
 
 - **`ResourceSample.description` is `None` unless the source declares one**; file samples and
   uncommented tables no longer get a "Sampled from …" placeholder.
+- **SQL inference keeps a link table's own key.** An edge inferred from a table with a primary key
+  outside its foreign keys carries that key as a property and as its identity, so two rows between
+  the same pair stay two edges. A key column named like an endpoint's identity field is renamed
+  after the table (`purchases.id` → `purchases_id`).
+- **SQL inference makes a table another table refers to a vertex**, even with two foreign keys.
 
 ### Fixed
 
+- **A three-way merge decision reaches only its own slot.** Each side's change set is split one op
+  per slot before reconciling, so taking one side no longer drops the other side's unrelated edits, and
+  different choices on conflicts from one kind of change no longer refuse the merge.
+- **An edge to a looked-up vertex is no longer dropped** when an earlier vertex step took the
+  transform output its `from` names; an explicit `from` reads it regardless of step order.
+- An edge step naming an end by both type and role now says `source_role` / `target_role` in its
+  error, not only `source_type_field`.
+- **`diff_manifests` emits `replace_edge_identities`** when an edge's keys change; the change was
+  previously reported as not expressible.
 - **Sampling through a `TableConnector` binding** carries the table and column comments, the
   primary and foreign keys and the row estimate, as `sample_postgres` does.
 
