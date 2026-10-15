@@ -16,10 +16,10 @@ jobs:
     offline:
         runs-on: ubuntu-latest
         steps:
-        -   uses: actions/checkout@v5
+        -   uses: actions/checkout@v7
 
         -   name: Install uv
-            uses: astral-sh/setup-uv@v7
+            uses: astral-sh/setup-uv@v10.3.0
             with:
                 version: "0.12.21"
                 python-version: "3.11"
@@ -28,26 +28,22 @@ jobs:
         -   name: Install dependencies (dev and plot)
             run: uv sync --locked --extra dev --extra plot
 
-        # test/db, test/data_source and test/object_storage need database
-        # containers. Everything else runs in-process.
+        # test/db needs database containers. The live parts of test/data_source
+        # and test/object_storage skip when their service is unreachable.
         -   name: Run the container-free suites
-            run: >-
-                uv run pytest test
-                --ignore=test/db
-                --ignore=test/data_source
-                --ignore=test/object_storage
+            run: uv run pytest test --ignore=test/db -n auto --dist loadfile
 
     # The public API against the newest release tag: a break needs a deprecation
     # shim (graflo._compat) or a major version bump.
     api:
         runs-on: ubuntu-latest
         steps:
-        -   uses: actions/checkout@v5
+        -   uses: actions/checkout@v7
             with:
                 fetch-depth: 0
 
         -   name: Install uv
-            uses: astral-sh/setup-uv@v7
+            uses: astral-sh/setup-uv@v10.3.0
             with:
                 version: "0.12.21"
                 python-version: "3.11"

@@ -10,11 +10,13 @@ them, which is what supplies the ``conn_conf`` / ``test_graph_name`` /
 
 from __future__ import annotations
 
+import threading
 from typing import Any, cast
 
 import pytest
 
 from graflo.db.manager import ConnectionManager
+from graflo.onto import AggregationType
 
 
 class PathologicalGraphsCases:
@@ -154,3 +156,143 @@ class StateCorruptionCases:
             # Outer should see inner's data
             result = db1.fetch_docs("Nested")
             assert len(result) == 2
+
+
+class GraphAlgorithmCases:
+    """Topologies that stress traversal algorithms."""
+
+    def test_lollipop_graph(self, conn_conf, test_graph_name, clean_db):
+        """Lollipop graph - pathological for certain algorithms."""
+        _ = clean_db
+        with ConnectionManager(connection_config=conn_conf) as db:
+            # Clique (the candy)
+            clique_size = 10
+            docs = [{"id": f"clique_{i}"} for i in range(clique_size)]
+            db.upsert_docs_batch(docs, "Lollipop", match_keys=["id"])
+
+            # Path (the stick)
+            stick_length = 20
+            docs = [{"id": f"stick_{i}"} for i in range(stick_length)]
+            db.upsert_docs_batch(docs, "Lollipop", match_keys=["id"])
+
+            # Clique edges (complete graph)
+            edges = []
+            for i in range(clique_size):
+                for j in range(i + 1, clique_size):
+                    edges.append([{"id": f"clique_{i}"}, {"id": f"clique_{j}"}, {}])
+
+            # Stick edges (path)
+            for i in range(stick_length - 1):
+                edges.append([{"id": f"stick_{i}"}, {"id": f"stick_{i + 1}"}, {}])
+
+            # Connect stick to clique
+            edges.append([{"id": "stick_0"}, {"id": "clique_0"}, {}])
+
+            db.insert_edges_batch(
+                edges,
+                source_class="Lollipop",
+                target_class="Lollipop",
+                relation_name="CONNECTED",
+                match_keys_source=["id"],
+                match_keys_target=["id"],
+            )
+
+            # Verify structure
+            result = db.execute("MATCH ()-[r:CONNECTED]->() RETURN count(r)")
+            expected = (clique_size * (clique_size - 1)) // 2 + stick_length
+            assert result.result_set[0][0] == expected
+
+
+class LockOrderingCases:
+    """Opposite-order updates and reads during inserts."""
+
+    def test_circular_update_dependency(self, conn_conf, test_graph_name, clean_db):
+        """Create circular update patterns that could deadlock."""
+        _ = clean_db
+        errors = []
+
+        def update_a_then_b():
+            """Update node A then node B in a loop to test lock ordering."""
+            try:
+                with ConnectionManager(connection_config=conn_conf) as db:
+                    for _ in range(10):
+                        db.upsert_docs_batch(
+                            [{"id": "A", "by": "thread1"}],
+                            "Deadlock",
+                            match_keys=["id"],
+                        )
+                        db.upsert_docs_batch(
+                            [{"id": "B", "by": "thread1"}],
+                            "Deadlock",
+                            match_keys=["id"],
+                        )
+            except Exception as e:
+                errors.append(str(e))
+
+        def update_b_then_a():
+            """Update node B then node A in opposite order to provoke deadlock."""
+            try:
+                with ConnectionManager(connection_config=conn_conf) as db:
+                    for _ in range(10):
+                        db.upsert_docs_batch(
+                            [{"id": "B", "by": "thread2"}],
+                            "Deadlock",
+                            match_keys=["id"],
+                        )
+                        db.upsert_docs_batch(
+                            [{"id": "A", "by": "thread2"}],
+                            "Deadlock",
+                            match_keys=["id"],
+                        )
+            except Exception as e:
+                errors.append(str(e))
+
+        t1 = threading.Thread(target=update_a_then_b, daemon=True)
+        t2 = threading.Thread(target=update_b_then_a, daemon=True)
+
+        t1.start()
+        t2.start()
+        t1.join(timeout=10)
+        t2.join(timeout=10)
+
+        # Should complete without deadlock
+        assert not t1.is_alive(), "Thread 1 appears deadlocked"
+        assert not t2.is_alive(), "Thread 2 appears deadlocked"
+
+    def test_phantom_read_scenario(self, conn_conf, test_graph_name, clean_db):
+        """Scenario that could cause phantom reads."""
+        _ = clean_db
+        phantoms_detected = []
+
+        def inserter():
+            """Insert 100 documents sequentially to create growing dataset."""
+            with ConnectionManager(connection_config=conn_conf) as db:
+                for i in range(100):
+                    db.upsert_docs_batch(
+                        [{"id": f"phantom_{i}"}], "Phantom", match_keys=["id"]
+                    )
+
+        def reader():
+            """Count documents repeatedly to detect non-monotonic phantom reads."""
+            with ConnectionManager(connection_config=conn_conf) as db:
+                counts = []
+                for _ in range(20):
+                    count = db.aggregate("Phantom", AggregationType.COUNT)
+                    counts.append(count)
+                # Check for non-monotonic reads (would indicate phantoms)
+                for i in range(1, len(counts)):
+                    if counts[i] < counts[i - 1]:
+                        phantoms_detected.append((counts[i - 1], counts[i]))
+
+        t1 = threading.Thread(target=inserter, daemon=True)
+        t2 = threading.Thread(target=reader, daemon=True)
+
+        t1.start()
+        t2.start()
+        # Bounded like the sibling deadlock test above: this class exists to catch
+        # a hung backend, so it must not itself hang the run when it finds one.
+        t1.join(timeout=30)
+        t2.join(timeout=30)
+
+        assert not t1.is_alive(), "Inserter thread appears stuck"
+        assert not t2.is_alive(), "Reader thread appears stuck"

@@ -30,13 +30,6 @@ def _transform_from_config(config: dict[str, Any]) -> Transform:
 
 
 @pytest.fixture
-def quoted_multi_row():
-    return """1486058874058,"['id:206158957580, name:Author A'
-    'id:360777873683, name:Author B'
-    "id:489626818966, name:Author C"]",[127313418 165205528],2015,10.1038/SREP13100"""
-
-
-@pytest.fixture
 def quoted_multi_item():
     return """['id:206158957580, name:Author A'
  'id:360777873683, name:Author B'

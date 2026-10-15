@@ -1,22 +1,16 @@
-"""Tests for FalkorDB index creation operations."""
+"""Tests for FalkorDB index creation operations.
+
+Schema-driven vertex index creation is shared from cypher_cases.
+"""
 
 from graflo.db.manager import ConnectionManager
+from test.db.cypher_cases.lifecycle import (
+    test_create_vertex_index,
+)
 
-
-def test_create_vertex_index(conn_conf, test_graph_name, schema_obj):
-    """Test creating vertex indexes from schema."""
-    schema_o = schema_obj("review")
-
-    with ConnectionManager(connection_config=conn_conf) as db_client:
-        db_client.define_vertex_indexes(
-            schema_o.core_schema.vertex_config, schema=schema_o
-        )
-
-    # FalkorDB index verification
-    # Note: FalkorDB doesn't have SHOW INDEX like Neo4j,
-    # but indexes are created silently. We verify by checking
-    # that the operation completed without error.
-    # The real test is whether queries using these fields perform well.
+__all__ = [
+    "test_create_vertex_index",
+]
 
 
 def test_create_edge_index(conn_conf, test_graph_name, schema_obj):

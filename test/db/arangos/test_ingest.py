@@ -11,6 +11,7 @@ def modes():
     ]
 
 
+@pytest.mark.parametrize("n_cores", [1, 2])
 def test_ingest(
     create_db,
     modes,
@@ -18,6 +19,7 @@ def test_ingest(
     current_path,
     test_db_name,
     reset,
+    n_cores,
 ):
     ingest(
         create_db,
@@ -26,5 +28,5 @@ def test_ingest(
         current_path,
         test_db_name,
         reset,
-        n_cores=1,
+        n_cores=n_cores,
     )

@@ -143,7 +143,9 @@ def consume(monkeypatch: pytest.MonkeyPatch):
                 bootstrap_servers="broker.invalid:9092",
                 topics=[TOPIC],
                 group_id="g",
-                idle_ms=1,
+                # Ends the read once the script is drained. A gap between two
+                # scripted messages must never reach it, even on a loaded runner.
+                idle_ms=50,
                 poll_timeout_ms=1,
             )
         )

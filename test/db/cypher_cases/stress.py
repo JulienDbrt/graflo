@@ -10,6 +10,9 @@ them, which is what supplies the ``conn_conf`` / ``test_graph_name`` /
 
 from __future__ import annotations
 
+import concurrent.futures
+import threading
+
 from graflo.db.manager import ConnectionManager
 from graflo.onto import AggregationType
 
@@ -111,3 +114,182 @@ class MemoryExhaustionCases:
                 db.upsert_docs_batch(docs, "Binary", match_keys=["id"])
             except Exception:
                 pass
+
+
+class ConcurrencyCases:
+    """Concurrent writers and readers on separate connections."""
+
+    def test_concurrent_inserts(self, conn_conf, test_graph_name, clean_db):
+        """Concurrent inserts to same label."""
+        _ = clean_db
+
+        def insert_batch(batch_id):
+            """Insert a batch of 10 documents with batch-prefixed IDs."""
+            with ConnectionManager(connection_config=conn_conf) as db:
+                docs = [{"id": f"{batch_id}_{i}", "batch": batch_id} for i in range(10)]
+                db.upsert_docs_batch(docs, "ConcurrentInsert", match_keys=["id"])
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            futures = [executor.submit(insert_batch, i) for i in range(5)]
+            concurrent.futures.wait(futures)
+
+        with ConnectionManager(connection_config=conn_conf) as db:
+            result = db.fetch_docs("ConcurrentInsert")
+            assert len(result) == 50  # 5 batches * 10 docs
+
+    def test_concurrent_read_write(self, conn_conf, test_graph_name, clean_db):
+        """Concurrent reads and writes."""
+        _ = clean_db
+        errors = []
+
+        def writer():
+            """Insert 20 documents sequentially, each in its own connection."""
+            for i in range(20):
+                try:
+                    with ConnectionManager(connection_config=conn_conf) as db:
+                        docs = [{"id": f"w{i}", "value": i}]
+                        db.upsert_docs_batch(docs, "ReadWrite", match_keys=["id"])
+                except Exception as e:
+                    errors.append(f"Writer error: {e}")
+
+        def reader():
+            """Read all documents 20 times, each in its own connection."""
+            for _ in range(20):
+                try:
+                    with ConnectionManager(connection_config=conn_conf) as db:
+                        db.fetch_docs("ReadWrite")
+                except Exception as e:
+                    errors.append(f"Reader error: {e}")
+
+        # daemon=True and a bounded join: a worker blocked on a wedged DB socket
+        # must fail this test, not stall the join here and then stall
+        # threading._shutdown at interpreter exit -- which hangs pytest *after*
+        # it has already reported success.
+        threads = [
+            threading.Thread(target=writer, daemon=True),
+            threading.Thread(target=reader, daemon=True),
+            threading.Thread(target=writer, daemon=True),
+            threading.Thread(target=reader, daemon=True),
+        ]
+
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=30)
+        assert not any(t.is_alive() for t in threads), (
+            "read/write workers did not finish within 30s"
+        )
+
+        # Should complete without errors
+        assert len(errors) == 0, f"Errors occurred: {errors}"
+
+    def test_concurrent_upsert_same_key(self, conn_conf, test_graph_name, clean_db):
+        """Multiple threads trying to upsert same document."""
+        _ = clean_db
+        results = []
+
+        def updater(thread_id):
+            """Repeatedly upsert the same document with thread-specific metadata."""
+            for i in range(10):
+                with ConnectionManager(connection_config=conn_conf) as db:
+                    docs = [
+                        {"id": "contested", "last_writer": thread_id, "iteration": i}
+                    ]
+                    db.upsert_docs_batch(docs, "Contested", match_keys=["id"])
+                    results.append((thread_id, i))
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [executor.submit(updater, i) for i in range(4)]
+            concurrent.futures.wait(futures)
+
+        with ConnectionManager(connection_config=conn_conf) as db:
+            result = db.fetch_docs("Contested")
+            # Should have exactly one document
+            assert len(result) == 1
+
+
+class CartesianLoadCases:
+    """Unanchored matches and dense multi-hop paths."""
+
+    def test_unanchored_match_storm(self, conn_conf, test_graph_name, clean_db):
+        """Create many nodes, then query without anchor - cartesian explosion."""
+        _ = clean_db
+        with ConnectionManager(connection_config=conn_conf) as db:
+            # Create modest node counts
+            for label in ["TypeA", "TypeB", "TypeC"]:
+                docs = [{"id": str(i)} for i in range(50)]
+                db.upsert_docs_batch(docs, label, match_keys=["id"])
+
+            # Query that could explode: 50 * 50 * 50 = 125,000 rows
+            try:
+                result = db.execute(
+                    "MATCH (a:TypeA), (b:TypeB), (c:TypeC) RETURN count(*)"
+                )
+                assert result.result_set[0][0] == 125000
+            except Exception:
+                pass  # Timeout or memory limit is acceptable
+
+    def test_dense_multi_hop_path(self, conn_conf, test_graph_name, clean_db):
+        """Dense graph with multi-hop path query - exponential paths."""
+        _ = clean_db
+        with ConnectionManager(connection_config=conn_conf) as db:
+            # Create dense subgraph
+            docs = [{"id": str(i)} for i in range(20)]
+            db.upsert_docs_batch(docs, "Dense", match_keys=["id"])
+
+            # Connect each node to several others (high connectivity)
+            edges = []
+            for i in range(20):
+                for j in range(i + 1, min(i + 5, 20)):
+                    edges.append([{"id": str(i)}, {"id": str(j)}, {}])
+
+            db.insert_edges_batch(
+                edges,
+                source_class="Dense",
+                target_class="Dense",
+                relation_name="CONNECTED",
+                match_keys_source=["id"],
+                match_keys_target=["id"],
+            )
+
+            # Variable length path query - exponential explosion
+            try:
+                result = db.execute(
+                    "MATCH p=(a:Dense)-[:CONNECTED*1..5]->(b:Dense) RETURN count(p)"
+                )
+                assert result.result_set[0][0] > 0
+            except Exception:
+                pass
+
+
+class ConnectionChurnCases:
+    """Rapid connection churn and interleaved connections."""
+
+    def test_rapid_connect_disconnect(self, conn_conf, test_graph_name):
+        """Rapidly open and close connections."""
+        for _ in range(50):
+            with ConnectionManager(connection_config=conn_conf) as db:
+                db.execute("RETURN 1")
+
+    def test_interleaved_operations(self, conn_conf, test_graph_name, clean_db):
+        """Interleave reads and writes in confusing patterns."""
+        _ = clean_db
+        with ConnectionManager(connection_config=conn_conf) as db:
+            for i in range(20):
+                # Write
+                db.upsert_docs_batch(
+                    [{"id": str(i), "phase": "write"}],
+                    "Interleaved",
+                    match_keys=["id"],
+                )
+                # Read immediately after write
+                db.fetch_docs("Interleaved", filters=["==", str(i), "id"])
+                # Overwrite
+                db.upsert_docs_batch(
+                    [{"id": str(i), "phase": "overwrite"}],
+                    "Interleaved",
+                    match_keys=["id"],
+                )
+                # Read again
+                result = db.fetch_docs("Interleaved", filters=["==", str(i), "id"])
+                assert result[0]["phase"] == "overwrite"

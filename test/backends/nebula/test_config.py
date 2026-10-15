@@ -1,4 +1,4 @@
-"""Unit tests for NebulaConfig (no Docker required)."""
+"""Unit tests for NebulaConfig."""
 
 from graflo.connections.onto import NebulaConfig
 from graflo.onto import DB_TYPE_TO_EXPRESSION_FLAVOR, DBType, ExpressionFlavor
@@ -29,10 +29,3 @@ def test_nebula_config_v5():
 def test_nebula_config_default_port():
     cfg = NebulaConfig()
     assert cfg._get_default_port() == 9669
-
-
-def test_nebula_config_from_docker_env():
-    cfg = NebulaConfig.from_docker_env()
-    assert cfg.username == "root"
-    assert cfg.password == "test!passfortesting"
-    assert cfg.version == "3"

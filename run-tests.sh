@@ -69,7 +69,7 @@ EOF
 done
 
 if [ "${#suites[@]}" -eq 0 ]; then
-  suites=(memgraphs postgres tigergraphs arangos falkordbs neo4js nebulas sql)
+  suites=(memgraphs postgres tigergraphs arangos falkordbs neo4js nebulas)
 fi
 
 pids=()

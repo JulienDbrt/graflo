@@ -24,7 +24,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from hypothesis import HealthCheck, assume, given, settings
+from hypothesis import HealthCheck, assume, event, given, settings
 from hypothesis import strategies as st
 
 from graflo.architecture.contract.manifest import GraphManifest
@@ -47,17 +47,18 @@ from graflo.architecture.evolution.merge3 import (
     take_right,
 )
 from graflo.architecture.evolution.ops import ManifestOp
+from test.hypothesis_budget import examples
 
 # Derandomized and database-free: a law suite that passes or fails depending on
 # the seed is a flaky test, not a law.
 LAWS = settings(
-    max_examples=200,
+    max_examples=examples(200),
     deadline=None,
     derandomize=True,
     database=None,
     suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
 )
-PER_KIND = settings(LAWS, max_examples=60)
+PER_KIND = settings(LAWS, max_examples=examples(60))
 
 # The closed vocabulary. No two names share a canonical key, so a collision in a
 # generated manifest is always one the generator intended.
@@ -100,10 +101,12 @@ def _subset(pool: list[str]) -> st.SearchStrategy[list[str]]:
 
 
 @st.composite
-def manifests(draw: st.DrawFn) -> GraphManifest:
+def manifests(draw: st.DrawFn, min_vertices: int = 1) -> GraphManifest:
     """A schema-only manifest over the closed vocabulary."""
     names = draw(
-        st.lists(st.sampled_from(VERTEX_POOL), unique=True, min_size=1, max_size=3)
+        st.lists(
+            st.sampled_from(VERTEX_POOL), unique=True, min_size=min_vertices, max_size=3
+        )
     )
     vertices = [
         {
@@ -516,27 +519,133 @@ def test_an_op_split_by_slot_is_the_op(kind, data) -> None:
 _RENAMES = {"rename_vertices", "rename_relations"}
 
 
+def _describe_vertex(vertex: str, text: str) -> dict[str, Any]:
+    return {"op": "set_vertex_descriptions", "descriptions": {vertex: text}}
+
+
+def _retype(vertex: str, field: str, type_: str) -> dict[str, Any]:
+    return {"op": "change_field_types", "vertices": {vertex: {field: {"type": type_}}}}
+
+
+def _triple(edge: tuple[str, str, str]) -> dict[str, str]:
+    return {"source": edge[0], "target": edge[1], "relation": edge[2]}
+
+
+def _describe_edge(edge: tuple[str, str, str], text: str) -> dict[str, Any]:
+    return {
+        "op": "set_edge_descriptions",
+        "edges": [{**_triple(edge), "description": text}],
+    }
+
+
+def _contention(
+    manifest: GraphManifest, element: tuple[str, str]
+) -> st.SearchStrategy[tuple[dict[str, Any], dict[str, Any]]]:
+    """Two payloads that write one slot of *element* differently, in either order.
+
+    Only pairs that collide whenever both apply: a rename or an edit of another
+    field never meets its counterpart, so it would not make a conflict.
+    """
+    core = _core(manifest)
+    kind, name = element
+    texts = st.lists(
+        st.text("ab", min_size=1, max_size=3), min_size=2, max_size=2, unique=True
+    )
+    if kind == "vertex":
+        pairs = [
+            texts.map(
+                lambda t: (_describe_vertex(name, t[0]), _describe_vertex(name, t[1]))
+            ),
+            texts.map(
+                lambda t: (
+                    {"op": "remove_vertices", "names": [name]},
+                    _describe_vertex(name, t[0]),
+                )
+            ),
+        ]
+        fields = [
+            f.name
+            for v in core.vertex_config.vertices
+            if v.name == name
+            for f in v.properties
+            if f.name != "id"
+        ]
+        if fields:
+            field = st.sampled_from(fields)
+            pairs += [
+                field.map(
+                    lambda f: (_retype(name, f, "STRING"), _retype(name, f, "INT"))
+                ),
+                st.tuples(field, st.sampled_from(["STRING", "INT"])).map(
+                    lambda t: (
+                        {"op": "remove_vertex_properties", "removals": {name: [t[0]]}},
+                        _retype(name, t[0], t[1]),
+                    )
+                ),
+            ]
+    else:
+        edge = st.sampled_from(
+            [
+                (e.source, e.target, e.relation)
+                for e in core.edge_config.edges
+                if e.relation == name
+            ]
+        )
+        pairs = [
+            st.tuples(edge, texts).map(
+                lambda t: (_describe_edge(t[0], t[1][0]), _describe_edge(t[0], t[1][1]))
+            ),
+            st.tuples(edge, texts).map(
+                lambda t: (
+                    {"op": "remove_edges", "edges": [_triple(t[0])]},
+                    _describe_edge(t[0], t[1][0]),
+                )
+            ),
+        ]
+    return st.tuples(st.one_of(pairs), st.booleans()).map(
+        lambda t: (t[0][1], t[0][0]) if t[1] else t[0]
+    )
+
+
+def _step(manifest: GraphManifest, payload: dict[str, Any]) -> GraphManifest:
+    """*manifest* after *payload*; itself when the op is malformed or refused."""
+    if not _is_an_op(payload):
+        return manifest
+    return _apply(manifest, [op_from_dict(payload)]) or manifest
+
+
 @st.composite
-def manifest_and_two_sequences(
+def manifest_and_two_contending_branches(
     draw: st.DrawFn,
 ) -> tuple[GraphManifest, GraphManifest, GraphManifest]:
-    """A base and two branches, each one to three ops deep."""
-    base = draw(manifests())
+    """A base and two descendants that collide on two or three elements.
 
-    def branch() -> GraphManifest:
-        current = base
-        for _ in range(draw(st.integers(min_value=1, max_value=3))):
-            following = _apply(current, [draw(ops_for(current))])
-            assume(following is not None)
-            assert following is not None
-            current = following
-        return current
+    The collisions are built, not filtered for. Each branch also takes up to one
+    unrelated op: that is what a decision must not carry along with it.
+    """
+    base = draw(manifests(min_vertices=2))
+    core = _core(base)
+    elements = [("vertex", v) for v in sorted(core.vertex_config.vertex_set)] + [
+        ("relation", r)
+        for r in sorted({e.relation for e in core.edge_config.edges if e.relation})
+    ]
+    hot = draw(st.lists(st.sampled_from(elements), min_size=2, max_size=3, unique=True))
+    left = right = base
+    for element in hot:
+        a, b = draw(_contention(base, element))
+        left, right = _step(left, a), _step(right, b)
 
-    return base, branch(), branch()
+    def unrelated(branch: GraphManifest) -> GraphManifest:
+        payloads = _payloads(branch)
+        if not payloads or not draw(st.booleans()):
+            return branch
+        return _step(branch, draw(st.one_of(list(payloads.values()))))
+
+    return base, unrelated(left), unrelated(right)
 
 
 @LAWS
-@given(manifest_and_two_sequences())
+@given(manifest_and_two_contending_branches())
 def test_a_decision_changes_nothing_outside_its_conflict(case) -> None:
     """Flipping one conflict's decision moves only what that conflict reaches.
 
@@ -549,6 +658,7 @@ def test_a_decision_changes_nothing_outside_its_conflict(case) -> None:
     except MergeError:
         assume(False)
         return
+    event(f"conflicts={min(len(result.conflicts), 3)}")
     assume(len(result.conflicts) >= 2)
 
     def merged(flip: int | None) -> GraphManifest | None:

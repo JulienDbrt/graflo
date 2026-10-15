@@ -62,7 +62,6 @@ See Also
 
 import concurrent.futures
 import threading
-import uuid
 
 import pytest
 
@@ -75,15 +74,22 @@ from test.db.cypher_cases.boundaries import (
     BoundaryConditionsCases,
     BoundaryValueAnalysisCases,
     MalformedInputsCases,
+    NumericStringCases,
     PathologicalIdsCases,
     TypeConfusionCases,
 )
 from test.db.cypher_cases.encoding import (
+    EmojiCases,
     LabelAbuseCases,
     MalformedEncodingCases,
     PropertyKeySmugglingCases,
 )
-from test.db.cypher_cases.graphs import PathologicalGraphsCases, StateCorruptionCases
+from test.db.cypher_cases.graphs import (
+    GraphAlgorithmCases,
+    LockOrderingCases,
+    PathologicalGraphsCases,
+    StateCorruptionCases,
+)
 from test.db.cypher_cases.injection import (
     CypherInjectionCases,
     QueryInjectionAdvancedCases,
@@ -93,11 +99,18 @@ from test.db.cypher_cases.queries import (
     AggregationCases,
     EdgeOperationsCases,
     FilterCases,
+    FilterStressCases,
     QueryComplexityCases,
     SchemaEvolutionCases,
     TemporalAnomaliesCases,
 )
-from test.db.cypher_cases.stress import BatchStressCases, MemoryExhaustionCases
+from test.db.cypher_cases.stress import (
+    BatchStressCases,
+    CartesianLoadCases,
+    ConcurrencyCases,
+    ConnectionChurnCases,
+    MemoryExhaustionCases,
+)
 
 
 class TestCypherInjection(CypherInjectionCases):
@@ -142,25 +155,13 @@ class TestCypherInjection(CypherInjectionCases):
                 assert len(result) <= 1
 
 
-class TestUnicodeEdgeCases:
+class TestUnicodeEdgeCases(EmojiCases):
     """Unicode and encoding edge case validation.
 
     Verifies correct handling of international text, special Unicode
     characters, and encoding edge cases that commonly cause issues
     in database systems.
     """
-
-    def test_emoji_overload(self, conn_conf, test_graph_name, clean_db):
-        """Store and retrieve emoji-heavy content."""
-        _ = clean_db
-        with ConnectionManager(connection_config=conn_conf) as db:
-            emoji_name = "😀😁😂🤣😃😄😅😆😉😊" * 10
-            docs = [{"id": "emoji", "name": emoji_name}]
-            db.upsert_docs_batch(docs, "EmojiNode", match_keys=["id"])
-
-            result = db.fetch_docs("EmojiNode")
-            assert len(result) == 1
-            assert result[0]["name"] == emoji_name
 
     def test_complex_emoji_sequences(self, conn_conf, test_graph_name, clean_db):
         """Test complex emoji sequences (ZWJ, skin tones, flags)."""
@@ -795,133 +796,16 @@ class TestBatchStress(BatchStressCases):
     """Stress test batch operations."""
 
 
-class TestConcurrencyStress:
+class TestConcurrencyStress(ConcurrencyCases):
     """Thread safety and race condition testing."""
-
-    def test_concurrent_inserts(self, conn_conf, test_graph_name, clean_db):
-        """Concurrent inserts to same label."""
-        _ = clean_db
-
-        def insert_batch(batch_id):
-            """Insert a batch of 10 documents with batch-prefixed IDs."""
-            with ConnectionManager(connection_config=conn_conf) as db:
-                docs = [{"id": f"{batch_id}_{i}", "batch": batch_id} for i in range(10)]
-                db.upsert_docs_batch(docs, "ConcurrentInsert", match_keys=["id"])
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            futures = [executor.submit(insert_batch, i) for i in range(5)]
-            concurrent.futures.wait(futures)
-
-        with ConnectionManager(connection_config=conn_conf) as db:
-            result = db.fetch_docs("ConcurrentInsert")
-            assert len(result) == 50  # 5 batches * 10 docs
-
-    def test_concurrent_read_write(self, conn_conf, test_graph_name, clean_db):
-        """Concurrent reads and writes."""
-        _ = clean_db
-        errors = []
-
-        def writer():
-            """Insert 20 documents sequentially, each in its own connection."""
-            for i in range(20):
-                try:
-                    with ConnectionManager(connection_config=conn_conf) as db:
-                        docs = [{"id": f"w{i}", "value": i}]
-                        db.upsert_docs_batch(docs, "ReadWrite", match_keys=["id"])
-                except Exception as e:
-                    errors.append(f"Writer error: {e}")
-
-        def reader():
-            """Read all documents 20 times, each in its own connection."""
-            for _ in range(20):
-                try:
-                    with ConnectionManager(connection_config=conn_conf) as db:
-                        db.fetch_docs("ReadWrite")
-                except Exception as e:
-                    errors.append(f"Reader error: {e}")
-
-        # daemon=True and a bounded join: a worker blocked on a wedged DB socket
-        # must fail this test, not stall the join here and then stall
-        # threading._shutdown at interpreter exit -- which hangs pytest *after*
-        # it has already reported success.
-        threads = [
-            threading.Thread(target=writer, daemon=True),
-            threading.Thread(target=reader, daemon=True),
-            threading.Thread(target=writer, daemon=True),
-            threading.Thread(target=reader, daemon=True),
-        ]
-
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join(timeout=30)
-        assert not any(t.is_alive() for t in threads), (
-            "read/write workers did not finish within 30s"
-        )
-
-        # Should complete without errors
-        assert len(errors) == 0, f"Errors occurred: {errors}"
-
-    def test_concurrent_upsert_same_key(self, conn_conf, test_graph_name, clean_db):
-        """Multiple threads trying to upsert same document."""
-        _ = clean_db
-        results = []
-
-        def updater(thread_id):
-            """Repeatedly upsert the same document with thread-specific metadata."""
-            for i in range(10):
-                with ConnectionManager(connection_config=conn_conf) as db:
-                    docs = [
-                        {"id": "contested", "last_writer": thread_id, "iteration": i}
-                    ]
-                    db.upsert_docs_batch(docs, "Contested", match_keys=["id"])
-                    results.append((thread_id, i))
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            futures = [executor.submit(updater, i) for i in range(4)]
-            concurrent.futures.wait(futures)
-
-        with ConnectionManager(connection_config=conn_conf) as db:
-            result = db.fetch_docs("Contested")
-            # Should have exactly one document
-            assert len(result) == 1
 
 
 class TestStateCorruption(StateCorruptionCases):
     """Test state handling and connection management."""
 
 
-class TestConnectionStress:
+class TestConnectionStress(ConnectionChurnCases):
     """Stress connection handling and state management."""
-
-    def test_rapid_connect_disconnect(self, conn_conf, test_graph_name):
-        """Rapidly open and close connections."""
-        for _ in range(50):
-            with ConnectionManager(connection_config=conn_conf) as db:
-                db.execute("RETURN 1")
-
-    def test_interleaved_operations(self, conn_conf, test_graph_name, clean_db):
-        """Interleave reads and writes in confusing patterns."""
-        _ = clean_db
-        with ConnectionManager(connection_config=conn_conf) as db:
-            for i in range(20):
-                # Write
-                db.upsert_docs_batch(
-                    [{"id": str(i), "phase": "write"}],
-                    "Interleaved",
-                    match_keys=["id"],
-                )
-                # Read immediately after write
-                db.fetch_docs("Interleaved", filters=["==", str(i), "id"])
-                # Overwrite
-                db.upsert_docs_batch(
-                    [{"id": str(i), "phase": "overwrite"}],
-                    "Interleaved",
-                    match_keys=["id"],
-                )
-                # Read again
-                result = db.fetch_docs("Interleaved", filters=["==", str(i), "id"])
-                assert result[0]["phase"] == "overwrite"
 
 
 class TestQueryInjectionAdvanced(QueryInjectionAdvancedCases):
@@ -944,7 +828,7 @@ class TestTemporalAnomalies(TemporalAnomaliesCases):
     """Test with extreme or invalid temporal values."""
 
 
-class TestGraphAlgorithmEdgeCases:
+class TestGraphAlgorithmEdgeCases(GraphAlgorithmCases):
     """Pathological graph structures that stress graph algorithms."""
 
     def test_cycle_detection_complex(self, conn_conf, test_graph_name, clean_db):
@@ -984,103 +868,9 @@ class TestGraphAlgorithmEdgeCases:
             )
             assert result.result_set[0][0] > 0
 
-    def test_lollipop_graph(self, conn_conf, test_graph_name, clean_db):
-        """Lollipop graph - pathological for certain algorithms."""
-        _ = clean_db
-        with ConnectionManager(connection_config=conn_conf) as db:
-            # Clique (the candy)
-            clique_size = 10
-            docs = [{"id": f"clique_{i}"} for i in range(clique_size)]
-            db.upsert_docs_batch(docs, "Lollipop", match_keys=["id"])
 
-            # Path (the stick)
-            stick_length = 20
-            docs = [{"id": f"stick_{i}"} for i in range(stick_length)]
-            db.upsert_docs_batch(docs, "Lollipop", match_keys=["id"])
-
-            # Clique edges (complete graph)
-            edges = []
-            for i in range(clique_size):
-                for j in range(i + 1, clique_size):
-                    edges.append([{"id": f"clique_{i}"}, {"id": f"clique_{j}"}, {}])
-
-            # Stick edges (path)
-            for i in range(stick_length - 1):
-                edges.append([{"id": f"stick_{i}"}, {"id": f"stick_{i + 1}"}, {}])
-
-            # Connect stick to clique
-            edges.append([{"id": "stick_0"}, {"id": "clique_0"}, {}])
-
-            db.insert_edges_batch(
-                edges,
-                source_class="Lollipop",
-                target_class="Lollipop",
-                relation_name="CONNECTED",
-                match_keys_source=["id"],
-                match_keys_target=["id"],
-            )
-
-            # Verify structure
-            result = db.execute("MATCH ()-[r:CONNECTED]->() RETURN count(r)")
-            expected = (clique_size * (clique_size - 1)) // 2 + stick_length
-            assert result.result_set[0][0] == expected
-
-
-class TestDeadlockPrevention:
+class TestDeadlockPrevention(LockOrderingCases):
     """Deadlock detection and transaction isolation testing."""
-
-    def test_circular_update_dependency(self, conn_conf, test_graph_name, clean_db):
-        """Create circular update patterns that could deadlock."""
-        _ = clean_db
-        errors = []
-
-        def update_a_then_b():
-            """Update node A then node B in a loop to test lock ordering."""
-            try:
-                with ConnectionManager(connection_config=conn_conf) as db:
-                    for _ in range(10):
-                        db.upsert_docs_batch(
-                            [{"id": "A", "by": "thread1"}],
-                            "Deadlock",
-                            match_keys=["id"],
-                        )
-                        db.upsert_docs_batch(
-                            [{"id": "B", "by": "thread1"}],
-                            "Deadlock",
-                            match_keys=["id"],
-                        )
-            except Exception as e:
-                errors.append(str(e))
-
-        def update_b_then_a():
-            """Update node B then node A in opposite order to provoke deadlock."""
-            try:
-                with ConnectionManager(connection_config=conn_conf) as db:
-                    for _ in range(10):
-                        db.upsert_docs_batch(
-                            [{"id": "B", "by": "thread2"}],
-                            "Deadlock",
-                            match_keys=["id"],
-                        )
-                        db.upsert_docs_batch(
-                            [{"id": "A", "by": "thread2"}],
-                            "Deadlock",
-                            match_keys=["id"],
-                        )
-            except Exception as e:
-                errors.append(str(e))
-
-        t1 = threading.Thread(target=update_a_then_b, daemon=True)
-        t2 = threading.Thread(target=update_b_then_a, daemon=True)
-
-        t1.start()
-        t2.start()
-        t1.join(timeout=10)
-        t2.join(timeout=10)
-
-        # Should complete without deadlock
-        assert not t1.is_alive(), "Thread 1 appears deadlocked"
-        assert not t2.is_alive(), "Thread 2 appears deadlocked"
 
     def test_self_referential_update(self, conn_conf, test_graph_name, clean_db):
         """Update a node based on reading its own value."""
@@ -1115,44 +905,6 @@ class TestDeadlockPrevention:
             result = db.fetch_docs("SelfRef")
             assert result[0]["counter"] > 0
             assert successful_updates > 0
-
-    def test_phantom_read_scenario(self, conn_conf, test_graph_name, clean_db):
-        """Scenario that could cause phantom reads."""
-        _ = clean_db
-        phantoms_detected = []
-
-        def inserter():
-            """Insert 100 documents sequentially to create growing dataset."""
-            with ConnectionManager(connection_config=conn_conf) as db:
-                for i in range(100):
-                    db.upsert_docs_batch(
-                        [{"id": f"phantom_{i}"}], "Phantom", match_keys=["id"]
-                    )
-
-        def reader():
-            """Count documents repeatedly to detect non-monotonic phantom reads."""
-            with ConnectionManager(connection_config=conn_conf) as db:
-                counts = []
-                for _ in range(20):
-                    count = db.aggregate("Phantom", AggregationType.COUNT)
-                    counts.append(count)
-                # Check for non-monotonic reads (would indicate phantoms)
-                for i in range(1, len(counts)):
-                    if counts[i] < counts[i - 1]:
-                        phantoms_detected.append((counts[i - 1], counts[i]))
-
-        t1 = threading.Thread(target=inserter, daemon=True)
-        t2 = threading.Thread(target=reader, daemon=True)
-
-        t1.start()
-        t2.start()
-        # Bounded like the sibling deadlock test above: this class exists to catch
-        # a hung backend, so it must not itself hang the run when it finds one.
-        t1.join(timeout=30)
-        t2.join(timeout=30)
-
-        assert not t1.is_alive(), "Inserter thread appears stuck"
-        assert not t2.is_alive(), "Reader thread appears stuck"
 
 
 class TestReDoS(ReDoSCases):
@@ -1203,58 +955,8 @@ class TestMemoryExhaustion(MemoryExhaustionCases):
     """Memory exhaustion and resource abuse testing."""
 
 
-class TestCartesianProductLoad:
+class TestCartesianProductLoad(CartesianLoadCases):
     """Queries designed to create explosive result sets."""
-
-    def test_unanchored_match_storm(self, conn_conf, test_graph_name, clean_db):
-        """Create many nodes, then query without anchor - cartesian explosion."""
-        _ = clean_db
-        with ConnectionManager(connection_config=conn_conf) as db:
-            # Create modest node counts
-            for label in ["TypeA", "TypeB", "TypeC"]:
-                docs = [{"id": str(i)} for i in range(50)]
-                db.upsert_docs_batch(docs, label, match_keys=["id"])
-
-            # Query that could explode: 50 * 50 * 50 = 125,000 rows
-            try:
-                result = db.execute(
-                    "MATCH (a:TypeA), (b:TypeB), (c:TypeC) RETURN count(*)"
-                )
-                assert result.result_set[0][0] == 125000
-            except Exception:
-                pass  # Timeout or memory limit is acceptable
-
-    def test_dense_multi_hop_path(self, conn_conf, test_graph_name, clean_db):
-        """Dense graph with multi-hop path query - exponential paths."""
-        _ = clean_db
-        with ConnectionManager(connection_config=conn_conf) as db:
-            # Create dense subgraph
-            docs = [{"id": str(i)} for i in range(20)]
-            db.upsert_docs_batch(docs, "Dense", match_keys=["id"])
-
-            # Connect each node to several others (high connectivity)
-            edges = []
-            for i in range(20):
-                for j in range(i + 1, min(i + 5, 20)):
-                    edges.append([{"id": str(i)}, {"id": str(j)}, {}])
-
-            db.insert_edges_batch(
-                edges,
-                source_class="Dense",
-                target_class="Dense",
-                relation_name="CONNECTED",
-                match_keys_source=["id"],
-                match_keys_target=["id"],
-            )
-
-            # Variable length path query - exponential explosion
-            try:
-                result = db.execute(
-                    "MATCH p=(a:Dense)-[:CONNECTED*1..5]->(b:Dense) RETURN count(p)"
-                )
-                assert result.result_set[0][0] > 0
-            except Exception:
-                pass
 
 
 class TestSchemaEvolution(SchemaEvolutionCases):
@@ -1290,157 +992,16 @@ class TestBoundaryValueAnalysis(BoundaryValueAnalysisCases):
     """Systematic boundary value testing."""
 
 
-class TestFilterStress:
+class TestFilterStress(FilterStressCases):
     """Stress test the filter system."""
-
-    def test_deeply_nested_boolean_filter(self, conn_conf, test_graph_name, clean_db):
-        """Deeply nested AND/OR expressions."""
-        _ = clean_db
-        with ConnectionManager(connection_config=conn_conf) as db:
-            docs = [{"id": str(i), "val": i} for i in range(10)]
-            db.upsert_docs_batch(docs, "FilterDeep", match_keys=["id"])
-
-            # Build deeply nested filter: ((((a AND b) OR c) AND d) OR e)...
-            nested_filter = ["==", "0", "id"]
-            for i in range(1, 8):
-                op = "or" if i % 2 == 0 else "and"
-                nested_filter = [op, nested_filter, ["==", str(i), "id"]]
-
-            try:
-                result = db.fetch_docs("FilterDeep", filters=nested_filter)
-                assert isinstance(result, list)
-            except Exception:
-                pass  # Deep nesting may not be supported
-
-    def test_filter_with_regex_metacharacters(
-        self, conn_conf, test_graph_name, clean_db
-    ):
-        """Filter values containing regex metacharacters."""
-        _ = clean_db
-        with ConnectionManager(connection_config=conn_conf) as db:
-            regex_chars = [".*", ".+", "^$", "[a-z]", "(group)", "a|b", "\\d+"]
-            docs = [{"id": str(i), "pattern": p} for i, p in enumerate(regex_chars)]
-            db.upsert_docs_batch(docs, "RegexChars", match_keys=["id"])
-
-            # Filter should match literal strings, not interpret as regex
-            for p in regex_chars:
-                result = db.fetch_docs("RegexChars", filters=["==", p, "pattern"])
-                assert len(result) == 1
-
-    def test_filter_empty_value(self, conn_conf, test_graph_name, clean_db):
-        """Filter for empty string value."""
-        _ = clean_db
-        with ConnectionManager(connection_config=conn_conf) as db:
-            docs = [
-                {"id": "1", "data": ""},
-                {"id": "2", "data": "not_empty"},
-            ]
-            db.upsert_docs_batch(docs, "EmptyFilter", match_keys=["id"])
-
-            result = db.fetch_docs("EmptyFilter", filters=["==", "", "data"])
-            assert len(result) == 1
-            assert result[0]["id"] == "1"
-
-    def test_filter_null_vs_missing(self, conn_conf, test_graph_name, clean_db):
-        """Distinguish between null value and missing key."""
-        _ = clean_db
-        with ConnectionManager(connection_config=conn_conf) as db:
-            docs = [
-                {"id": "1", "field": None},
-                {"id": "2", "field": "exists"},
-                {"id": "3"},  # field missing entirely
-            ]
-            db.upsert_docs_batch(docs, "NullVsMissing", match_keys=["id"])
-
-            # This tests how the system handles null vs absent
-            result = db.fetch_docs("NullVsMissing")
-            assert len(result) == 3
 
 
 class TestPathologicalIds(PathologicalIdsCases):
     """IDs designed to cause problems."""
 
 
-class TestDataTypeEdgeCases:
+class TestDataTypeEdgeCases(NumericStringCases):
     """Extreme data type edge cases."""
-
-    def test_scientific_notation_extremes(self, conn_conf, test_graph_name, clean_db):
-        """Extreme scientific notation values."""
-        _ = clean_db
-        with ConnectionManager(connection_config=conn_conf) as db:
-            sci_values = [
-                ("small_pos", 1e-300),
-                ("large_pos", 1e300),
-                ("small_neg", -1e-300),
-                ("large_neg", -1e300),
-                ("denormal", 5e-324),  # Smallest denormalized float
-            ]
-
-            for name, val in sci_values:
-                docs = [{"id": name, "sci": val}]
-                try:
-                    db.upsert_docs_batch(docs, "Scientific", match_keys=["id"])
-                except Exception:
-                    pass
-
-    def test_integer_overflow_boundaries(self, conn_conf, test_graph_name, clean_db):
-        """Test around integer overflow boundaries."""
-        _ = clean_db
-        with ConnectionManager(connection_config=conn_conf) as db:
-            boundaries = [
-                ("i64_max", 2**63 - 1),
-                ("i64_max_plus", 2**63),  # Overflow
-                ("i64_min", -(2**63)),
-                ("i64_min_minus", -(2**63) - 1),  # Underflow
-                ("i32_max", 2**31 - 1),
-                ("i32_max_plus", 2**31),
-                ("u64_max", 2**64 - 1),
-            ]
-
-            for name, val in boundaries:
-                docs = [{"id": name, "boundary": val}]
-                try:
-                    db.upsert_docs_batch(docs, "Boundaries", match_keys=["id"])
-                except (OverflowError, ValueError):
-                    pass
-
-    def test_string_that_looks_like_number(self, conn_conf, test_graph_name, clean_db):
-        """Strings that might be coerced to numbers."""
-        _ = clean_db
-        with ConnectionManager(connection_config=conn_conf) as db:
-            sneaky_numbers = [
-                "123",
-                "12.34",
-                "-456",
-                "1e10",
-                "0x1F",  # Hex
-                "0o777",  # Octal
-                "0b1010",  # Binary
-                "  123  ",  # Padded
-                "123abc",  # Partial
-                "+123",
-                "++123",
-            ]
-
-            for i, val in enumerate(sneaky_numbers):
-                docs = [{"id": str(i), "numeric_string": val}]
-                db.upsert_docs_batch(docs, "NumStrings", match_keys=["id"])
-
-            result = db.fetch_docs("NumStrings")
-            # Verify strings stayed as strings
-            for r in result:
-                assert isinstance(r["numeric_string"], str)
-
-    def test_uuid_collisions(self, conn_conf, test_graph_name, clean_db):
-        """Generate many UUIDs looking for collisions."""
-        _ = clean_db
-        with ConnectionManager(connection_config=conn_conf) as db:
-            uuids = [str(uuid.uuid4()) for _ in range(1000)]
-            docs = [{"id": u, "seq": i} for i, u in enumerate(uuids)]
-            db.upsert_docs_batch(docs, "UUIDs", match_keys=["id"])
-
-            count = db.aggregate("UUIDs", AggregationType.COUNT)
-            assert count == 1000  # No collisions
 
     def test_empty_string_variations(self, conn_conf, test_graph_name, clean_db):
         """Various representations of 'empty'."""
