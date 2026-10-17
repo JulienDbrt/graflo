@@ -14,12 +14,6 @@ DATA_DIR = Path(__file__).parents[1] / "data" / "rdf"
 
 
 @pytest.fixture()
-def sample_ontology_path() -> Path:
-    """Path to the sample TBox-only ontology file."""
-    return DATA_DIR / "sample_ontology.ttl"
-
-
-@pytest.fixture()
 def sample_data_path() -> Path:
     """Path to the sample combined TBox + ABox data file."""
     return DATA_DIR / "sample_data.ttl"

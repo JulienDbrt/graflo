@@ -240,3 +240,19 @@ class LabelAbuseCases:
                     db.upsert_docs_batch(docs, label, match_keys=["id"])
                 except Exception:
                     pass
+
+
+class EmojiCases:
+    """Emoji-heavy content round-trips intact."""
+
+    def test_emoji_overload(self, conn_conf, test_graph_name, clean_db):
+        """Store and retrieve emoji-heavy content."""
+        _ = clean_db
+        with ConnectionManager(connection_config=conn_conf) as db:
+            emoji_name = "😀😁😂🤣😃😄😅😆😉😊" * 10
+            docs = [{"id": "emoji", "name": emoji_name}]
+            db.upsert_docs_batch(docs, "EmojiNode", match_keys=["id"])
+
+            result = db.fetch_docs("EmojiNode")
+            assert len(result) == 1
+            assert result[0]["name"] == emoji_name

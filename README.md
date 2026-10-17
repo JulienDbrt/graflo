@@ -156,12 +156,15 @@ uv run pytest test
 TigerGraph, NebulaGraph and Kafka tests are skipped unless you pass
 `--run-tigergraph`, `--run-nebula` or `--run-kafka`.
 
-The suites that need no database run without the containers, and CI runs them
-on every pull request:
+Everything outside `test/db` runs without the containers, and CI runs it on
+every pull request:
 
 ```shell
-uv run pytest test --ignore=test/db --ignore=test/data_source --ignore=test/object_storage
+uv run pytest test --ignore=test/db -n auto --dist loadfile
 ```
+
+Property tests run a reduced example budget by default; `HYPOTHESIS_PROFILE=full`
+runs the full one.
 
 ## License
 

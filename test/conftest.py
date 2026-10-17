@@ -1,45 +1,34 @@
 import io
 import logging
+import os
 from os.path import dirname, join, realpath
 from pathlib import Path
 
 import pandas as pd
 import pytest
 import yaml
+from hypothesis import settings
 from suthing import FileHandle, diff
 
 from graflo.architecture.contract.bindings import Bindings, FileConnector
 from graflo.architecture.contract.manifest import GraphManifest
 from graflo.architecture.util import cast_graph_name_to_triple
 from graflo.util.misc import sorted_dicts
+from test.hypothesis_budget import register_profiles
 
 logger = logging.getLogger(__name__)
 
-
-def pytest_configure(config):
-    config.addinivalue_line(
-        "markers",
-        "bulk_e2e: TigerGraph native bulk E2E tests (skipped unless --run-bulk-e2e)",
-    )
-    config.addinivalue_line(
-        "markers",
-        "performance: performance / stress tests (skipped unless --run-performance)",
-    )
-    config.addinivalue_line(
-        "markers", "nebula: NebulaGraph integration tests (skipped unless --run-nebula)"
-    )
-    config.addinivalue_line(
-        "markers",
-        "kafka: Kafka integration tests (skipped unless --run-kafka)",
-    )
-    config.addinivalue_line(
-        "markers",
-        "tigergraph: live TigerGraph tests (skipped unless --run-tigergraph)",
-    )
+# Loaded at import, before pytest_configure, so `--hypothesis-profile` still wins.
+register_profiles()
+settings.load_profile(os.environ.get("HYPOTHESIS_PROFILE", "ci"))
 
 
 def pytest_addoption(parser):
-    parser.addoption("--reset", action="store_true")
+    parser.addoption(
+        "--reset",
+        action="store_true",
+        help="Rewrite the reference files under test/ref instead of comparing to them",
+    )
     parser.addoption(
         "--run-bulk-e2e",
         action="store_true",
@@ -231,18 +220,6 @@ def verify(sample, current_path, mode, test_type, kind="sizes", reset=False):
 
 
 @pytest.fixture()
-def df_ibes() -> pd.DataFrame:
-    df0_str = """TICKER,CUSIP,CNAME,OFTIC,ACTDATS,ESTIMID,ANALYST,ERECCD,ETEXT,IRECCD,ITEXT,EMASKCD,AMASKCD,USFIRM,ACTTIMS,REVDATS,REVTIMS,ANNDATS,ANNTIMS
-0000,87482X10,TALMER BANCORP,TLMR,20140310,RBCDOMIN,ARFSTROM      J,2,OUTPERFORM,2,BUY,00000659,00071182,1,8:54:03,20160126,9:35:52,20140310,0:20:00
-0000,87482X10,TALMER BANCORP,TLMR,20140311,JPMORGAN,ALEXOPOULOS   S,,OVERWEIGHT,2,BUY,00001243,00079092,1,17:10:47,20160126,10:09:34,20140310,0:25:00"""
-    return pd.read_csv(
-        io.StringIO(df0_str),
-        sep=",",
-        dtype={"TICKER": str, "ANNDATS": str, "REVDATS": str},
-    )
-
-
-@pytest.fixture()
 def sample_ticker() -> list[dict]:
     df0_str = """Date,Open,High,Low,Close,Volume,Dividends,Stock Splits,ticker
 2014-04-15,17.899999618530273,17.920000076293945,15.149999618530273,15.350000381469727,3531700,0,0,AAPL
@@ -250,65 +227,6 @@ def sample_ticker() -> list[dict]:
     return pd.read_csv(
         io.StringIO(df0_str),
     ).to_dict(orient="records")
-
-
-@pytest.fixture()
-def df_transform_collision() -> pd.DataFrame:
-    df0_str = """id,name,pet_name
-A0,Joe,Rex"""
-    return pd.read_csv(
-        io.StringIO(df0_str),
-        sep=",",
-    )
-
-
-@pytest.fixture()
-def row_doc_ibes() -> dict[str, list]:
-    return {
-        "agency": [{"aname": "RBCDOMIN"}],
-        "analyst": [{"initial": "J", "last_name": "ARFSTROM"}],
-        "publication": [
-            {"datetime_announce": "2014-03-10T0:20:00Z"},
-            {"datetime_review": "2016-01-26T9:35:52Z"},
-        ],
-        "recommendation": [
-            {"erec": 2.0, "etext": "OUTPERFORM", "irec": 2, "itext": "BUY"}
-        ],
-        "ticker": [{"cname": "TALMER BANCORP", "cusip": "87482X10", "oftic": "TLMR"}],
-    }
-
-
-@pytest.fixture()
-def row_resource_transform_collision():
-    tc = yaml.safe_load(
-        """
-        name: pets
-        transforms:
-        -   transform:
-                rename:
-                    pet_name: name
-    """
-    )
-    return tc
-
-
-@pytest.fixture()
-def vertex_config_transform_collision():
-    vc = yaml.safe_load(
-        """
-        vertices:
-        -
-            name: person
-            properties:
-            -   id
-            -   name
-        -
-            name: pet
-            properties:
-            -   name
-    """
-    )
-    return vc
 
 
 @pytest.fixture()

@@ -167,7 +167,8 @@ suites.
    name.
 3. Add `test/db/<name>s/` with a `conftest.py` that supplies a config fixture
    and isolates each test, plus at least one test that runs `define_schema`
-   and `ingest`.
+   and `ingest`. Tests that need no database (query building, DDL rendering,
+   config parsing) go in `test/backends/<name>/` instead, where CI runs them.
 4. Add `docker/<name>/` with a compose file, add the name to the
    `DATABASES` list in `docker/start-all.sh`, `docker/stop-all.sh` and
    `docker/cleanup-all.sh`, and add the suite to `run-tests.sh`.

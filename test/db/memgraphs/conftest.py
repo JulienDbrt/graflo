@@ -8,8 +8,12 @@ import uuid
 
 import pytest
 
+# Before the shared cases are imported, so their asserts are rewritten too.
+pytest.register_assert_rewrite("test.db.cypher_cases")
+
 from graflo.connections.onto import MemgraphConfig
 from graflo.db.manager import ConnectionManager
+from test.db.cypher_cases.traits import CypherTraits
 
 
 @pytest.fixture(scope="function")
@@ -53,3 +57,16 @@ def clean_db(conn_conf, test_graph_name):
 def test_db_name(test_graph_name):
     """Alias for test_graph_name for compatibility with shared test utilities."""
     return test_graph_name
+
+
+@pytest.fixture(scope="session")
+def cypher_traits() -> CypherTraits:
+    """Engine behaviour the shared Cypher cases assert against."""
+    return CypherTraits(
+        connection_handle="conn",
+        upsert_null_removes_property=False,
+        orders_mixed_types=False,
+        min_single_insert_ops=50,
+        min_read_ops=100,
+        max_batch_sizes=(1000, 5000, 10000),
+    )

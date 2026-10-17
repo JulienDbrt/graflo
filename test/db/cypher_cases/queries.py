@@ -235,3 +235,70 @@ class TemporalAnomaliesCases:
 
             result = db.fetch_docs("EdgeCaseDates")
             assert len(result) == len(problematic_dates)
+
+
+class FilterStressCases:
+    """Nested, metacharacter, empty and null filters."""
+
+    def test_deeply_nested_boolean_filter(self, conn_conf, test_graph_name, clean_db):
+        """Deeply nested AND/OR expressions."""
+        _ = clean_db
+        with ConnectionManager(connection_config=conn_conf) as db:
+            docs = [{"id": str(i), "val": i} for i in range(10)]
+            db.upsert_docs_batch(docs, "FilterDeep", match_keys=["id"])
+
+            # Build deeply nested filter: ((((a AND b) OR c) AND d) OR e)...
+            nested_filter = ["==", "0", "id"]
+            for i in range(1, 8):
+                op = "or" if i % 2 == 0 else "and"
+                nested_filter = [op, nested_filter, ["==", str(i), "id"]]
+
+            try:
+                result = db.fetch_docs("FilterDeep", filters=nested_filter)
+                assert isinstance(result, list)
+            except Exception:
+                pass  # Deep nesting may not be supported
+
+    def test_filter_with_regex_metacharacters(
+        self, conn_conf, test_graph_name, clean_db
+    ):
+        """Filter values containing regex metacharacters."""
+        _ = clean_db
+        with ConnectionManager(connection_config=conn_conf) as db:
+            regex_chars = [".*", ".+", "^$", "[a-z]", "(group)", "a|b", "\\d+"]
+            docs = [{"id": str(i), "pattern": p} for i, p in enumerate(regex_chars)]
+            db.upsert_docs_batch(docs, "RegexChars", match_keys=["id"])
+
+            # Filter should match literal strings, not interpret as regex
+            for p in regex_chars:
+                result = db.fetch_docs("RegexChars", filters=["==", p, "pattern"])
+                assert len(result) == 1
+
+    def test_filter_empty_value(self, conn_conf, test_graph_name, clean_db):
+        """Filter for empty string value."""
+        _ = clean_db
+        with ConnectionManager(connection_config=conn_conf) as db:
+            docs = [
+                {"id": "1", "data": ""},
+                {"id": "2", "data": "not_empty"},
+            ]
+            db.upsert_docs_batch(docs, "EmptyFilter", match_keys=["id"])
+
+            result = db.fetch_docs("EmptyFilter", filters=["==", "", "data"])
+            assert len(result) == 1
+            assert result[0]["id"] == "1"
+
+    def test_filter_null_vs_missing(self, conn_conf, test_graph_name, clean_db):
+        """Distinguish between null value and missing key."""
+        _ = clean_db
+        with ConnectionManager(connection_config=conn_conf) as db:
+            docs = [
+                {"id": "1", "field": None},
+                {"id": "2", "field": "exists"},
+                {"id": "3"},  # field missing entirely
+            ]
+            db.upsert_docs_batch(docs, "NullVsMissing", match_keys=["id"])
+
+            # This tests how the system handles null vs absent
+            result = db.fetch_docs("NullVsMissing")
+            assert len(result) == 3

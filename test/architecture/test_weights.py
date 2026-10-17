@@ -1,11 +1,11 @@
 import logging
-from pathlib import Path
 
 from graflo.architecture.graph_types import ActionContext
 from graflo.architecture.pipeline.runtime.actor import ActorInitContext, ActorWrapper
 from graflo.architecture.schema.db_aware import WeightConfig
 from graflo.architecture.schema.edge import EdgeConfig
 from graflo.architecture.schema.vertex import Field, FieldType
+from graflo.plot.plotter import assemble_tree
 
 logger = logging.getLogger(__name__)
 
@@ -21,14 +21,7 @@ def test_act_openalex(resource_openalex_authors, vc_openalex, sample_openalex_au
         )
     )
     ctx = anw(ctx, doc=sample_openalex_authors)
-    # Try to generate tree visualization if the plot extra is installed
-    try:
-        from graflo.plot.plotter import assemble_tree
-
-        assemble_tree(anw, Path("test/figs/openalex_authors.pdf"))
-    except (ImportError, RuntimeError):
-        # the plot extra is not installed: skip the figure
-        logger.debug("plot extra not installed, skipping tree visualization")
+    assert assemble_tree(anw).number_of_nodes() > 0
     acc = anw.assemble(ctx)
     edge = acc[("author", "institution", None)][0]
     assert edge[-1] == {

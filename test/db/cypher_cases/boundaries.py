@@ -10,7 +10,10 @@ them, which is what supplies the ``conn_conf`` / ``test_graph_name`` /
 
 from __future__ import annotations
 
+import uuid
+
 from graflo.db.manager import ConnectionManager
+from graflo.onto import AggregationType
 
 
 class BoundaryConditionsCases:
@@ -280,3 +283,85 @@ class MalformedInputsCases:
             except (KeyError, Exception):
                 # Expected
                 pass
+
+
+class NumericStringCases:
+    """Numeric extremes and strings that look like numbers."""
+
+    def test_scientific_notation_extremes(self, conn_conf, test_graph_name, clean_db):
+        """Extreme scientific notation values."""
+        _ = clean_db
+        with ConnectionManager(connection_config=conn_conf) as db:
+            sci_values = [
+                ("small_pos", 1e-300),
+                ("large_pos", 1e300),
+                ("small_neg", -1e-300),
+                ("large_neg", -1e300),
+                ("denormal", 5e-324),  # Smallest denormalized float
+            ]
+
+            for name, val in sci_values:
+                docs = [{"id": name, "sci": val}]
+                try:
+                    db.upsert_docs_batch(docs, "Scientific", match_keys=["id"])
+                except Exception:
+                    pass
+
+    def test_integer_overflow_boundaries(self, conn_conf, test_graph_name, clean_db):
+        """Test around integer overflow boundaries."""
+        _ = clean_db
+        with ConnectionManager(connection_config=conn_conf) as db:
+            boundaries = [
+                ("i64_max", 2**63 - 1),
+                ("i64_max_plus", 2**63),  # Overflow
+                ("i64_min", -(2**63)),
+                ("i64_min_minus", -(2**63) - 1),  # Underflow
+                ("i32_max", 2**31 - 1),
+                ("i32_max_plus", 2**31),
+                ("u64_max", 2**64 - 1),
+            ]
+
+            for name, val in boundaries:
+                docs = [{"id": name, "boundary": val}]
+                try:
+                    db.upsert_docs_batch(docs, "Boundaries", match_keys=["id"])
+                except (OverflowError, ValueError):
+                    pass
+
+    def test_string_that_looks_like_number(self, conn_conf, test_graph_name, clean_db):
+        """Strings that might be coerced to numbers."""
+        _ = clean_db
+        with ConnectionManager(connection_config=conn_conf) as db:
+            sneaky_numbers = [
+                "123",
+                "12.34",
+                "-456",
+                "1e10",
+                "0x1F",  # Hex
+                "0o777",  # Octal
+                "0b1010",  # Binary
+                "  123  ",  # Padded
+                "123abc",  # Partial
+                "+123",
+                "++123",
+            ]
+
+            for i, val in enumerate(sneaky_numbers):
+                docs = [{"id": str(i), "numeric_string": val}]
+                db.upsert_docs_batch(docs, "NumStrings", match_keys=["id"])
+
+            result = db.fetch_docs("NumStrings")
+            # Verify strings stayed as strings
+            for r in result:
+                assert isinstance(r["numeric_string"], str)
+
+    def test_uuid_collisions(self, conn_conf, test_graph_name, clean_db):
+        """Generate many UUIDs looking for collisions."""
+        _ = clean_db
+        with ConnectionManager(connection_config=conn_conf) as db:
+            uuids = [str(uuid.uuid4()) for _ in range(1000)]
+            docs = [{"id": u, "seq": i} for i, u in enumerate(uuids)]
+            db.upsert_docs_batch(docs, "UUIDs", match_keys=["id"])
+
+            count = db.aggregate("UUIDs", AggregationType.COUNT)
+            assert count == 1000  # No collisions

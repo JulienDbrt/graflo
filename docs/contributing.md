@@ -127,13 +127,15 @@ uv run pytest test
 
 Tests marked `tigergraph`, `nebula`, `kafka`, `performance` or `bulk_e2e` are skipped unless you pass the matching option: `--run-tigergraph`, `--run-nebula`, `--run-kafka`, `--run-performance` or `--run-bulk-e2e`.
 
-The suites under `test/db`, `test/data_source` and `test/object_storage` need the containers. The rest runs in-process, and CI runs exactly that part on every pull request:
+The suites under `test/db` need the containers. The rest runs in-process — the live parts of `test/data_source` and `test/object_storage` skip when their service is unreachable — and CI runs exactly that part on every pull request:
 
 ```bash
-uv run pytest test --ignore=test/db --ignore=test/data_source --ignore=test/object_storage
+uv run pytest test --ignore=test/db -n auto --dist loadfile
 ```
 
-CI does not run the database suites, so run them locally before a change to a backend.
+CI does not run `test/db`, so run it locally before a change to a backend. A weekly workflow runs the same suites against the newest dependency versions `pyproject.toml` admits, rather than the ones `uv.lock` pins. Unit tests of backend code that need no database go in `test/backends/`, where CI runs them.
+
+Property tests (Hypothesis) run under the `ci` profile by default: a fifth of each test's example count, derandomized. Run them at the full count with `HYPOTHESIS_PROFILE=full` (or `--hypothesis-profile=full`). A test that sets its own count writes it through `examples()` in `test/hypothesis_budget.py`, so the profile still scales it.
 
 ### uv version
 

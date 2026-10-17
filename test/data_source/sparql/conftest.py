@@ -18,9 +18,3 @@ def fuseki_config():
     except FileNotFoundError:
         pytest.skip("docker/fuseki/.env not found – Fuseki not configured")
     return config
-
-
-@pytest.fixture(scope="module")
-def fuseki_query_endpoint(fuseki_config) -> str:
-    """Full SPARQL query endpoint URL for the Fuseki test dataset."""
-    return fuseki_config.query_endpoint

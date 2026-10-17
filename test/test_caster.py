@@ -10,6 +10,7 @@ from suthing import FileHandle
 from graflo.architecture.pipeline.runtime.actor import ActorWrapper
 from graflo.hq.caster import Caster
 from graflo.hq.ingestion_parameters import IngestionParams
+from graflo.plot.plotter import assemble_tree
 from test.conftest import fetch_manifest_obj, verify
 
 logger = logging.getLogger(__name__)
@@ -33,22 +34,10 @@ def cast(modes, current_path, level, reset, n_cores=1):
         schema = manifest.require_schema()
         ingestion_model = manifest.require_ingestion_model()
 
-        # Create the directory if it doesn't exist
-        output_dir = "test/figs"
-        pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
-
-        # Try to generate tree visualizations if the plot extra is installed
-        try:
-            from graflo.plot.plotter import assemble_tree
-
-            for r in ingestion_model.resources:
-                assemble_tree(
-                    ActorWrapper(*r.pipeline),
-                    f"{output_dir}/{mode}.resource-{r.name}.pdf",
-                )
-        except (ImportError, RuntimeError):
-            # the plot extra is not installed: skip the figure
-            logger.debug("plot extra not installed, skipping tree visualization")
+        # Every resource assembles into an actor tree; rendering it is
+        # covered by test/plot.
+        for r in ingestion_model.resources:
+            assert assemble_tree(ActorWrapper(*r.pipeline)).number_of_nodes() > 0
         ingestion_model.finish_init(schema.core_schema)
         caster = Caster(
             schema,

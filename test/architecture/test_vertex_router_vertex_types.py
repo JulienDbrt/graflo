@@ -49,6 +49,7 @@ from graflo.architecture.evolution.rewrite import (
 )
 from graflo.hq.document_caster import DocumentCaster
 from graflo.hq.ingestion_parameters import IngestionParams
+from test.hypothesis_budget import examples
 
 CLASSES = ("Machine", "Line", "Sensor")
 
@@ -336,7 +337,7 @@ def _after(declared: frozenset[str], mapping: dict[str, str | None]) -> set[str]
 
 
 class TestEvolutionInvariant:
-    @settings(max_examples=400, deadline=None)
+    @settings(max_examples=examples(400), deadline=None)
     @given(router=_routers(), mapping=_class_maps())
     def test_every_value_routes_to_its_class_renamed(self, router, mapping) -> None:
         evolved = evolve_router(router, mapping, declared=DECLARED)
@@ -363,7 +364,7 @@ class TestEvolutionInvariant:
             assert was is None and now == value and value not in DECLARED
             assert reach is not None and owners <= reach
 
-    @settings(max_examples=300, deadline=None)
+    @settings(max_examples=examples(300), deadline=None)
     @given(
         split=st.sets(_classes, min_size=1, max_size=3),
         mapping=_class_maps(),

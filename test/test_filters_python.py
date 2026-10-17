@@ -220,17 +220,6 @@ def operator_clause_open():
 
 
 @pytest.fixture()
-def operator_clause_close():
-    return yaml.safe_load(
-        """
-        field: name
-        operator: __eq__
-        value: Close
-    """
-    )
-
-
-@pytest.fixture()
 def operator_clause_positive_value():
     return yaml.safe_load(
         """
@@ -308,7 +297,7 @@ def test_operator_implication_from_dict(
 
 
 def test_operator_ticker_yaml_filters_or():
-    """End-to-end: parse the exact OR-based filter structure from ticker.yaml.
+    """End-to-end: parse an OR of implications, as a ticker resource declares it.
 
     With OR(IF_THEN(A,B), IF_THEN(C,D)) where A and C are mutually exclusive,
     at least one implication is vacuously true so the OR is always True.

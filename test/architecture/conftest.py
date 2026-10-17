@@ -1,23 +1,9 @@
-import pathlib
-
 import pytest
 import yaml
 from suthing import FileHandle
 
 from graflo.architecture import EdgeConfig
 from graflo.architecture.schema.vertex import VertexConfig
-
-
-@pytest.fixture(scope="session", autouse=True)
-def create_test_dirs():
-    test_dirs = [
-        "test/figs",
-    ]
-
-    for dir_path in test_dirs:
-        pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
-
-    yield
 
 
 @pytest.fixture()
@@ -46,16 +32,6 @@ def vertex_pub():
                 -   field: value
                     cmp_operator: ">"
                     value: 0
-    """
-    )
-    return tc
-
-
-@pytest.fixture()
-def vertex_helper():
-    tc = yaml.safe_load(
-        """
-        name: analyst
     """
     )
     return tc
@@ -453,45 +429,6 @@ def vertex_config_kg_mention():
         identity:
         -   _key
     """)
-    return VertexConfig.from_dict(tc)
-
-
-@pytest.fixture()
-def data_key_property():
-    return [
-        {
-            "name": "0ad-data-common",
-            "version": "0.0.26-1",
-            "dependencies": {
-                "depends": [
-                    {"name": "fonts-dejavu-core"},
-                    {"name": "fonts-freefont-ttf"},
-                    {"name": "fonts-texgyre"},
-                ],
-                "depends_aliases": [
-                    {"source": "fonts-dejavu-core", "target": "ttf-dejavu-core"},
-                    {"source": "fonts-freefont-ttf", "target": "ttf-freefont"},
-                    {"source": "fonts-texgyre", "target": "tex-gyre"},
-                ],
-                "pre-depends": [{"name": "dpkg", "version": ">= 1.15.6~"}],
-                "suggests": [{"name": "0ad"}],
-                "breaks": [{"name": "0ad-data", "version": "<< 0.0.12-1~"}],
-            },
-        }
-    ]
-
-
-@pytest.fixture()
-def vertex_key_property():
-    tc = yaml.safe_load(
-        """
-    vertices:
-        -   name: package
-            properties:
-            -   name
-            -   version
-    """
-    )
     return VertexConfig.from_dict(tc)
 
 
