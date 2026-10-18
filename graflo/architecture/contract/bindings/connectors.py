@@ -47,6 +47,7 @@ class BoundSourceKind(BaseEnum):
         SPARQL: SPARQL / RDF connector (endpoint or local RDF via rdflib).
         API: REST API connector (path + pagination on a runtime base URL).
         KAFKA: Kafka topic consumer (topics + group_id on a runtime bootstrap).
+        PUSH: Records handed to the resource by the caller; no address.
     """
 
     FILE = "file"
@@ -54,6 +55,7 @@ class BoundSourceKind(BaseEnum):
     SPARQL = "sparql"
     API = "api"
     KAFKA = "kafka"
+    PUSH = "push"
 
 
 class ConnectorUpdate(ConfigBaseModel):
@@ -639,6 +641,20 @@ class ApiResponseStructure(ConfigBaseModel):
         default=None,
         description="Dot path to the next opaque cursor token.",
     )
+    ok_path: str | None = Field(
+        default=None,
+        description=(
+            "Dot path to a success flag in every response body (e.g. ``ok``). "
+            "A body where it is not ``true`` raises, even with HTTP status 200."
+        ),
+    )
+    error_path: str | None = Field(
+        default=None,
+        description=(
+            "Dot path to an error code in the response body (e.g. ``error``). "
+            "Named in the raised error; a non-empty value raises on its own."
+        ),
+    )
     batch_metadata_paths: dict[str, str] = Field(
         default_factory=dict,
         description=(
@@ -709,6 +725,60 @@ class PaginationConfig(ConfigBaseModel):
     response: ApiResponseStructure = Field(default_factory=ApiResponseStructure)
 
 
+class WatermarkConfig(ConfigBaseModel):
+    """Where an API source left off, and how to ask it to resume from there.
+
+    The source tracks the largest value of ``field`` over the rows it yields.
+    Values compare as numbers when both parse as numbers, and as text
+    otherwise, so timestamps must be written in one sortable form (ISO 8601 in
+    one zone). The caller stores that value and renders it into the next run's
+    query parameters; GraFlo keeps no run state itself.
+
+    Attributes:
+        field: Dot path of the value on each row.
+        param: Query parameter that carries the value on the next run.
+        template: Parameter text with a ``{value}`` placeholder; ``None`` sends
+            the bare value.
+    """
+
+    field: str = Field(..., min_length=1)
+    param: str = Field(..., min_length=1)
+    template: str | None = None
+
+    def render(self, value: Any) -> dict[str, Any]:
+        """Return the query parameters that resume from *value*."""
+        if self.template is None:
+            return {self.param: value}
+        return {self.param: self.template.replace("{value}", str(value))}
+
+
+#: ``{name}`` placeholders in a dependent connector's ``path`` and ``params``.
+TEMPLATE_VARIABLE = re.compile(r"\{([A-Za-z_][A-Za-z0-9_]*)\}")
+
+
+class ParentRequest(ConfigBaseModel):
+    """Make one request per record of another API connector.
+
+    Attributes:
+        connector: Name of the parent API connector in the same bindings.
+        fields: Template variable -> dot path into a parent record. Each
+            variable fills ``{variable}`` in the child's ``path`` and string
+            ``params``; a parent record missing any of them is skipped.
+    """
+
+    connector: str = Field(..., min_length=1)
+    fields: dict[str, str] = Field(..., min_length=1)
+
+
+def template_variables(path: str, params: dict[str, Any]) -> set[str]:
+    """Return the ``{name}`` variables used in *path* and string *params*."""
+    found = set(TEMPLATE_VARIABLE.findall(path))
+    for value in params.values():
+        if isinstance(value, str):
+            found.update(TEMPLATE_VARIABLE.findall(value))
+    return found
+
+
 class APIConnector(ResourceConnector):
     """Connector for REST API endpoints.
 
@@ -729,6 +799,11 @@ class APIConnector(ResourceConnector):
         retry_status_forcelist: HTTP status codes to retry on. A ``Retry-After``
             header on the response sets the wait.
         verify: Verify SSL certificates.
+        watermark: Where a run left off; see :class:`WatermarkConfig`.
+        parent: Make one request per record of another API connector, with
+            ``{variable}`` in ``path`` and ``params`` filled from that record;
+            see :class:`ParentRequest`. Without its own ``conn_proxy`` mapping
+            the child uses the parent's connection.
     """
 
     path: str = Field(..., description="Relative API endpoint path")
@@ -743,6 +818,27 @@ class APIConnector(ResourceConnector):
         default_factory=lambda: [429, 500, 502, 503, 504]
     )
     verify: bool = True
+    watermark: WatermarkConfig | None = None
+    parent: ParentRequest | None = None
+
+    @model_validator(mode="after")
+    def _check_template_variables(self) -> Self:
+        used = template_variables(self.path, self.params)
+        declared = set(self.parent.fields) if self.parent is not None else set()
+        if self.parent is not None and used - declared:
+            raise ValueError(
+                f"API connector '{self.name or self.path}' uses template variables "
+                f"{sorted(used - declared)} that parent.fields does not declare"
+            )
+        return self
+
+    def _hash_payload(self) -> dict[str, Any]:
+        payload = super()._hash_payload()
+        for optional in ("watermark", "parent"):
+            if payload.get(optional) is None:
+                # Unset, it must not move the hash of connectors declared before it.
+                payload.pop(optional, None)
+        return payload
 
     @staticmethod
     def _join_url(base_url: str, path: str) -> str:
@@ -797,7 +893,39 @@ class APIConnector(ResourceConnector):
             verify=self.verify,
             pagination=pagination,
             row_annotations=dict(self.row_annotations),
+            watermark=self.watermark,
         )
+
+
+class PushConnector(ResourceConnector):
+    """Connector for records pushed to a resource rather than fetched.
+
+    It has no address: the caller hands the records over at run time
+    (``RegistryBuilder.build(pushed=...)``), keyed by the connector name. Declaring
+    it keeps what a resource accepts versioned and reviewable like any other
+    source.
+
+    Attributes:
+        kind: Always ``push``; required, so the connector is never read as
+            another kind.
+        name: Name the pushed records are keyed by.
+        records_path: Dot path to the record list when a pushed item is an
+            envelope rather than a record.
+        row_annotations: Constant fields merged into every record (record wins).
+    """
+
+    kind: Literal["push"]
+    name: str = Field(..., min_length=1)
+    records_path: str | None = None
+
+    def matches(self, resource_identifier: str) -> bool:
+        """Match connector name or resource name."""
+        return resource_identifier == self.name or (
+            self.resource_name is not None and resource_identifier == self.resource_name
+        )
+
+    def bound_source_kind(self) -> BoundSourceKind:
+        return BoundSourceKind.PUSH
 
 
 class KafkaConnector(ResourceConnector):

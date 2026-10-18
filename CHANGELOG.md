@@ -5,13 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.19.0]
+
+### Added
+
+- **Body-level API errors:** `response.ok_path` and `response.error_path` on an API connector's
+  pagination. A status-200 body whose flag is not `true`, or whose error code is set, raises
+  `APIBodyError` with that code instead of reading as an empty page.
+- **Dependent API requests:** `APIConnector.parent: {connector, fields}` makes one request per
+  record of another API connector, filling `{field}` in `path` and `params`; child records carry
+  those fields. The child uses the parent's connection and request settings unless it sets its own.
+  `RegistryBuilder.api_source` builds the source; `ResourceSampler.sample_connector` takes `bindings`.
+- **`lookup_candidates`** (`graflo.hq.lookup`): the vertices a short text may name, by exact label,
+  key pattern, normalised label or alias edge; keys and labels only. `normalize_label`
+  (`graflo.util.transform`) gives the label normal form, usable as a transform.
+- **Aspects** (`graflo.architecture.evolution.aspects`): an aspect is a domain-free vocabulary a
+  manifest is lifted with. `state-core` is now two of them, each liftable on its own:
+  `provenance` (`SourceRecord`, `Agent`, `wasDerivedFrom`, `wasAttributedTo`; needs no spec) and
+  `state` (`<Type>State`, `<Type>Observation`; needs a spec). `graflo lift --aspect NAME` and
+  `plan_lift(..., aspects=[...])` pick them, both by default; `ASPECTS` lists them.
+  `LiftSpec.provenance_for` names the types that gain `wasDerivedFrom`.
+- **`PushConnector`** (`kind: push`, `BoundSourceKind.PUSH`): a resource source with no address;
+  `RegistryBuilder.build(pushed=...)` hands it records at run time.
+- **`APIConnector.watermark`**: `APIDataSource.high_water` holds the largest value of a declared
+  field over a run, and `WatermarkConfig.render` gives the query parameters that resume from it.
+- **`ResourceSampler`** samples API connectors through the connection provider.
+- **`gf:` ontology** (1.8.0) declares `gf:PushConnector` and `gf:PushSource`.
 
 ### Changed
 
+- **Object storage:** the repository's S3 service is SeaweedFS (`docker/seaweedfs`, S3 API on
+  port 8333) instead of MinIO, whose images no longer pull anonymously.
+  `MinioConfig.from_docker_env()` reads `docker/seaweedfs`, takes `S3_*` settings
+  (`S3_ENDPOINT`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`, `S3_LOADER_ENDPOINT`, …) and
+  works without a settings file.
+- **Provenance aspect:** the vertex it mints is **`SourceRecord`** (was `Evidence`), keyed on
+  `source_record_id`, with `content_hash`; `wasAttributedTo` carries a `role` property. A lifted
+  manifest that used `Evidence` keeps it; a new lift mints `SourceRecord`.
 - **Tests:** database-free backend tests moved from `test/db` to `test/backends`, so CI runs them;
   CI runs the suite in parallel with a reduced Hypothesis budget (`HYPOTHESIS_PROFILE=full` for the
   full one), and a weekly run tests against the newest dependency versions.
+
+### Deprecated
+
+- **`graflo.architecture.evolution.state_core`**: import `plan_lift`, `LiftSpec`, `Grounding`,
+  `EdgeGrounding` and `LiftError` from `graflo.architecture.evolution.aspects`; the `plan`, `spec`
+  and `vocabulary` submodules forward to the aspects too (`EVIDENCE` and `evidence_vertex` to
+  `SOURCE_RECORD` and `source_record_vertex`). Removed in 2.0.
 
 ## [1.18.2] - 2026-10-14
 

@@ -8,22 +8,27 @@ from contract fields plus runtime credentials from a connection provider.
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Iterator
 from typing import Any
+from urllib.parse import quote
 
 import requests
-from pydantic import Field
+from pydantic import Field, PrivateAttr
 from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 from urllib3.util.retry import Retry
 
 from graflo.architecture.base import ConfigBaseModel
-from graflo.architecture.contract.bindings import PaginationConfig
+from graflo.architecture.contract.bindings import PaginationConfig, WatermarkConfig
+from graflo.architecture.contract.bindings.connectors import TEMPLATE_VARIABLE
 from graflo.connections.sources import ApiAuth
 from graflo.data_source.api_response import (
     ResolvedApiResponse,
+    check_body,
     detect_carry_params,
     extract_records,
+    get_at_path,
     get_batch_metadata,
     has_more_pages,
     next_cursor_value,
@@ -56,6 +61,28 @@ class APIConfig(ConfigBaseModel):
     verify: bool = True
     pagination: PaginationConfig | None = None
     row_annotations: dict[str, Any] = Field(default_factory=dict)
+    watermark: WatermarkConfig | None = None
+
+
+def _as_number(value: object) -> float | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return None
+    return None
+
+
+def _later(candidate: object, current: object) -> bool:
+    """True when *candidate* is past *current* as a watermark."""
+    a, b = _as_number(candidate), _as_number(current)
+    if a is not None and b is not None:
+        return a > b
+    return str(candidate) > str(current)
 
 
 class APIDataSource(AbstractDataSource):
@@ -63,10 +90,29 @@ class APIDataSource(AbstractDataSource):
 
     A request that fails after its retries raises ``requests.RequestException``
     from :meth:`iter_batches`, on whichever page it happens.
+
+    With a declared watermark, :attr:`high_water` holds the largest watermark
+    value among the rows yielded so far by the current iteration.
     """
 
     config: APIConfig
     source_type: DataSourceType = DataSourceType.API
+    _high_water: Any = PrivateAttr(default=None)
+
+    @property
+    def high_water(self) -> Any:
+        """Largest watermark value yielded so far; ``None`` without a watermark."""
+        return self._high_water
+
+    def _observe(self, row: dict[str, Any]) -> None:
+        mark = self.config.watermark
+        if mark is None:
+            return
+        value = get_at_path(row, mark.field)
+        if value is None or isinstance(value, (dict, list)):
+            return
+        if self._high_water is None or _later(value, self._high_water):
+            self._high_water = value
 
     def _create_session(self) -> requests.Session:
         session = requests.Session()
@@ -110,6 +156,7 @@ class APIDataSource(AbstractDataSource):
     ) -> Iterator[list[dict]]:
         session = self._create_session()
         total_items = 0
+        self._high_water = None
         resolved_response: ResolvedApiResponse | None = None
 
         try:
@@ -166,6 +213,9 @@ class APIDataSource(AbstractDataSource):
                     if resolved_response is not None
                     else ResolvedApiResponse()
                 )
+                # Some APIs answer 200 with a failure in the body; reading it as
+                # an empty page would end the stream as if it were complete.
+                check_body(data, response_shape)
                 items = extract_records(data, response_shape)
                 batch_metadata = get_batch_metadata(data, response_shape)
 
@@ -173,9 +223,9 @@ class APIDataSource(AbstractDataSource):
                 for item in items:
                     if limit is not None and total_items >= limit:
                         break
-                    batch.append(
-                        {**self.config.row_annotations, **batch_metadata, **item}
-                    )
+                    row = {**self.config.row_annotations, **batch_metadata, **item}
+                    self._observe(row)
+                    batch.append(row)
                     total_items += 1
 
                     if len(batch) >= batch_size:
@@ -224,3 +274,83 @@ class APIDataSource(AbstractDataSource):
 
         finally:
             session.close()
+
+
+def _render(template: str, values: dict[str, Any], *, quote_values: bool) -> str:
+    def substitute(match: re.Match[str]) -> str:
+        value = str(values[match.group(1)])
+        return quote(value, safe="") if quote_values else value
+
+    return TEMPLATE_VARIABLE.sub(substitute, template)
+
+
+def _render_param(value: Any, values: dict[str, Any]) -> Any:
+    """A param that is exactly ``{variable}`` keeps the value's type."""
+    if not isinstance(value, str):
+        return value
+    whole = TEMPLATE_VARIABLE.fullmatch(value)
+    if whole is not None:
+        return values[whole.group(1)]
+    return _render(value, values, quote_values=False)
+
+
+class DependentAPIDataSource(AbstractDataSource):
+    """One request per record of a parent source, its rows carrying the variables.
+
+    For each parent record, the variables declared in *fields* are read by dot
+    path; a record missing any of them is skipped. They fill ``{variable}`` in
+    the child's URL (percent-encoded) and string params, and every child row
+    carries them as fields unless the row has a field of the same name.
+    """
+
+    parent: APIDataSource | DependentAPIDataSource
+    config: APIConfig
+    fields: dict[str, str]
+    source_type: DataSourceType = DataSourceType.API
+    _high_water: Any = PrivateAttr(default=None)
+
+    @property
+    def high_water(self) -> Any:
+        """Largest watermark value over every child request of the current iteration."""
+        return self._high_water
+
+    def _values(self, record: dict[str, Any]) -> dict[str, Any] | None:
+        values: dict[str, Any] = {}
+        for variable, path in self.fields.items():
+            value = get_at_path(record, path)
+            if value is None or isinstance(value, (dict, list)):
+                return None
+            values[variable] = value
+        return values
+
+    def _request_for(self, values: dict[str, Any]) -> APIConfig:
+        params = {
+            key: _render_param(value, values)
+            for key, value in self.config.params.items()
+        }
+        url = _render(self.config.url, values, quote_values=True)
+        return self.config.model_copy(update={"url": url, "params": params})
+
+    def iter_batches(
+        self, batch_size: int = 1000, limit: int | None = None
+    ) -> Iterator[list[dict]]:
+        self._high_water = None
+        total = 0
+        for parent_batch in self.parent.iter_batches(batch_size=batch_size):
+            for record in parent_batch:
+                if limit is not None and total >= limit:
+                    return
+                values = self._values(record)
+                if values is None:
+                    continue
+                child = APIDataSource(config=self._request_for(values))
+                remaining = None if limit is None else limit - total
+                for batch in child.iter_batches(batch_size=batch_size, limit=remaining):
+                    rows = [{**values, **row} for row in batch]
+                    total += len(rows)
+                    yield rows
+                mark = child.high_water
+                if mark is not None and (
+                    self._high_water is None or _later(mark, self._high_water)
+                ):
+                    self._high_water = mark

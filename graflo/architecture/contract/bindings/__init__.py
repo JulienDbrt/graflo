@@ -10,9 +10,12 @@ from .connectors import (
     KafkaConnector,
     PaginationConfig,
     PaginationRequestConfig,
+    ParentRequest,
+    PushConnector,
     ResourceConnector,
     SparqlConnector,
     TableConnector,
+    WatermarkConfig,
 )
 from .core import (
     Bindings,
@@ -37,9 +40,12 @@ __all__ = [
     "KafkaConnector",
     "PaginationConfig",
     "PaginationRequestConfig",
+    "ParentRequest",
+    "PushConnector",
     "ResourceConnector",
     "ResourceConnectorBinding",
     "SparqlConnector",
     "StagingProxyBinding",
     "TableConnector",
+    "WatermarkConfig",
 ]

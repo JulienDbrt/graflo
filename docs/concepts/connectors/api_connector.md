@@ -240,6 +240,8 @@ All paths are [dot paths](#dot-paths-and-response-shapes) into the JSON body.
 | `total_count_path` | `null` | Total number of records across all pages; used together with `offset_path` |
 | `offset_path` | `null` | The offset of this page, as the API echoes it |
 | `cursor_path` | `null` | The token for the next page |
+| `ok_path` | `null` | A success flag every body carries, such as `ok`; a body where it is not `true` is an [error](#errors), even with status 200 |
+| `error_path` | `null` | An error code in the body, such as `error`; named in the error, and a non-empty value is an error on its own |
 | `batch_metadata_paths` | `{}` | Values of the response to copy into every record of the page, as `{record field: path}`, for example `{_batch_id: result_id}` |
 | `auto_detect` | `false` | Fill the unset paths from the first response; see [Detecting paths](#detecting-paths-from-the-first-response) |
 
@@ -435,10 +437,80 @@ The example above declares its shared settings once, under `connector_templates`
 
 Templates are expanded when the bindings are loaded. A `conn_proxy` at the top level of `bindings` is the label for every connector that has no `connector_connection` row.
 
+## One request per parent record
+
+Some endpoints need a value from another endpoint's records: the messages of each channel, the comments of each issue. Give the connector a `parent`: the name of another API connector in the same bindings, and the `fields` to read from each of its records. Each field fills `{field}` in the child's `path` and string `params`:
+
+```yaml
+connectors:
+  - name: channels
+    path: /conversations.list
+    pagination:
+      request: {strategy: cursor}
+      response: {records_path: channels, cursor_path: response_metadata.next_cursor}
+  - name: messages
+    path: /conversations.history
+    params: {channel: "{channel}"}
+    parent: {connector: channels, fields: {channel: id}}
+    pagination:
+      request: {strategy: cursor}
+      response: {records_path: messages, cursor_path: response_metadata.next_cursor}
+```
+
+- GraFlo pages through `channels`, then makes one paginated `messages` request per channel record.
+- Every child record carries the fields it was fetched with (here `channel`), unless it already has a field of that name, so a message can be linked to its channel.
+- A parent record that lacks one of the fields is skipped. To fetch the replies of threaded messages only, read `thread_ts` from `messages`: messages without it get no request.
+- A value placed in the path is percent-encoded. A param that is exactly `"{field}"` keeps the value's type.
+- Every `{name}` in `path` and `params` must be declared in `fields`. The parent must be an API connector, and parents cannot form a cycle; anything else is refused when the bindings load.
+- Without its own `conn_proxy` mapping, the child uses its parent's connection. It also takes the parent's `headers`, `timeout`, `retries` and TLS settings unless it sets them.
+- Parents chain: `replies` can name `messages`, which names `channels`.
+- The parent is fetched again for each child connector that names it, so a resource bound to the parent and one bound to the child read the parent twice.
+
+## Resuming where the last run stopped
+
+A run reads every record the endpoint returns. Re-reading records already in the graph is safe, because each one is upserted by its identity, but it is slow on an API with a rate limit. A `watermark` lets a run start where the previous one stopped:
+
+```yaml
+    - name: work_orders_api
+      path: /api/work-orders
+      resource_name: work_orders
+      params:
+        q: "plant = 'P1' order by updated"
+      watermark:
+        field: updated
+        param: q
+        template: "plant = 'P1' and updated >= '{value}' order by updated"
+```
+
+- `field` is the dot path of a value on each record that grows over time, such as a modification time.
+- `param` is the query parameter that carries the value on the next run.
+- `template` is the text of that parameter, with `{value}` where the value goes. Without a template the bare value is sent.
+
+While it reads, the data source keeps the largest `field` value among the records it has returned, as `high_water`. Values compare as numbers when both parse as numbers, and as text otherwise, so write timestamps in one sortable form, such as ISO 8601 in one time zone. GraFlo stores nothing between runs: you keep the value, and you hand it back with a [runtime connector update](runtime_updates.md) before the next run.
+
+```python
+from graflo.architecture.contract.bindings import ConnectorUpdate
+
+source = registry.get_data_sources("work_orders")[0]
+# ... after the run:
+last = source.high_water
+
+connector = bindings.get_connectors_for_resource("work_orders")[0]
+bindings.apply_connector_update(
+    ConnectorUpdate(
+        connector="work_orders_api",
+        params={**connector.params, **connector.watermark.render(last)},
+    )
+)
+```
+
+Use `>=` rather than `>` in the template. Two records can share the last value across a page boundary; `>=` reads one of them again, which the upsert absorbs, while `>` would skip it.
+
 ## Errors
 
 - An HTTP error, a connection failure that outlasts the retries, or a body that is not JSON raises a `requests.RequestException` and ends the ingestion, on whichever page it happens. Batches written before the failure stay in the graph.
 - An object body with no `records_path`, set or detected, raises a `ValueError`.
+- Some APIs answer status 200 and report the failure in the body, as in `{"ok": false, "error": "channel_not_found"}`. With `ok_path` or `error_path` set, such a body raises an `APIBodyError` (from `graflo.data_source.api_response`) whose `code` is the value at `error_path`, on whichever page it happens; it is never read as an empty last page.
 - A connector whose label has no registered configuration fails the run before anything is read, with a `ValueError` that names the resource and the connector. With `IngestionParams(strict_registry=False)` it is skipped with a warning in the log and the other connectors run as usual.
 
 ## What to read next

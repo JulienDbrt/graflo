@@ -96,6 +96,7 @@ nav:
         -   Merging manifests: concepts/schema/merging_manifests.md
         -   Version control: concepts/schema/versioning.md
         -   Live schema drift: concepts/schema/live_drift.md
+        -   Aspects: concepts/schema/aspects.md
         -   Conformance profiles: concepts/schema/world_model_profile.md
         -   GraFlo ontology: concepts/schema/ontology.md
     -   Ingestion:
@@ -106,8 +107,10 @@ nav:
         -   Table filters and views: concepts/connectors/table_views.md
         -   API connector: concepts/connectors/api_connector.md
         -   Kafka connector: concepts/connectors/kafka_connector.md
+        -   Push connector: concepts/connectors/push_connector.md
         -   Runtime connector updates: concepts/connectors/runtime_updates.md
     -   Operations:
+        -   Finding the vertices a text names: concepts/operations/finding_vertices_from_text.md
         -   Graph export and migration: concepts/operations/graph_export_migration.md
         -   Removing vertices and edges: concepts/operations/deleting_instances.md
         -   Object storage: concepts/operations/object_storage.md
@@ -156,8 +159,8 @@ nav:
         -   20 - Combine two manifests: examples/manifest-union/index.md
         -   21 - Combine manifests with a routed source: examples/router-union-alignment/index.md
         -   22 - Version control for a manifest: examples/version-control/index.md
-    -   Profiles:
-        -   23 - Track state and measurements: examples/state-core-lift/index.md
+    -   Aspects and profiles:
+        -   23 - Track state and measurements: examples/lift-aspects/index.md
 -   API Reference: reference/
 -   Internals:
     -   Merge internals: internals/merge_internals.md

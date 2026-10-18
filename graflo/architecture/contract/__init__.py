@@ -14,9 +14,12 @@ from .bindings import (
     KafkaConnector,
     PaginationConfig,
     PaginationRequestConfig,
+    ParentRequest,
+    PushConnector,
     ResourceConnector,
     SparqlConnector,
     TableConnector,
+    WatermarkConfig,
 )
 from .manifest import GraphManifest
 
@@ -32,7 +35,9 @@ __all__ = [
     "KafkaConnector",
     "PaginationConfig",
     "PaginationRequestConfig",
+    "ParentRequest",
     "ProtoTransform",
+    "PushConnector",
     "Resource",
     "ResourceConfig",
     "ResourceConnector",
@@ -40,6 +45,7 @@ __all__ = [
     "SparqlConnector",
     "TableConnector",
     "Transform",
+    "WatermarkConfig",
     "build_resource_runtime",
 ]
 

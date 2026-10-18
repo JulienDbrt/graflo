@@ -39,7 +39,7 @@ clone of the repository. The repository has a Docker Compose setup under
 |---|---|---|
 | 11 | [How do I keep database credentials out of the manifest?](connection-proxy/index.md) | PostgreSQL and ArangoDB |
 | 12 | [How do I configure several API sources from environment variables?](api-env-config/index.md) | Environment variables only; no API or database is contacted |
-| 13 | [How do I load a large graph into TigerGraph quickly?](tigergraph-bulk-s3/index.md) | TigerGraph and MinIO |
+| 13 | [How do I load a large graph into TigerGraph quickly?](tigergraph-bulk-s3/index.md) | TigerGraph and S3 object storage |
 
 ## File backend
 
@@ -71,11 +71,11 @@ union behind examples 20 and 21.
 | 21 | [How do I combine manifests when one source decides the type per row?](router-union-alignment/index.md) | Nothing |
 | 22 | [Two people changed the same manifest. How do I merge their changes and keep the history?](version-control/index.md) | Nothing |
 
-## Profiles
+## Aspects and profiles
 
 | No. | Question | Needs to run |
 |---|---|---|
-| 23 | [How do I turn a plain schema into one that tracks state and measurements over time?](state-core-lift/index.md) | Nothing |
+| 23 | [How do I turn a plain schema into one that tracks state and measurements over time?](lift-aspects/index.md) | Nothing |
 
 ## What to read next
 
