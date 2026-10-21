@@ -15,7 +15,7 @@ import queue
 import threading
 from collections.abc import Coroutine, Generator, Iterator, Mapping, Sequence
 from contextlib import AsyncExitStack, contextmanager
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 from uuid import uuid4
 
 from graflo.architecture.contract.ingestion import IngestionModel
@@ -48,6 +48,9 @@ from graflo.hq.endpoint_resolve import (
     select_matches,
 )
 from graflo.onto import DBType, EndpointAmbiguityPolicy
+
+if TYPE_CHECKING:
+    from graflo.filter.onto import FilterExpression
 
 logger = logging.getLogger(__name__)
 
@@ -255,12 +258,18 @@ class DBWriter:
         *,
         bulk_session_id: str | None = None,
         stamp: Mapping[str, Any] | None = None,
+        guard: FilterExpression | None = None,
     ) -> None:
         """Push *gc* to the database (vertices, attached records, extra weights,
         then edges).
 
         Every reserved field of every element written is set from *stamp*,
         whatever value a document carries.
+
+        *guard* is a trusted read guard every write-time lookup must pass —
+        secondary-identity edge endpoints, attached-record matches and
+        extra-weight vertices — so a write never links to, attaches onto or
+        copies from a vertex the guard hides.
 
         When *bulk_session_id* is provided, appends rows using the connection's
         native bulk interface instead of using per-record writes.
@@ -275,8 +284,13 @@ class DBWriter:
             ValueError: If *gc* carries attached records under a bulk session,
                 or an element of a type with a reserved field and *stamp* does
                 not set it.
+            NotImplementedError: If *guard* is given and the backend does not
+                apply read guards; nothing is written.
         """
+        if guard is not None:
+            require_read_guard(conn_conf)
         check_stamp(gc, self.schema, stamp)
+        refuse_reserved_attributes(gc, self.schema)
         self._check_union(gc, conn_conf)
         if bulk_session_id:
             apply_stamp(gc, self.schema, stamp)
@@ -317,7 +331,7 @@ class DBWriter:
 
         apply_stamp(gc, self.schema, stamp, edges=False)
         await self._push_vertices(gc, conn_conf)
-        await self._attach_vertices(gc, conn_conf)
+        await self._attach_vertices(gc, conn_conf, guard=guard)
         if resource is not None:
             # Joins each blank vertex to its siblings from the same cast. A
             # resource-less container carries its edges explicitly, and the join
@@ -325,11 +339,12 @@ class DBWriter:
             # documents) of pure Python, so off the event loop.
             await asyncio.to_thread(self._resolve_blank_edges, gc, conn_conf)
         if resource is not None:
-            await self._enrich_extra_weights(gc, conn_conf, resource)
+            await self._enrich_extra_weights(gc, conn_conf, resource, guard=guard)
         # Edges last: blank resolution and extra weights add rows and
         # attributes, and the stamp must win over both.
+        refuse_reserved_attributes(gc, self.schema)
         apply_stamp(gc, self.schema, stamp, vertices=False)
-        await self._push_edges(gc, conn_conf, resource)
+        await self._push_edges(gc, conn_conf, resource, guard=guard)
 
     def delete_vertices(
         self, conn_conf: DBConfig, vertex: str, key_docs: list[dict[str, Any]]
@@ -652,7 +667,13 @@ class DBWriter:
     # Attached records
     # ------------------------------------------------------------------
 
-    async def _attach_vertices(self, gc: GraphContainer, conn_conf: DBConfig) -> None:
+    async def _attach_vertices(
+        self,
+        gc: GraphContainer,
+        conn_conf: DBConfig,
+        *,
+        guard: FilterExpression | None = None,
+    ) -> None:
         """Write attached records onto the vertices their secondary identity finds.
 
         Each record is looked up by the identity ``gc.attached_by`` names for its
@@ -661,7 +682,8 @@ class DBWriter:
         record never nulls a property the owners wrote in the same batch. A
         record that matches nothing is counted and not written: attaching never
         creates a vertex. Several matches follow ``endpoints_on_ambiguous``,
-        writing the record onto each vertex it keeps. A dry run only counts.
+        writing the record onto each vertex it keeps. A vertex *guard* hides is
+        never matched. A dry run only counts.
 
         Raises:
             ValueError: If an attached class has no selector in ``gc.attached_by``.
@@ -687,7 +709,13 @@ class DBWriter:
                 def _sync() -> tuple[list[dict[str, Any]], AttachStats]:
                     with self._connection(conn_conf) as db:
                         return self._resolve_attached(
-                            db, vcol, docs, selector, conn_conf=conn_conf, policy=policy
+                            db,
+                            vcol,
+                            docs,
+                            selector,
+                            conn_conf=conn_conf,
+                            policy=policy,
+                            guard=guard,
                         )
 
                 filled, stats = await asyncio.to_thread(_sync)
@@ -726,6 +754,7 @@ class DBWriter:
         *,
         conn_conf: DBConfig,
         policy: EndpointAmbiguityPolicy,
+        guard: FilterExpression | None = None,
     ) -> tuple[list[dict[str, Any]], AttachStats]:
         """Resolve one class's attached records to the rows to upsert.
 
@@ -749,7 +778,11 @@ class DBWriter:
         found: dict[int, list[dict[str, Any]]] = {}
         if any(resolvable):
             found = db.resolve_vertices(
-                vc.vertex_dbname(vcol), stored_docs, match_keys, identity_keys
+                vc.vertex_dbname(vcol),
+                stored_docs,
+                match_keys,
+                identity_keys,
+                **_guard_kwargs(guard),
             )
 
         filled: list[dict[str, Any]] = []
@@ -875,7 +908,12 @@ class DBWriter:
     # ------------------------------------------------------------------
 
     async def _enrich_extra_weights(
-        self, gc: GraphContainer, conn_conf: DBConfig, resource
+        self,
+        gc: GraphContainer,
+        conn_conf: DBConfig,
+        resource,
+        *,
+        guard: FilterExpression | None = None,
     ) -> None:
         """Copy stored vertex fields onto the edges of the documents that name the vertex.
 
@@ -883,7 +921,7 @@ class DBWriter:
         is read back from the database, and its fields become attributes of
         that document's edges. A document that produced several takes the first
         one the database holds; one that produced none, or none the database
-        holds, keeps its edges as cast.
+        holds, keeps its edges as cast. A vertex *guard* hides is not read.
         """
         rules = [
             (entry.edge, weight)
@@ -901,7 +939,7 @@ class DBWriter:
                         logger.error(f"{weight.name} not a valid vertex")
                         continue
                     self._enrich_edges_from_stored_vertex(
-                        db, gc, conn_conf, edge=edge, weight=weight
+                        db, gc, conn_conf, edge=edge, weight=weight, guard=guard
                     )
 
         await asyncio.to_thread(_sync)
@@ -914,6 +952,7 @@ class DBWriter:
         *,
         edge: Edge,
         weight: Weight,
+        guard: FilterExpression | None = None,
     ) -> None:
         """Apply one ``extra_weights`` rule to every document of *gc*."""
         name = weight.name
@@ -943,6 +982,7 @@ class DBWriter:
             keys.vertex_docs(name, key_docs),
             tuple(keys.vertex_fields(name, vc.identity_fields(name))),
             tuple(keys.vertex_fields(name, source_fields)),
+            **_guard_kwargs(guard),
         )
         for index in sorted(resolved):
             matches = resolved[index]
@@ -969,6 +1009,8 @@ class DBWriter:
         gc: GraphContainer,
         conn_conf: DBConfig,
         resource: Any | None = None,
+        *,
+        guard: FilterExpression | None = None,
     ) -> None:
         """Insert all edges in *gc*.
 
@@ -980,7 +1022,7 @@ class DBWriter:
 
         Endpoints declared by a secondary identity are resolved to their primary
         identity first, so the write itself stays a plain primary-key operation
-        on every backend.
+        on every backend; a vertex *guard* hides is never matched.
 
         Raises:
             AmbiguousEndpointError: on several matches under the ``error`` policy;
@@ -1019,6 +1061,7 @@ class DBWriter:
                             edge_id=edge_id,
                             match=endpoint_match,
                             vertex_config=vc,
+                            guard=guard,
                         )
 
                 edge_docs = await asyncio.to_thread(_sync)
@@ -1147,6 +1190,7 @@ class DBWriter:
         edge_id: tuple,
         match: Any,
         vertex_config: Any,
+        guard: FilterExpression | None = None,
     ) -> list:
         """Map secondary-identity endpoints to primary identities before writing."""
         source_fields = vertex_config.match_fields(edge.source, match.source)
@@ -1184,6 +1228,7 @@ class DBWriter:
             resolve_source=list(source_fields) != list(source_identity),
             resolve_target=list(target_fields) != list(target_identity),
             policy=policy,
+            guard=guard,
         )
         self.stats.add_endpoints(edge_id, stats)
         if keys is not None and keys.active:
@@ -1310,6 +1355,25 @@ class DBWriter:
         return projected, relation_name
 
 
+def require_read_guard(conn_conf: DBConfig) -> None:
+    """Refuse a guard, before any write, on a backend that cannot apply it.
+
+    Raises:
+        NotImplementedError: unless the backend declares ``supports_read_guard``.
+    """
+    try:
+        ConnectionManager.require(conn_conf, ConnectionCapability.READ_GUARD)
+    except ValueError as exc:
+        raise NotImplementedError(
+            f"{exc}; a guarded write is refused rather than looked up unguarded"
+        ) from exc
+
+
+def _guard_kwargs(guard: FilterExpression | None) -> dict[str, Any]:
+    """``{"guard": guard}`` for a lookup, or nothing when there is no guard."""
+    return {"guard": guard} if guard is not None else {}
+
+
 def check_stamp(
     gc: GraphContainer, schema: Schema, stamp: Mapping[str, Any] | None
 ) -> None:
@@ -1373,6 +1437,49 @@ def apply_stamp(
                     row[2].update(copy.deepcopy(values))
                 else:
                     rows[i] = (row[0], row[1], copy.deepcopy(values))
+
+
+def refuse_reserved_attributes(gc: GraphContainer, schema: Schema) -> None:
+    """Refuse an edge attribute that copies a reserved field onto a readable one.
+
+    An extra weight can carry a vertex field onto an edge as ``f`` or ``V@f``.
+    When ``f`` is reserved, the copy would be readable, and a read guard would
+    take an unstamped ``f`` for a label. Only an edge that declares the
+    attribute reserved itself may carry it; the stamp then overwrites it.
+
+    Raises:
+        ValueError: An edge attribute named after a reserved field.
+    """
+    reserved = schema.reserved_fields()
+    if not reserved:
+        return
+    core = schema.core_schema
+    vc = core.vertex_config
+    for edge_id, rows in gc.edges.items():
+        edge = core.edge_config.declared(edge_id)
+        own = (
+            {f.name for f in edge.properties if f.reserved}
+            if edge is not None
+            else set()
+        )
+        for row in rows:
+            if len(row) <= 2 or not isinstance(row[2], dict):
+                continue
+            for key in row[2]:
+                if key in own:
+                    continue
+                vertex, at, name = key.partition("@")
+                if at:
+                    copied = vertex in vc.vertex_set and any(
+                        f.reserved and f.name == name for f in vc.properties(vertex)
+                    )
+                else:
+                    copied = key in reserved
+                if copied:
+                    raise ValueError(
+                        f"edge {edge_id} carries attribute {key!r}, a copy of a "
+                        "reserved field; only the writer's stamp may set it"
+                    )
 
 
 def _reserved_by_owner(
