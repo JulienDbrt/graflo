@@ -133,13 +133,7 @@ The suites under `test/db` need the containers. The rest runs in-process — the
 uv run pytest test --ignore=test/db -n auto --dist loadfile
 ```
 
-Run the affected `test/db` suite locally before a change to a backend. The
-Memgraph compatibility workflow also runs `test/db/memgraphs` against 3.7.1,
-3.13.1 and 3.14.0 when its connector, shared Cypher code, tests or dependencies
-change; it can be started manually. Other live backend suites are not run in CI.
-A weekly workflow runs the container-free suites against the newest dependency
-versions `pyproject.toml` admits, rather than the ones `uv.lock` pins. Unit tests
-of backend code that need no database go in `test/backends/`, where CI runs them.
+CI does not run `test/db`, so run it locally before a change to a backend. A weekly workflow runs the same suites against the newest dependency versions `pyproject.toml` admits, rather than the ones `uv.lock` pins. Unit tests of backend code that need no database go in `test/backends/`, where CI runs them.
 
 Property tests (Hypothesis) run under the `ci` profile by default: a fifth of each test's example count, derandomized. Run them at the full count with `HYPOTHESIS_PROFILE=full` (or `--hypothesis-profile=full`). A test that sets its own count writes it through `examples()` in `test/hypothesis_budget.py`, so the profile still scales it.
 

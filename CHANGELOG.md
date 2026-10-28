@@ -9,16 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Memgraph** uses native composite indexes for multi-field vertex identities,
-  secondary indexes and upsert match keys, preserving the declared field order.
-  The Docker default is 3.14.0; a dedicated integration workflow checks 3.7.1,
-  3.13.1 and 3.14.0.
+- **Memgraph** builds one composite index, in declared field order, for a multi-field
+  vertex index, identity or upsert match key (Memgraph 3.2 or later). The Docker default is 3.14.0.
 
 ### Fixed
 
-- **Memgraph** retries a failed automatic index creation on a later upsert batch
-  instead of caching the failed attempt as an existing index. Cursors for vertex
-  index creation close on both success and failure.
+- **Memgraph** retries a failed automatic index creation on a later batch instead of
+  treating it as created.
 
 ## [1.24.0]
 
