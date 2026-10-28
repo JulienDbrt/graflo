@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
+
 from graflo.db.memgraph.conn import edge_property_index_query
 
 
@@ -87,10 +89,84 @@ def test_a_vertex_identity_is_indexed_and_constrained_unique(monkeypatch) -> Non
     db.define_vertex_indexes(schema.core_schema.vertex_config, schema)
 
     assert fake.statements == [
-        "CREATE INDEX ON :person(name)",
-        "CREATE INDEX ON :person(born)",
+        "CREATE INDEX ON :person(name, born)",
         "CREATE CONSTRAINT ON (n:person) ASSERT n.name, n.born IS UNIQUE",
     ]
+
+
+def test_a_composite_merge_index_is_created_once_per_connection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A multi-field identity keeps one ordered index across repeated batches."""
+    db, fake = _memgraph(monkeypatch)
+
+    for _ in range(2):
+        db.upsert_docs_batch(
+            [{"tenant": "acme", "id": "1"}], "person", match_keys=["tenant", "id"]
+        )
+
+    assert [s for s in fake.statements if s.startswith("CREATE INDEX")] == [
+        "CREATE INDEX ON :person(tenant, id)"
+    ]
+
+
+@pytest.mark.parametrize("already_exists", [False, True])
+def test_only_successful_merge_indexes_are_cached(
+    monkeypatch: pytest.MonkeyPatch, already_exists: bool
+) -> None:
+    """Retry failed DDL without interrupting ingestion or retrying existing indexes."""
+    db, fake = _memgraph(monkeypatch)
+    execute = _Cursor.execute
+    attempts: list[str] = []
+
+    def fail_first_index(self: _Cursor, query: str, params: object = None) -> None:
+        """Simulate a catalogue failure on the first index request."""
+        if query.startswith("CREATE INDEX"):
+            attempts.append(query)
+            if len(attempts) == 1:
+                raise RuntimeError("Index already exists" if already_exists else "busy")
+        execute(self, query, params)
+
+    monkeypatch.setattr(_Cursor, "execute", fail_first_index)
+    for _ in range(3):
+        db.upsert_docs_batch([{"id": "1"}], "person", match_keys=["id"])
+
+    assert len(attempts) == (1 if already_exists else 2)
+    assert sum(s.startswith("UNWIND") for s in fake.statements) == 3
+
+
+def test_merge_indexes_distinguish_field_groups(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An existing simple index does not stand in for a composite one."""
+    db, fake = _memgraph(monkeypatch)
+
+    for fields in [["id"], ["tenant", "id"], ["id"], ["tenant", "id"]]:
+        db.upsert_docs_batch(
+            [{"tenant": "acme", "id": "1"}], "person", match_keys=fields
+        )
+
+    assert [s for s in fake.statements if s.startswith("CREATE INDEX")] == [
+        "CREATE INDEX ON :person(id)",
+        "CREATE INDEX ON :person(tenant, id)",
+    ]
+
+
+def test_composite_indexes_quote_each_identifier(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A comma or backtick in a property name remains part of that name."""
+    db, fake = _memgraph(monkeypatch)
+
+    db.upsert_docs_batch(
+        [{"tenant, id": "acme", "external`id": "1"}],
+        "work item",
+        match_keys=["tenant, id", "external`id"],
+    )
+
+    assert fake.statements[0] == (
+        "CREATE INDEX ON :`work item`(`tenant, id`, `external``id`)"
+    )
 
 
 class _CatalogCursor(_Cursor):

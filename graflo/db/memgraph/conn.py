@@ -188,6 +188,28 @@ def edge_property_index_query(relation: str, field: str) -> str:
     return f"CREATE EDGE INDEX ON :{cypher_name(relation)}({cypher_name(field)})"
 
 
+def _create_vertex_index(conn: Any, label: str, fields: Sequence[str]) -> None:
+    """Create one label-property index, preserving composite field order.
+
+    Memgraph 3.2 and later support native composite indexes. An existing index
+    is accepted; other failures propagate so callers can retry on a later batch.
+
+    Args:
+        conn: An open, autocommit Memgraph driver connection.
+        label: Node label to index.
+        fields: Property names in the declared index order.
+    """
+    properties = ", ".join(cypher_name(field) for field in fields)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(f"CREATE INDEX ON :{cypher_name(label)}({properties})")
+    except Exception as error:
+        if "already exists" not in str(error).lower():
+            raise
+    finally:
+        cursor.close()
+
+
 def _create_unique_constraint(conn: Any, label: str, fields: list[str]) -> None:
     """Constrain *fields* of *label* unique together; an existing one is kept."""
     props = ", ".join(f"n.{cypher_name(f)}" for f in fields)
@@ -295,8 +317,8 @@ class MemgraphConnection(Connection):
         self.conn = mgclient.connect(**connect_kwargs)
         self.conn.autocommit = True
         self._database_name = config.database or "memgraph"
-        # (label, key) pairs whose MERGE index this connection already ensured.
-        self._merge_indexed: set[tuple[str, str]] = set()
+        # (label, ordered fields) whose MERGE index this connection ensured.
+        self._merge_indexed: set[tuple[str, tuple[str, ...]]] = set()
 
     def execute(self, query: str, **kwargs) -> QueryResult:
         """Execute a raw OpenCypher query against the database.
@@ -503,8 +525,8 @@ class MemgraphConnection(Connection):
         """Create indexes for vertex labels based on configuration.
 
         Iterates through all vertices defined in the configuration and creates
-        indexes for each specified field. Memgraph supports indexes on node
-        properties for faster lookups. Identity index is prepended when schema
+        indexes for each declared field group. Memgraph supports composite node
+        property indexes for faster lookups. Identity index is prepended when schema
         is provided (Memgraph has no implicit identity index).
 
         Parameters
@@ -516,7 +538,7 @@ class MemgraphConnection(Connection):
         Notes
         -----
         - Index creation is idempotent (existing indexes are skipped)
-        - Uses Memgraph syntax: ``CREATE INDEX ON :Label(property)``
+        - Uses Memgraph syntax: ``CREATE INDEX ON :Label(prop1, prop2)``
         - Errors are logged but don't stop processing of other indexes
         """
         if self.conn is None:
@@ -546,25 +568,17 @@ class MemgraphConnection(Connection):
                         index_list = [identity_idx, *index_list]
             storage_label = db_vertex.vertex_dbname(label) if db_vertex else label
             for index_obj in index_list:
-                for field in index_obj.fields:
-                    try:
-                        query = (
-                            f"CREATE INDEX ON :{cypher_name(storage_label)}"
-                            f"({cypher_name(field)})"
-                        )
-                        cursor = self.conn.cursor()
-                        cursor.execute(query)
-                        cursor.close()
-                        logger.debug(f"Created index on {storage_label}.{field}")
-                    except Exception as e:
-                        if "already exists" in str(e).lower():
-                            logger.debug(
-                                f"Index on {storage_label}.{field} already exists"
-                            )
-                        else:
-                            logger.warning(
-                                f"Failed to create index on {storage_label}.{field}: {e}"
-                            )
+                if not index_obj.fields:
+                    continue
+                try:
+                    _create_vertex_index(self.conn, storage_label, index_obj.fields)
+                except Exception as error:
+                    logger.warning(
+                        "Failed to create index on %s(%s): %s",
+                        storage_label,
+                        ", ".join(index_obj.fields),
+                        error,
+                    )
                 if index_obj.unique and index_obj.fields:
                     # A constraint gives MERGE no index, so it comes on top of them.
                     _create_unique_constraint(
@@ -839,23 +853,17 @@ class MemgraphConnection(Connection):
         if not sanitized_docs:
             return
 
-        # Auto-create index on match_keys for MERGE performance, once per
+        # Auto-create an index on match_keys for MERGE performance, once per
         # connection: the statement is DDL, and Memgraph takes a unique-access
         # lock for it even when the index exists.
-        missing = [k for k in match_keys if (class_name, k) not in self._merge_indexed]
-        if missing:
-            cursor = self.conn.cursor()
-            for key in missing:
-                try:
-                    cursor.execute(
-                        f"CREATE INDEX ON :{cypher_name(class_name)}({cypher_name(key)})"
-                    )
-                    logger.debug(f"Created index on {class_name}.{key}")
-                except Exception as e:
-                    if "already exists" not in str(e).lower():
-                        logger.debug(f"Index on {class_name}.{key}: {e}")
-                self._merge_indexed.add((class_name, key))
-            cursor.close()
+        merge_index = (class_name, tuple(match_keys_list))
+        if match_keys_list and merge_index not in self._merge_indexed:
+            try:
+                _create_vertex_index(self.conn, class_name, match_keys_list)
+            except Exception as error:
+                logger.debug("Index on %s%s: %s", class_name, match_keys_list, error)
+            else:
+                self._merge_indexed.add(merge_index)
 
         # Build the MERGE clause with match keys
         index_str = ", ".join(

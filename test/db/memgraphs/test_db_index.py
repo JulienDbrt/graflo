@@ -3,6 +3,10 @@
 Schema-driven vertex index creation is shared from cypher_cases.
 """
 
+import pytest
+
+from graflo.architecture.schema import Schema
+from graflo.connections.onto import MemgraphConfig
 from graflo.db.manager import ConnectionManager
 from test.db.cypher_cases.lifecycle import (
     test_create_vertex_index,
@@ -11,6 +15,68 @@ from test.db.cypher_cases.lifecycle import (
 __all__ = [
     "test_create_vertex_index",
 ]
+
+
+def test_composite_vertex_indexes(
+    conn_conf: MemgraphConfig, test_graph_name: str, clean_db: None
+) -> None:
+    """Schema and upserts preserve composite indexes and enforce the identity."""
+    label = test_graph_name
+    schema = Schema.model_validate(
+        {
+            "metadata": {"name": "composite_indexes"},
+            "core_schema": {
+                "vertex_config": {
+                    "vertices": [
+                        {
+                            "name": label,
+                            "properties": ["tenant", "id", "name", "born"],
+                            "identity": ["tenant", "id"],
+                        }
+                    ]
+                },
+                "edge_config": {"edges": []},
+            },
+            "db_profile": {
+                "db_flavor": "memgraph",
+                "vertex_indexes": {label: [{"fields": ["name", "born"]}]},
+            },
+        }
+    )
+    with ConnectionManager(connection_config=conn_conf) as db:
+        # Repeating schema definition must also accept existing composite indexes.
+        for _ in range(2):
+            db.define_vertex_indexes(schema.core_schema.vertex_config, schema)
+        db.upsert_docs_batch(
+            [
+                {"tenant": "acme", "id": "1", "name": "Alice", "born": 1990},
+                {"tenant": "other", "id": "1", "name": "Bob", "born": 1991},
+            ],
+            label,
+            match_keys=["tenant", "id"],
+        )
+        db.upsert_docs_batch(
+            [{"tenant": "acme", "id": "1", "name": "Alicia"}],
+            label,
+            match_keys=["tenant", "id"],
+        )
+
+        catalog = db.execute("SHOW INDEX INFO")
+        indexes = [dict(zip(catalog.columns, row)) for row in catalog]
+        assert {
+            tuple(row["property"])
+            for row in indexes
+            if row["label"] == label and row["index type"] == "label+property"
+        } == {("tenant", "id"), ("name", "born")}
+        assert sorted(db.fetch_docs(label), key=lambda doc: doc["tenant"]) == [
+            {"tenant": "acme", "id": "1", "name": "Alicia", "born": 1990},
+            {"tenant": "other", "id": "1", "name": "Bob", "born": 1991},
+        ]
+        with pytest.raises(Exception, match="[Uu]nique"):
+            db.execute(
+                f"CREATE (:{label} {{tenant: $tenant, id: $id}})", tenant="acme", id="1"
+            )
+        assert len(db.fetch_docs(label)) == 2
 
 
 def test_create_edge_index(conn_conf, test_graph_name, schema_obj):

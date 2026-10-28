@@ -219,6 +219,19 @@ docker compose --env-file .env --profile graflo.kafka up -d
 
 Memgraph is a high-performance, in-memory graph database that supports OpenCypher and uses the Bolt protocol.
 
+The default image is `memgraph/memgraph-mage:3.14.0`. The compatibility suite
+also runs against 3.7.1 (the original connector baseline) and 3.13.1. To check
+another release locally, set `IMAGE_VERSION` in `docker/memgraph/.env`, start
+the service and run `uv run pytest test/db/memgraphs`. Use a separate data volume
+for each release; an upgraded data directory is not a downgrade test fixture.
+
+Vertex indexes use native composite indexes: `fields: [tenant, id]` creates
+`CREATE INDEX ON :Label(tenant, id)`. Identity fields also get a uniqueness
+constraint. Relationship indexes remain one edge-type property index per field.
+
+The [Memgraph compatibility workflow](../.github/workflows/memgraph-compatibility.yml)
+runs these integration tests for connector changes and can also be started manually.
+
 **Connection Details:**
 - Bolt port: `7687` (default, configurable via `MEMGRAPH_PORT` in `.env`)
 - Uses Bolt protocol (bolt://) for connections
