@@ -219,6 +219,8 @@ docker compose --env-file .env --profile graflo.kafka up -d
 
 Memgraph is a high-performance, in-memory graph database that supports OpenCypher and uses the Bolt protocol.
 
+The default image is `memgraph/memgraph-mage:3.14.0`; GraFlo needs Memgraph 3.2 or later.
+
 **Connection Details:**
 - Bolt port: `7687` (default, configurable via `MEMGRAPH_PORT` in `.env`)
 - Uses Bolt protocol (bolt://) for connections
