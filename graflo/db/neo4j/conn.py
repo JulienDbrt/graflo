@@ -27,8 +27,9 @@ import logging
 from collections.abc import Sequence
 from typing import Any, LiteralString, cast
 
-from neo4j import GraphDatabase, NotificationDisabledCategory
+from neo4j import GraphDatabase, NotificationDisabledCategory, Result
 from neo4j.exceptions import ClientError
+from neo4j.time import Date, DateTime, Time
 
 from graflo.architecture.graph_types import EdgeDirection, GraphContainer, Index
 from graflo.architecture.schema import Schema
@@ -49,8 +50,14 @@ from graflo.db.cypher import (
     rel_absent_upsert_clause,
     rel_merge_props_map_from_row_index,
 )
-from graflo.db.cypher.delete import delete_nodes, delete_relationships
+from graflo.db.cypher.delete import (
+    delete_nodes,
+    delete_relationships,
+    delete_scoped_nodes,
+    delete_scoped_relationships,
+)
 from graflo.db.cypher.traversal import cypher_graph_neighbors
+from graflo.db.cypher.union import union_upsert_query, union_upsert_rows
 from graflo.db.field_type_support import assert_schema_supported
 from graflo.db.graph_introspection import (
     GraphSchemaInferencer,
@@ -82,6 +89,26 @@ _BENIGN_DUPLICATE_SCHEMA_CODES = frozenset(
 DEFAULT_NEO4J_USERNAME = "neo4j"
 
 
+def _native(value: Any) -> Any:
+    """*value* in plain Python: a Neo4j date, time or datetime becomes its ``datetime`` type."""
+    if isinstance(value, (DateTime, Date, Time)):
+        return value.to_native()
+    if isinstance(value, dict):
+        return {k: _native(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_native(v) for v in value]
+    return value
+
+
+def _rows(result: Result) -> list[dict[str, Any]]:
+    """The records of *result* as plain-Python dicts.
+
+    ``Result.data()`` keeps the driver's temporal types, which no caller can
+    serialize, so every document read goes through here.
+    """
+    return [_native(row) for row in result.data()]
+
+
 def _create_schema_rule(db: Any, query: str) -> None:
     """Run an index or constraint DDL statement; an existing rule is not an error."""
     try:
@@ -93,45 +120,6 @@ def _create_schema_rule(db: Any, query: str) -> None:
             )
             return
         raise
-
-
-def _union_upsert(
-    docs: list[dict[str, Any]],
-    class_name: str,
-    match_keys: Sequence[str],
-    union_fields: Sequence[str],
-) -> tuple[str, list[dict[str, Any]]]:
-    """A node upsert that unions *union_fields* with what the node holds.
-
-    Each row carries the replaced properties under ``p`` and the union ones
-    under ``u``, so ``n += row.p`` can never overwrite a stored list. Members
-    keep first-seen order, stored ones first; null members are dropped,
-    since ``null IN acc`` is never true and they would pile up.
-    """
-    index_str = ", ".join(
-        f"{cypher_name(k)}: row.p.{cypher_name(k)}" for k in match_keys
-    )
-    unions = ", ".join(
-        f"n.{q} = reduce(acc = [], x IN [y IN "
-        f"coalesce(n.{q}, []) + coalesce(row.u.{q}, []) "
-        "WHERE y IS NOT NULL] | CASE WHEN x IN acc THEN acc ELSE acc + x END)"
-        for q in (cypher_name(f, quoted=True) for f in union_fields)
-    )
-    query = f"""
-            WITH $batch AS batch
-            UNWIND batch as row
-            MERGE (n:{cypher_name(class_name)} {{ {index_str} }})
-            SET n += row.p
-            SET {unions}
-        """
-    batch = [
-        {
-            "p": {k: v for k, v in doc.items() if k not in union_fields},
-            "u": {k: doc[k] for k in union_fields if k in doc},
-        }
-        for doc in docs
-    ]
-    return query, batch
 
 
 class Neo4jConnection(Connection):
@@ -148,6 +136,7 @@ class Neo4jConnection(Connection):
 
     flavor = DBType.NEO4J
     supports_instance_delete = True
+    supports_scoped_delete = True
     supports_graph_export = True
     # A migration emitter is registered for this backend
     # (graflo/migrate/executor.py); the other six have none.
@@ -616,8 +605,10 @@ class Neo4jConnection(Connection):
         dry = kwargs.pop("dry", False)
         union_fields: tuple[str, ...] = tuple(kwargs.pop("union_fields", ()) or ())
 
+        params: dict[str, Any]
         if union_fields:
-            q, batch = _union_upsert(docs, class_name, match_keys, union_fields)
+            q = union_upsert_query(class_name, match_keys, union_fields)
+            params = {"data": union_upsert_rows(docs, union_fields)}
         else:
             index_str = ", ".join(
                 [f"{cypher_name(k)}: row.{cypher_name(k)}" for k in match_keys]
@@ -629,11 +620,11 @@ class Neo4jConnection(Connection):
             ON MATCH set n += row
             ON CREATE set n += row
         """
-            batch = docs
+            params = {"batch": docs}
         if not dry:
             # Consumed so the write has committed, and raised any error, before
             # the call returns; ``run`` alone returns before the commit.
-            self.execute(q, batch=batch).consume()
+            self.execute(q, **params).consume()
 
     def insert_edges_batch(
         self,
@@ -792,7 +783,7 @@ class Neo4jConnection(Connection):
             f"  {limit_clause}"
         )
         cursor = self.execute(q, **params.values)
-        r = [item["n"] for item in cursor.data()]
+        r = [item["n"] for item in _rows(cursor)]
         return r
 
     # TODO test
@@ -880,7 +871,7 @@ class Neo4jConnection(Connection):
         """
 
         cursor = self.execute(query, **params)
-        result = [item["r"] for item in cursor.data()]
+        result = [item["r"] for item in _rows(cursor)]
 
         # Note: unset_keys is not supported in Neo4j as we can't modify the result structure
         # after the query
@@ -926,6 +917,35 @@ class Neo4jConnection(Connection):
             match_keys_source,
             match_keys_target,
             chunk_size,
+        )
+
+    def delete_scoped_vertices(self, class_name: str, field: str, value: Any) -> None:
+        """Remove the nodes whose *field* equals *value*, with ``DETACH DELETE``."""
+        delete_scoped_nodes(
+            lambda query, params: self.execute(query, **params),
+            class_name,
+            field,
+            value,
+        )
+
+    def delete_scoped_edges(
+        self,
+        source_class: str,
+        target_class: str,
+        relation_name: str | None,
+        field: str,
+        value: Any,
+        *,
+        collection_name: str | None = None,
+    ) -> None:
+        """Remove the relationships of one type whose *field* equals *value*."""
+        delete_scoped_relationships(
+            lambda query, params: self.execute(query, **params),
+            source_class,
+            target_class,
+            relation_name,
+            field,
+            value,
         )
 
     def fetch_present_documents(
@@ -990,7 +1010,7 @@ class Neo4jConnection(Connection):
             if discriminant:
                 field = cypher_name(discriminant, quoted=True)
                 query += f" RETURN n.{field} AS key, count(*) AS value"
-                rows = self.execute(query, **params.values).data()
+                rows = _rows(self.execute(query, **params.values))
                 return {row["key"]: row["value"] for row in rows}
             query += " RETURN count(n) AS value"
         else:
@@ -1012,7 +1032,7 @@ class Neo4jConnection(Connection):
                     f"Unsupported aggregation type: {aggregation_function}"
                 )
 
-        rows = self.execute(query, **params.values).data()
+        rows = _rows(self.execute(query, **params.values))
         if aggregation_function == AggregationType.SORTED_UNIQUE:
             return [row["value"] for row in rows]
         return rows[0]["value"] if rows else None
@@ -1080,7 +1100,7 @@ class Neo4jConnection(Connection):
             edge_types=edge_types,
             limit=limit,
             schema=schema,
-            run=lambda query, params: self.execute(query, **params).data(),
+            run=lambda query, params: _rows(self.execute(query, **params)),
             filters=filters,
             guard=guard,
         )
@@ -1099,7 +1119,7 @@ class Neo4jConnection(Connection):
             RETURN properties(n) AS props
             {limit_clause}
         """
-        rows = self.execute(query).data()
+        rows = _rows(self.execute(query))
         return [
             strip_internal_properties(row["props"]) for row in rows if row.get("props")
         ]
@@ -1129,7 +1149,7 @@ class Neo4jConnection(Connection):
                    properties(r) AS edge_props
             {limit_clause}
         """
-        rows = self.execute(query).data()
+        rows = _rows(self.execute(query))
         result: list[list[dict[str, Any]]] = []
         for row in rows:
             source_doc = strip_internal_properties(row.get("source_props") or {})

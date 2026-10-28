@@ -5,7 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [
+## [1.24.1]
+
+### Added
+
+- **FalkorDB**: applies a read guard (`supports_read_guard`) on every node and relationship of
+  `graph_neighbors` and `traverse` and to `resolve_vertices`, exports the graph
+  (`supports_graph_export`), and writes `merge: union` list fields (`supports_union_merge`).
+- **`GraphEngine.delete_scoped`** / **`DBWriter.delete_scoped`**: remove the vertices and edges of
+  the given types whose scope field equals a value (`supports_scoped_delete`; Neo4j and FalkorDB).
+- **`merge_manifests`**: `renames.<side>.connectors` renames a side's connectors; references to
+  them (`resource_connector`, `connector_connection`, an API connector's `parent`) follow.
+
+### Changed
+
+- **Push connectors**: the name is part of a push connector's identity, so a manifest can hold
+  several; their hashes change.
+- **Lifts** (`provenance`, `state`, `access`): a type, edge or property of the aspect's vocabulary
+  that the manifest already declares is kept and gains its missing properties and IRIs, instead of
+  being refused; only another key, IRI, property type, `reserved`, `merge` or `directed` is refused,
+  every difference in one `LiftError`. Lifting twice is lifting once.
+- **`plan_access`**: `minted_vertices` and `minted_relations` are removed; it plans against the
+  manifest as the earlier aspects of the same lift leave it.
+
+### Fixed
+
+- **`merge_manifests`**: a connector renamed by `prefix_right` takes an API connector's `parent`
+  reference with it.
+
+## [1.24.1]
 
 ### Changed
 
@@ -18,6 +46,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PostgreSQL** builds declared edge indexes.
 - **Neo4j**: a declared uniqueness constraint the server refuses is an error; only the identity
   falls back to a plain index.
+- **File backend**: applies a read guard (`supports_read_guard`) to `fetch_docs`, `resolve_vertices`,
+  `graph_neighbors` and `traverse`, and unions `merge: union` fields (`supports_union_merge`).
+- **File backend**: reads fold records by identity, so an upsert written twice reads as one vertex
+  or edge, as on a database. Every read scans the whole collection it reads.
+- **`lookup_candidates`** and **`gather_candidates`**: candidates that tie on lane are ordered by
+  type and key, never by the database's row order.
+
+### Fixed
+
+- **File backend**: a connection sees writes published after its first read, its own or another
+  connection's; `fetch_edges` applies `filters` before `limit`.
+- **Neo4j**: reads return Neo4j dates, times and datetimes as Python `date`, `time` and `datetime`,
+  not the driver's `neo4j.time` types.
+- **`graph_neighbors`** on Neo4j, Memgraph, FalkorDB and ArangoDB returns the walked edges as well
+  as the reached vertices, in the same rows as other backends, and `limit` caps the edges as
+  documented. On ArangoDB, `limit` counts distinct reached vertices.
 
 ## [1.24.0]
 

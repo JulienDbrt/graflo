@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import copy
+
 import pytest
 
 from graflo.architecture.contract.manifest import GraphManifest
@@ -100,7 +102,7 @@ def test_provenance_for_an_unknown_type_is_refused() -> None:
         )
 
 
-def test_a_name_the_aspect_would_mint_and_that_already_exists_is_refused() -> None:
+def test_a_type_the_aspect_would_mint_and_that_is_keyed_otherwise_is_refused() -> None:
     config = {
         "schema": {
             "metadata": {"name": "m", "version": "1.0.0"},
@@ -118,8 +120,117 @@ def test_a_name_the_aspect_would_mint_and_that_already_exists_is_refused() -> No
             },
         }
     }
-    with pytest.raises(LiftError, match="already has"):
+    with pytest.raises(LiftError, match=r"Agent is keyed by \['id'\]"):
         plan_provenance(_manifest(config))
+
+
+def _carrying_the_vocabulary() -> GraphManifest:
+    """A kit's manifest: it carries the aspect's types, extended with its own fields."""
+    lifted = apply_evolution(_manifest(), plan_provenance(_manifest()))
+    config = lifted.model_dump(mode="json", by_alias=True)
+    for vertex in config["schema"]["core_schema"]["vertex_config"]["vertices"]:
+        if vertex["name"] == "Agent":
+            vertex["properties"].append({"name": "email", "type": "STRING"})
+            vertex["description"] = "A person, keyed by email."
+    return _manifest(config)
+
+
+def test_types_that_conform_are_kept_and_nothing_is_added_twice() -> None:
+    manifest = _carrying_the_vocabulary()
+
+    ops = plan_provenance(manifest, attach=["Ticket"])
+
+    assert [op.op for op in ops] == ["add_edges"]
+    core = apply_evolution(manifest, ops).require_schema().core_schema
+    assert "email" in core.vertex_config.property_names("Agent")
+    assert sorted(e.edge_id for e in core.edge_config.edges) == [
+        ("SourceRecord", "Agent", "wasAttributedTo"),
+        ("Ticket", "SourceRecord", "wasDerivedFrom"),
+    ]
+
+
+def test_a_manifest_already_lifted_plans_nothing() -> None:
+    assert plan_provenance(_carrying_the_vocabulary()) == []
+
+
+#: A kit that declares only what it fills: no content hash, no media type, no
+#: role on the attribution, no field IRI, a narrower match on its agents.
+PARTIAL_KIT: dict = {
+    "schema": {
+        "metadata": {"name": "kit", "version": "1.0.0"},
+        "graph": {
+            "vertex_config": {
+                "vertices": [
+                    {
+                        "name": "SourceRecord",
+                        "semantics": {"iri": f"{PROV}Entity"},
+                        "properties": [
+                            {"name": "source_record_id", "type": "STRING"},
+                            {"name": "source_uri", "type": "STRING"},
+                            {"name": "retrieved_at", "type": "DATETIME"},
+                            {"name": "repo_id", "type": "STRING"},
+                        ],
+                        "identity": ["source_record_id"],
+                    },
+                    {
+                        "name": "Agent",
+                        "semantics": {
+                            "iri": f"{PROV}Agent",
+                            "exact_match": [f"{PROV}Agent"],
+                        },
+                        "properties": [{"name": "agent_id", "type": "STRING"}],
+                        "identity": ["agent_id"],
+                    },
+                ]
+            },
+            "edge_config": {
+                "edges": [
+                    {
+                        "source": "SourceRecord",
+                        "target": "Agent",
+                        "relation": "wasAttributedTo",
+                    }
+                ]
+            },
+        },
+    }
+}
+
+
+def test_a_kit_that_carries_part_of_the_vocabulary_gains_the_rest() -> None:
+    kit = _manifest(PARTIAL_KIT)
+
+    lifted = apply_evolution(kit, plan_provenance(kit))
+
+    core = lifted.require_schema().core_schema
+    reference = apply_evolution(_manifest(), plan_provenance(_manifest()))
+    whole = reference.require_schema().core_schema
+    for name in ("SourceRecord", "Agent"):
+        have = {f.name: f for f in core.vertex_config.properties(name)}
+        for field in whole.vertex_config.properties(name):
+            assert have[field.name].type == field.type
+            assert have[field.name].semantics == field.semantics
+        assert core.vertex_config[name].semantics == whole.vertex_config[name].semantics
+    assert "repo_id" in core.vertex_config.property_names("SourceRecord")
+    (edge,) = core.edge_config.edges
+    assert [f.name for f in edge.properties] == ["role"]
+    assert edge.semantics == whole.edge_config.edges[0].semantics
+    assert plan_provenance(lifted) == []
+
+
+def test_every_contradiction_is_named_at_once() -> None:
+    config = copy.deepcopy(PARTIAL_KIT)
+    record = config["schema"]["graph"]["vertex_config"]["vertices"][0]
+    record["semantics"] = {"iri": "https://schema.org/Message"}
+    record["properties"].append({"name": "content_hash", "type": "INT"})
+
+    with pytest.raises(LiftError) as refused:
+        plan_provenance(_manifest(config))
+
+    assert "SourceRecord is grounded as 'https://schema.org/Message'" in str(
+        refused.value
+    )
+    assert "SourceRecord.content_hash is" in str(refused.value)
 
 
 def test_an_unknown_aspect_is_refused_by_name() -> None:

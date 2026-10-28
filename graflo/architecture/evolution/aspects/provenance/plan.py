@@ -12,8 +12,9 @@ from collections.abc import Iterable
 
 from graflo.architecture.contract.manifest import GraphManifest
 
-from ...ops import AddEdgesOp, AddVerticesOp, ManifestOp
+from ...ops import ManifestOp
 from ..base import LiftError
+from ..join import join
 from . import vocabulary as vocab
 
 
@@ -26,6 +27,12 @@ def plan_provenance(
     nothing else to attach: it is what makes the schema *able* to say where a
     fact came from, which is the question the world-model profile asks.
 
+    The vocabulary is joined with what the manifest has
+    (:func:`~graflo.architecture.evolution.aspects.join.join`): a
+    ``SourceRecord`` or ``Agent`` it already declares keeps its own properties
+    and gains the aspect's missing ones, so manifests that carry the
+    vocabulary, such as source kits, compose and lift in any order.
+
     Args:
         manifest: the manifest to lift, already ``finish_init()``-ed.
         attach: vertex type names that gain a ``wasDerivedFrom`` edge to
@@ -33,8 +40,8 @@ def plan_provenance(
             exists or is added by the same change set.
 
     Raises:
-        LiftError: the manifest has no schema, or already has a type named
-            ``SourceRecord`` or ``Agent``.
+        LiftError: the manifest has no schema, or declares part of the
+            vocabulary in a way that contradicts it.
     """
     schema = manifest.graph_schema
     if schema is None:
@@ -42,20 +49,14 @@ def plan_provenance(
             "cannot lift a manifest with no schema block: there are no types to "
             "attach provenance to"
         )
-    existing = set(schema.core_schema.vertex_config.vertex_set)
-    taken = sorted({vocab.SOURCE_RECORD, vocab.AGENT} & existing)
-    if taken:
-        raise LiftError(
-            f"the lift would mint types the manifest already has: {taken}. Rename "
-            "them first, or leave the provenance aspect out if they already serve "
-            "this role"
-        )
-    edges = [vocab.derived_from_edge(name) for name in attach]
-    edges.append(vocab.attributed_to_edge())
-    return [
-        AddVerticesOp(vertices=[vocab.source_record_vertex(), vocab.agent_vertex()]),
-        AddEdgesOp(edges=edges),
-    ]
+    return join(
+        schema.core_schema,
+        vertices=[vocab.source_record_vertex(), vocab.agent_vertex()],
+        edges=[
+            *(vocab.derived_from_edge(name) for name in attach),
+            vocab.attributed_to_edge(),
+        ],
+    )
 
 
 __all__ = ["plan_provenance"]

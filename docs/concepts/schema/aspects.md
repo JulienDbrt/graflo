@@ -53,6 +53,25 @@ lists the aspects by name.
 A lift changes the **schema only**. Nothing fills the new types until a
 resource does; see [Filling the provenance types](#filling-the-provenance-types).
 
+### What if the manifest already has some of the vocabulary?
+
+A lift adds what the manifest lacks and keeps what it already declares. An
+existing type, edge or property of the aspect's vocabulary is kept and gains
+only its missing parts:
+
+| Already declared | The lift |
+|---|---|
+| nothing of that name | adds the type, edge or property |
+| the same thing | keeps it |
+| a type without some of the aspect's properties | adds those properties |
+| a type, edge or property with no IRI | adds the aspect's IRI |
+| further properties, secondary identities, a description | keeps them as they are |
+| another key, IRI, property type, `reserved` or `merge`, or another `directed` on an edge | refuses |
+
+Lifting twice is the same as lifting once. Composing manifests that each carry
+part of the vocabulary and then lifting gives the same schema as lifting each
+one and then composing them.
+
 ## The provenance aspect
 
 Two types and two edges:
@@ -81,6 +100,10 @@ Which types gain `wasDerivedFrom`:
 
 `SourceRecord -wasAttributedTo-> Agent` is added even when nothing else is, so
 the schema can always say who produced a record.
+
+A source kit can declare its own `SourceRecord` with only the properties it
+fills, plus its own. The lift adds the rest of the table to it, as for any
+[vocabulary the manifest already has](#what-if-the-manifest-already-has-some-of-the-vocabulary).
 
 ## Filling the provenance types
 
@@ -203,7 +226,8 @@ engine.ingest(manifest=manifest, target_db_config=conn_conf, ingestion_params=pa
 
 What a zone is and which zones a reader opens are not part of the graph; your
 service decides both. Combine several conditions with `conjoin()`. Guards and
-`union` labels are supported on Neo4j; other backends refuse them. The guard
+`union` labels are supported on Neo4j and the file backend; other backends
+refuse them. The guard
 names the field as stored, so do not rename `access_zones` in `db_profile`. A
 reserved field cannot be part of an identity.
 
@@ -234,15 +258,15 @@ A lift never guesses. It stops with a `LiftError` that names what is missing
 when:
 
 - an aspect name is unknown, or the manifest has no schema block;
-- a type the lift would add already exists (`SourceRecord`, `Agent`,
-  `MachineState`, …): rename it first, or leave that aspect out if your type
-  already plays its role;
+- the manifest declares part of the vocabulary differently: another key, IRI,
+  property type, `reserved` or `merge` (`SourceRecord` keyed by `id`, zones
+  that merge by `replace` where the spec says `union`). Every difference is
+  named in one error; rename or change those first;
 - the spec names a type or property the manifest does not have;
 - a `stateful` or `observed` type has no key to point back to, or a `stateful`
   property is part of the key;
 - a type relies on the identity fallback and the spec gives it no `identity`;
-- `access` is named with nothing to label, a type already declares
-  `access_zones`, or an edge is given `shared`.
+- `access` is named with nothing to label, or an edge is given `shared`.
 
 ## See also
 
