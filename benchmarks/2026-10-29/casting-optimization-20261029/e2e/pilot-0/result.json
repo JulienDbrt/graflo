@@ -1,0 +1,95 @@
+{
+  "variant": "pilot",
+  "trial": 0,
+  "documents": 2000,
+  "seconds": 0.3250647280001431,
+  "client_cpu_seconds": 0.2788081659999999,
+  "server_cpu_seconds": 0.046622,
+  "affinity": [
+    2
+  ],
+  "source_file": "/repo/graflo/architecture/graph_types/merge.py",
+  "source_sha256": "e2822ce33f5c7ccd1732e4c1451a67b1d1df34fabc73fa720811920bb41348e9",
+  "memory_before_ingestion": {
+    "server": {
+      "VmHWM": 32595968,
+      "VmRSS": 32595968
+    },
+    "client": {
+      "VmHWM": 187277312,
+      "VmRSS": 187277312
+    },
+    "server_cgroup_peak": 58884096,
+    "client_cgroup_peak": 280555520
+  },
+  "kernel_peaks_at_ingestion_end": {
+    "server": {
+      "VmHWM": 44490752,
+      "VmRSS": 44490752
+    },
+    "client": {
+      "VmHWM": 194560000,
+      "VmRSS": 194560000
+    },
+    "server_cgroup_peak": 72200192,
+    "client_cgroup_peak": 287993856
+  },
+  "files": [
+    {
+      "format": "csv",
+      "bytes": 166523,
+      "sha256": "b9422cfc5288eaf2ba1155ee6a474e7e11ab76b3f5f7251ed276a8a044108857"
+    },
+    {
+      "format": "jsonl",
+      "bytes": 269790,
+      "sha256": "efbaf67055949a17417c8c3559a793f84b3b5a8564eaa481a1a2e0a63bc25241"
+    }
+  ],
+  "typed_nodes_sha256": "1f2c01d6eeae5972318e746fefda7b055f24ab357d71eb7d8331961b129a7e47",
+  "typed_edges_sha256": "786f338d9c345b77ef10f068019c12bc2ef3aa7c1482c090a8d315db5e82cc24",
+  "items": 2000,
+  "categories": 1000,
+  "edges": 2000,
+  "constraints": [
+    {
+      "type": "UNIQUE",
+      "label": "Category",
+      "properties": [
+        "tenant",
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "Item",
+      "properties": [
+        "tenant",
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    }
+  ],
+  "indexes": [
+    [
+      "Category",
+      [
+        "tenant",
+        "id"
+      ]
+    ],
+    [
+      "Item",
+      [
+        "tenant",
+        "id",
+        "score",
+        "seq"
+      ]
+    ]
+  ],
+  "passed": true
+}

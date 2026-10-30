@@ -1,0 +1,32 @@
+{
+  "base_commit": "12431f62124988ddd12a949841ef55d9c956ace3",
+  "branch": "perf/casting-hot-path",
+  "candidate_files": [
+    "graflo/architecture/graph_types/merge.py"
+  ],
+  "python": "3.11.13",
+  "container": "graflo-cast-profile-20261029",
+  "resources": {
+    "cpu_quota": 2,
+    "cpuset": "2,3",
+    "memory_bytes": 2147483648
+  },
+  "source_paths": {
+    "base": "/repo",
+    "candidate": "/candidate"
+  },
+  "primary_run": "paired-cast-v2.jsonl",
+  "oracle": "Every raw Pydantic field, scalar type/float bits, mapping/container type/order, alias topology, input mutations and failures. Source-root substitution is restricted to traceback fields. Independent expected values and relation endpoints are also checked.",
+  "warmup_and_validation": "Initialization, warmup, GC-before-run and all serialization/validation are excluded from measured intervals. Normal GC remains enabled during timing. CPU and wall seconds retained.",
+  "interference_policy": "No test, profiling or extra interpreter runs in the measured Docker cgroup during this primary run. Earlier empty-filter run has a one-off import probe and is not evidence for the current candidate.",
+  "harness_sha256": {
+    "micro_fusion.py": "e2ec3a3904797b09a23f3aecd56e343692db49f9e237e822768c2435fcac2880",
+    "paired_cast.py": "9b29eb5245ce16f9d3574a89d5dca2da2a106fa5802c8cb5f95d450078410c1b",
+    "profile_cast.py": "73fe78b696af27828c76d760c643f0b16e6081d137a55a9db7244c1ceb277b4e",
+    "cases.py": "1299fc84ad0e6d6b0e9a93389054d14abf24b18dfa23133f435fcf60e38ab435",
+    "differential_fusion.py": "8b54ae96a8e7ddbabbbefe2d31de09c1143eadadc87a7f5f7074ec25ff9d47fc",
+    "cast_worker.py": "f4ccbebdcb29d119e2cf0e52bd9f6e824459965ef21722a2ec2c33e83fb02155",
+    "import_probe.py": "b307643d2199d8ef7a28e40b4f84974b0cd6233cce7cd2038a2549549371ba0f"
+  },
+  "publication": "Local only; no push or PR before 2026-10-30 Europe/Madrid."
+}

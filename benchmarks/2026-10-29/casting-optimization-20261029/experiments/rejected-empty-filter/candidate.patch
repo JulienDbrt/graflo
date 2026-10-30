@@ -1,0 +1,28 @@
+diff --git a/graflo/architecture/graph_types/merge.py b/graflo/architecture/graph_types/merge.py
+index 3a6a026..f0cacdf 100644
+--- a/graflo/architecture/graph_types/merge.py
++++ b/graflo/architecture/graph_types/merge.py
+@@ -64,6 +64,22 @@ def fuse_doc_basis(
+     """
+     if not docs:
+         return docs
++    # Fully mapped vertex steps can be followed by several empty transform
++    # fragments. These contribute nothing to a fusion. Only scan that shape:
++    # small groups and groups of nonempty observations should not pay for it.
++    # Exact types preserve the general path's custom iteration/hash behaviour.
++    if (
++        type(docs) is list
++        and len(docs) > 2
++        and type(docs[0]) is dict
++        and docs[0]
++        and type(docs[1]) is dict
++        and not docs[1]
++        and type(index_keys) is tuple
++        and all(type(key) is str for key in index_keys)
++        and all(type(doc) is dict for doc in docs)
++    ):
++        docs = [doc for doc in docs if doc]
+     if isinstance(docs[0], VertexRep):
+         groups: dict[tuple[bool, str | None], list[VertexRep]] = {}
+         for rep in docs:
+

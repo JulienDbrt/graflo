@@ -1,0 +1,35 @@
+DRAFT ONLY — benchmark acceptance gate not met; do not submit yet.
+Earliest authorized publication date: 2026-10-30 Europe/Madrid. Nothing is scheduled.
+
+Title: perf: reduce repeated document-fusion overhead during casting
+
+Casting repeatedly fuses ordinary dictionaries and VertexRep observations. The existing implementation constructs four nested helper functions on each fusion group and routes ordinary dictionaries through the general representation checks. This change moves the helpers to module scope and specializes ordinary lists of dictionaries. Empty fragments are queued until merging, so callbacks from later keys can still populate them.
+
+The general path remains for subclasses and VertexRep inputs. Regression coverage checks identity hashing, keyless fragments, union behaviour, shallow references, ordering, invalid inputs, callback-driven mutations and errors. Two properties compare plain and general fusion paths over generated inputs. An opt-in casting benchmark checks values outside its measured interval and adds no timing threshold to CI.
+
+Validation on Python 3.11.13 / Linux aarch64:
+- 5,220 offline tests passed; 14 skipped; one existing rdflib deprecation warning.
+- All pre-commit hooks, including Ruff and ty, passed.
+- Full-budget targeted tests and 3,000 differential fusion examples passed on the final source.
+- Eight fresh C 4.22.3 databases: 800,000 Item nodes, 8,000 Category nodes and 800,000 edges read and independently checked in full. Typed graph hashes match exactly across all eight runs. The order of index-listing rows varies between reference trials; full index contents and property order match, with raw differences retained.
+
+Performance remains conditional:
+- Independent fresh-process casting confirmation, 12 AB/BA pairs of 50,000 documents, batch 1,000: 4.09% median CPU time reduction, speedup 95% paired bootstrap CI 1.0340–1.0570x.
+- The planned persistent-process confirmation does not corroborate this: -3.98% median time reduction, speedup CI 0.9010–1.0786x.
+- Four fresh-server file-ETL pairs show 2.46% median wall-time reduction; this is exploratory, not a precise or general speedup claim.
+- A/A control CI includes 1. All outliers, rejected variants and counterexamples are retained. The global predeclared gate is not met. Obtain a quiet, controlled measurement environment and resolve the discrepancy before proposing merge. No further tuning or selective repetitions were used to turn this into a positive result.
+
+Scope: one fusion module, regression tests, opt-in benchmark and changelog; no changes to DB backends, executor defaults or CI live-database workflows.
+
+Local branch: perf/casting-hot-path
+Commit: 833ca760e1ae2daacd084d8f1a3ddf84a9b0f022 (unsigned local commit)
+Base: 12431f62124988ddd12a949841ef55d9c956ace3
+The installed editable distribution metadata still says 1.24.0; both sides import the checked 1.24.1 source with identical read-only dependencies. Only the package version string changed upstream between those dependency locks.
+
+Attach the local report, raw samples and executable harness before publication. Do not substitute a link to a local file in a public PR.
+
+Repository checklist for a future submission:
+- [x] Tests added; the documented offline CI suite passes; live FalkorDB ETL checked separately. Other live DB suites were not run.
+- [x] Changelog updated; no public configuration or user-visible behaviour change intended.
+- [ ] CLA check to be verified by the existing account status at publication; no acceptance is made by this draft.
+- [ ] Performance discrepancy resolved under a new, controlled protocol.

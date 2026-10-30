@@ -1,0 +1,7 @@
+{
+  "semantic_equal": true,
+  "raw_tracebacks_equal": false,
+  "expected_difference": "helper names, source paths and line positions; original tracebacks retained",
+  "base": "diagnostic-base.json",
+  "candidate": "diagnostic-candidate-final.json"
+}

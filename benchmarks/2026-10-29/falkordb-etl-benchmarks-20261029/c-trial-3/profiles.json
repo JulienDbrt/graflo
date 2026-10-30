@@ -1,0 +1,69 @@
+{
+  "point": {
+    "query": "MATCH (n:Item {tenant:$tenant,id:$id}) RETURN n.seq,n.revision,n.score",
+    "params": {
+      "tenant": "tenant0",
+      "id": "0"
+    },
+    "plan": [
+      "Results | Records produced: 1, Execution time: 0.000125 ms",
+      "    Project | Records produced: 1, Execution time: 0.000751 ms",
+      "        Node By Index Scan | (n:Item) | Records produced: 1, Execution time: 0.013500 ms"
+    ]
+  },
+  "one_hop": {
+    "query": "MATCH (n:Item {tenant:$tenant,id:$id})-[:IN_CATEGORY]->(g:Category) RETURN g.tenant,g.id",
+    "params": {
+      "tenant": "tenant9",
+      "id": "791"
+    },
+    "plan": [
+      "Results | Records produced: 1, Execution time: 0.000208 ms",
+      "    Project | Records produced: 1, Execution time: 0.000750 ms",
+      "        Conditional Traverse | (n)->(g:Category) | Records produced: 1, Execution time: 0.049419 ms",
+      "            Node By Index Scan | (n:Item) | Records produced: 1, Execution time: 0.010375 ms"
+    ]
+  },
+  "two_hops": {
+    "query": "MATCH (n:Item {tenant:$tenant,id:$id})-[:IN_CATEGORY]->(:Category)<-[:IN_CATEGORY]-(peer:Item) RETURN count(peer)",
+    "params": {
+      "tenant": "tenant8",
+      "id": "583"
+    },
+    "plan": [
+      "Results | Records produced: 1, Execution time: 0.000167 ms",
+      "    Aggregate | Records produced: 1, Execution time: 0.009710 ms",
+      "        Conditional Traverse | (n)->(peer:Item) | Records produced: 150, Execution time: 0.083709 ms",
+      "            Node By Index Scan | (n:Item) | Records produced: 1, Execution time: 0.007417 ms"
+    ]
+  },
+  "range_sort": {
+    "query": "MATCH (n:Item) WHERE n.tenant=$tenant AND n.score >= 990 RETURN n.seq,n.score ORDER BY n.score DESC,n.seq LIMIT 10",
+    "params": {
+      "tenant": "tenant7",
+      "id": "375"
+    },
+    "plan": [
+      "Results | Records produced: 10, Execution time: 0.000501 ms",
+      "    Limit | Records produced: 10, Execution time: 0.000915 ms",
+      "        Sort | Records produced: 10, Execution time: 0.005785 ms",
+      "            Project | Records produced: 150, Execution time: 0.042013 ms",
+      "                Node By Index Scan | (n:Item) | Records produced: 150, Execution time: 0.193584 ms"
+    ]
+  },
+  "group_count": {
+    "query": "MATCH (g:Category)<-[:IN_CATEGORY]-(n:Item) WHERE g.tenant=$tenant RETURN g.id,count(n) AS cnt ORDER BY cnt DESC,g.id LIMIT 10",
+    "params": {
+      "tenant": "tenant6",
+      "id": "167"
+    },
+    "plan": [
+      "Results | Records produced: 10, Execution time: 0.000708 ms",
+      "    Limit | Records produced: 10, Execution time: 0.000627 ms",
+      "        Sort | Records produced: 10, Execution time: 0.007956 ms",
+      "            Aggregate | Records produced: 100, Execution time: 0.826227 ms",
+      "                Conditional Traverse | (n)->(n) | Records produced: 15000, Execution time: 0.815206 ms",
+      "                    Node By Index Scan | (g:Category) | Records produced: 100, Execution time: 0.013746 ms"
+    ]
+  }
+}

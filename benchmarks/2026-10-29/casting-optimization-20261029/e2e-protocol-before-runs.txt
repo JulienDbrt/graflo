@@ -1,0 +1,40 @@
+Validation bout en bout, définie avant les passages mesurés
+
+Objectif : vérifier sur une vraie base que le chemin de fusion conserve tous
+les attributs et les relations, et mesurer séparément l'effet sur l'ingestion.
+Ces passages complètent la confirmation primaire de casting ; ils ne la
+remplacent pas. Aucun lecteur concurrent n'est ajouté à ce contrôle.
+
+Une répétition de mise au point à 2 000 documents précède les mesures.
+Puis quatre paires de 100 000 documents CSV/JSONL, ordre AB/BA/AB/BA.
+Chaque passage a son serveur neuf, graphe neuf et processus client neuf.
+Même jeu de fichiers et mêmes dépendances pour A et B. La référence est
+12431f62124988ddd12a949841ef55d9c956ace3, la candidate est perf/casting-hot-path.
+Les empreintes du code de fusion sont enregistrées à chaque passage.
+
+Serveur C 4.22.3, image immuable :
+falkordb/falkordb@sha256:725b74d400124862c9e0f318c56bfb3c55b97cd7f301d9dfe8685980fb3c8195
+Serveur cpuset 0,1, quota 2 CPU, mémoire 2 Gio ; module THREAD_COUNT 2,
+OMP_THREAD_COUNT 2, snapshots et AOF désactivés explicitement.
+Client cpuset 2, quota 1 CPU, mémoire 3 Gio ; affinité 2 avant les imports.
+Client inline, n_cores=1, batch 1000, prefetch 2, une source, une écriture et
+un batch en vol. Réseau local privé par espace réseau du serveur.
+Machine partagée : l'affinité ne réserve pas le CPU et ne fixe pas sa fréquence.
+
+Le chronométrage comprend lecture des fichiers locaux, transformations,
+casting et écritures. Imports, création du schéma, copie des fichiers et
+vérification exhaustive sont hors intervalle. Temps mural, CPU client et
+CPU du cgroup serveur sont rapportés distinctement.
+
+Après ingestion, lecture et validation des 100 000 Item, 1 000 Category et
+100 000 arêtes ; types exacts des attributs, bits des flottants, ordre des
+propriétés conservé dans les empreintes. Vérification des index et contraintes.
+Les observations typées complètes sont archivées en JSONL gzip.
+VmHWM et memory.peak sont capturés avant et après ingestion ; ce sont des
+maxima de vie du processus/cgroup qui incluent son démarrage, pas un pic
+exclusif de la phase de casting. La vérification ultérieure en est exclue.
+
+Conserver tous les passages, sans exclusion d'outlier. Avec quatre paires,
+ces mesures restent une corroboration exploratoire et ne permettent pas
+une affirmation de petit gain précis. Toute différence fonctionnelle arrête
+la campagne et doit être expliquée, corrigée et conservée comme preuve.

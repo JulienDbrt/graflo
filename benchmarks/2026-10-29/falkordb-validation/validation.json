@@ -1,0 +1,49 @@
+{
+  "status": "local_only_no_push_no_pr",
+  "earliest_publication": "2026-10-30",
+  "timezone": "Europe/Madrid",
+  "base_sha": "1ee6e608c9f757e5f303b4358f331e391156cc45",
+  "commit_sha": "3230dfb28d05380b5e0517ec7d6c88fc88f3fe2e",
+  "branch": "feat/falkordb-c-rust-compatibility",
+  "python": "3.11.13",
+  "platform": "Linux aarch64",
+  "uv": "0.12.21",
+  "dependencies": {
+    "falkordb": "1.8.1",
+    "redis": "8.1.0",
+    "pytest": "9.1.1",
+    "ty": "0.0.91"
+  },
+  "results": {
+    "FalkorDB 4.22.3": {
+      "passed": 184,
+      "failed": 0,
+      "skipped": 21,
+      "seconds": 3.434
+    },
+    "FalkorDB 6.0.3": {
+      "passed": 184,
+      "failed": 0,
+      "skipped": 21,
+      "seconds": 81.553
+    },
+    "offline": {
+      "passed": 5156,
+      "failed": 0,
+      "skipped": 13,
+      "seconds": 24.747
+    }
+  },
+  "pre_commit": "all hooks passed",
+  "image_digests": {
+    "falkordb/falkordb:v4.22.3": "sha256:725b74d400124862c9e0f318c56bfb3c55b97cd7f301d9dfe8685980fb3c8195",
+    "falkordb/falkordb:6.0.3": "sha256:0fb85036662ce3d1206530a38fdf7df5a92b1fb31ad23087f8d4e89038ce0812"
+  },
+  "head_with_benchmark_documentation": "a20d2459d360e70e3571f14c5353ef0edfb517ed",
+  "benchmarks_report": "/Users/julien/graflo/falkordb-benchmarks-20261029/rapport.html",
+  "benchmarks": {
+    "C_performance_cases_passed": 21,
+    "Rust_performance_cases_passed": 21,
+    "additional_timed_samples": 128
+  }
+}

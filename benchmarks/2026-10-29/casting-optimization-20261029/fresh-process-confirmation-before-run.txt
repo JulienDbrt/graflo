@@ -1,0 +1,20 @@
+Contrôle supplémentaire décidé avant lecture de la confirmation CPU2
+
+Les 12 répétitions du protocole initial partagent les mêmes deux interpréteurs.
+Le bootstrap par paires donne donc une incertitude conditionnelle à ces deux
+processus. Il ne couvre pas les effets d'allocateur, d'initialisation et de
+randomisation propres à chaque processus. Le témoin A/A à +2,10 % de réduction
+médiane, IC incluant zéro, rend ce contrôle particulièrement pertinent.
+
+Exécuter 12 nouvelles paires indépendantes de processus, 50 000 documents ETL,
+batch 1000, affinité 2, ordre AB/BA équilibré. Nouveaux processus A et B à chaque
+paire ; imports, données, échauffement et validation hors chronométrage.
+Ordre de création des processus équilibré comme celui des mesures. Même
+PYTHONHASHSEED dans chaque paire, variant de 20261029 à 20261040 entre paires.
+Chaque durée mesurée provient d'un seul appel échauffé par processus.
+Conserver aussi le résultat du protocole initial, quel qu'il soit.
+
+Ne pas changer le code de production. Mêmes critères : réduction médiane CPU
+>=3 % et borne basse de l'IC95 d'accélération >1. Si les processus neufs ne
+confirment pas ce critère, ne pas qualifier le gain de robuste. Aucun retrait
+d'outlier ou choix du protocole au résultat. Le CPU reste partagé avec l'hôte.

@@ -1,0 +1,34 @@
+[
+  {
+    "path": "data-2000/initial.csv",
+    "bytes": 166523,
+    "sha256": "b9422cfc5288eaf2ba1155ee6a474e7e11ab76b3f5f7251ed276a8a044108857",
+    "records": 1000,
+    "phase": "initial",
+    "format": "csv"
+  },
+  {
+    "path": "data-2000/initial.jsonl",
+    "bytes": 269790,
+    "sha256": "efbaf67055949a17417c8c3559a793f84b3b5a8564eaa481a1a2e0a63bc25241",
+    "records": 1000,
+    "phase": "initial",
+    "format": "jsonl"
+  },
+  {
+    "path": "data-2000/delta.csv",
+    "bytes": 169843,
+    "sha256": "f3dfe44496f024a2042585cb2719964520d0f0df16cd19c71d2ebddc0c6391ea",
+    "records": 1000,
+    "phase": "delta",
+    "format": "csv"
+  },
+  {
+    "path": "data-2000/delta.jsonl",
+    "bytes": 269790,
+    "sha256": "836c18a1349052bb13a1ff9b26442bfdf48db966435130b73258e31f211f4082",
+    "records": 1000,
+    "phase": "delta",
+    "format": "jsonl"
+  }
+]

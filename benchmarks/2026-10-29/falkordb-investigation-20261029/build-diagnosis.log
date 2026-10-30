@@ -1,0 +1,34 @@
+Downloading matplotlib (10.2MiB)
+Downloading fonttools (5.3MiB)
+Downloading kiwisolver (1.2MiB)
+ Downloaded kiwisolver
+ Downloaded fonttools
+ Downloaded matplotlib
+Installed 11 packages in 88ms
+{
+  "stable_rust_6_0_3_merge_new_10000": {
+    "median_seconds": 2.5885290919995896,
+    "min_seconds": 2.575144098999772,
+    "max_seconds": 2.5911251349998565,
+    "samples": 3
+  },
+  "edge_merge_new_10000": {
+    "median_seconds": 0.03846884900031,
+    "min_seconds": 0.03711973200006469,
+    "max_seconds": 0.041951597999286605,
+    "samples": 3
+  },
+  "median_speedup": 67.28896650842685,
+  "edge_merge_new_50000": {
+    "median_seconds": 0.20396069999969768,
+    "min_seconds": 0.19306847099960578,
+    "max_seconds": 0.2131069919996662,
+    "samples": 3
+  },
+  "native_profile": {
+    "stable_pending_records": 44974080,
+    "edge_pending_records": 0,
+    "batch_size": 1024,
+    "formula": "sum(min(1024,N-start)*start for start in range(0,N,1024))"
+  }
+}

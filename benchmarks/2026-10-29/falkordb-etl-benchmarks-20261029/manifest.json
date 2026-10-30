@@ -1,0 +1,189 @@
+{
+  "schema": {
+    "metadata": {
+      "name": "falkor_etl_benchmark"
+    },
+    "graph": {
+      "vertex_config": {
+        "vertices": [
+          {
+            "name": "Item",
+            "properties": [
+              "id",
+              "tenant",
+              "seq",
+              "title",
+              "score",
+              "revision",
+              "payload",
+              "category"
+            ],
+            "identity": [
+              "tenant",
+              "id"
+            ]
+          },
+          {
+            "name": "Category",
+            "properties": [
+              "tenant",
+              "id"
+            ],
+            "identity": [
+              "tenant",
+              "id"
+            ]
+          }
+        ]
+      },
+      "edge_config": {
+        "edges": [
+          {
+            "source": "Item",
+            "target": "Category",
+            "relation": "IN_CATEGORY"
+          }
+        ]
+      }
+    },
+    "db_profile": {
+      "db_flavor": "falkordb",
+      "vertex_indexes": {
+        "Item": [
+          {
+            "fields": [
+              "score"
+            ]
+          },
+          {
+            "fields": [
+              "seq"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "ingestion_model": {
+    "resources": [
+      {
+        "name": "items",
+        "pipeline": [
+          {
+            "transform": {
+              "rename": {
+                "tenant": "tenant",
+                "payload": "payload",
+                "category": "category"
+              }
+            }
+          },
+          {
+            "transform": {
+              "call": {
+                "module": "graflo.util.transform",
+                "foo": "remove_prefix",
+                "input": [
+                  "id"
+                ],
+                "output": [
+                  "id"
+                ],
+                "params": {
+                  "prefix": "urn:item:"
+                }
+              }
+            }
+          },
+          {
+            "transform": {
+              "call": {
+                "module": "builtins",
+                "foo": "int",
+                "input": [
+                  "seq"
+                ],
+                "output": [
+                  "seq"
+                ],
+                "params": {}
+              }
+            }
+          },
+          {
+            "transform": {
+              "call": {
+                "module": "builtins",
+                "foo": "float",
+                "input": [
+                  "score"
+                ],
+                "output": [
+                  "score"
+                ],
+                "params": {}
+              }
+            }
+          },
+          {
+            "transform": {
+              "call": {
+                "module": "builtins",
+                "foo": "int",
+                "input": [
+                  "revision"
+                ],
+                "output": [
+                  "revision"
+                ],
+                "params": {}
+              }
+            }
+          },
+          {
+            "transform": {
+              "call": {
+                "module": "scenario",
+                "foo": "normalize_title",
+                "input": [
+                  "title"
+                ],
+                "output": [
+                  "title"
+                ],
+                "params": {}
+              }
+            }
+          },
+          {
+            "vertex": "Item",
+            "from": {
+              "id": "id",
+              "tenant": "tenant",
+              "seq": "seq",
+              "title": "title",
+              "score": "score",
+              "revision": "revision",
+              "payload": "payload",
+              "category": "category"
+            }
+          },
+          {
+            "vertex": "Category",
+            "from": {
+              "tenant": "tenant",
+              "id": "category"
+            }
+          },
+          {
+            "edge": {
+              "from": "Item",
+              "to": "Category",
+              "relation": "IN_CATEGORY"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

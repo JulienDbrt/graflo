@@ -1,0 +1,21 @@
+Seuils de décision avant la campagne appariée principale
+
+Aucune divergence de sortie typée, ordre, multiplicité, erreur ou entrée modifiée.
+Les seules substitutions des diagnostics sont les racines /repo/ et /candidate/,
+documentées ; les autres champs, messages et lignes d'erreur sont conservés.
+Les cas de temps excluent les profils instrumentés, le démarrage, l'échauffement,
+les empreintes, la validation et les E/S de collecte. GC est explicite avant le
+chronométrage, puis garde sa politique normale pendant l'appel.
+
+Objectif : au moins 3 % de gain CPU médian sur ETL, et borne basse de l'intervalle
+bootstrap apparié à 95 % supérieure à 1. Les temps muraux sont publiés aussi.
+Régression CPU fiable de plus de 2 % sur une autre charge : investigation ou
+retrait, même si la charge principale progresse. Publier tous les cas et blocs,
+avec l'ordre AB/BA tournant, sans supprimer une répétition parce qu'elle est lente.
+
+Cas : ETL, plat, imbriqué, erreurs, stress de transformations ; tailles de lots
+100/1 000/10 000 pour l'ETL. Douze paires par cas principal, huit pour les deux
+autres tailles de lots. Les scénarios de stress sont étiquetés comme tels.
+Deux interpréteurs persistants, indépendants et séquentiels, mêmes ressources
+et dépendances. Vérification du module source chargé et de son empreinte.
+Les intervalles de 8–12 paires sur un hôte partagé ne sont pas une preuve universelle.

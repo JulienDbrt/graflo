@@ -1,0 +1,20 @@
+{"kind": "metadata", "modules": [["name", "vectorset", "ver", 1, "path", "", "args", []], ["name", "graph", "ver", 42203, "path", "/var/lib/falkordb/bin/falkordb.so", "args", ["THREAD_COUNT", "2", "OMP_THREAD_COUNT", "2"]]], "engine": "c", "phase": "matrix"}
+{"size": 1000, "mode": "none", "operation": "create", "seconds": 0.0018480529997759731, "server_ms": 1.018983, "nodes_created": 1000.0, "properties_set": 2000.0, "engine": "c", "phase": "matrix"}
+{"size": 1000, "mode": "none", "operation": "merge_new", "seconds": 0.001989843000046676, "server_ms": 1.268312, "nodes_created": 1000.0, "properties_set": 2000.0, "engine": "c", "phase": "matrix"}
+{"size": 1000, "mode": "range", "operation": "create", "seconds": 0.0024245029999292456, "server_ms": 1.694057, "nodes_created": 1000.0, "properties_set": 2000.0, "engine": "c", "phase": "matrix"}
+{"size": 1000, "mode": "range", "operation": "merge_new", "seconds": 0.0038483960006487905, "server_ms": 3.195657, "nodes_created": 1000.0, "properties_set": 2000.0, "engine": "c", "phase": "matrix"}
+{"size": 1000, "mode": "unique", "operation": "create", "seconds": 0.0024979179997899337, "server_ms": 1.876011, "nodes_created": 1000.0, "properties_set": 2000.0, "engine": "c", "phase": "matrix"}
+{"size": 1000, "mode": "unique", "operation": "merge_new", "seconds": 0.004432052999618463, "server_ms": 3.750272, "nodes_created": 1000.0, "properties_set": 2000.0, "engine": "c", "phase": "matrix"}
+{"size": 1000, "mode": "range", "operation": "merge_existing", "seconds": 0.0031510329999946407, "server_ms": 2.20759, "nodes_created": 0, "properties_set": 1000.0, "engine": "c", "phase": "matrix"}
+{"size": 1000, "mode": "unique", "operation": "merge_existing", "seconds": 0.0031534489999103243, "server_ms": 2.478752, "nodes_created": 0, "properties_set": 1000.0, "engine": "c", "phase": "matrix"}
+{"size": 1000, "mode": "range", "operation": "match_update", "seconds": 0.002626833000249462, "server_ms": 1.992135, "nodes_created": 0, "properties_set": 1000.0, "engine": "c", "phase": "matrix"}
+{"size": 10000, "mode": "none", "operation": "create", "seconds": 0.013909401999626425, "server_ms": 7.87329, "nodes_created": 10000.0, "properties_set": 20000.0, "engine": "c", "phase": "matrix"}
+{"size": 10000, "mode": "none", "operation": "merge_new", "seconds": 0.017636799999309005, "server_ms": 11.436108, "nodes_created": 10000.0, "properties_set": 20000.0, "engine": "c", "phase": "matrix"}
+{"size": 10000, "mode": "range", "operation": "create", "seconds": 0.021769566000330087, "server_ms": 16.026909, "nodes_created": 10000.0, "properties_set": 20000.0, "engine": "c", "phase": "matrix"}
+{"size": 10000, "mode": "range", "operation": "merge_new", "seconds": 0.037437148000208254, "server_ms": 31.699781, "nodes_created": 10000.0, "properties_set": 20000.0, "engine": "c", "phase": "matrix"}
+{"size": 10000, "mode": "unique", "operation": "create", "seconds": 0.023730409000563668, "server_ms": 18.11475, "nodes_created": 10000.0, "properties_set": 20000.0, "engine": "c", "phase": "matrix"}
+{"size": 10000, "mode": "unique", "operation": "merge_new", "seconds": 0.04284206099964649, "server_ms": 37.264609, "nodes_created": 10000.0, "properties_set": 20000.0, "engine": "c", "phase": "matrix"}
+{"size": 10000, "mode": "range", "operation": "merge_existing", "seconds": 0.02862516500044876, "server_ms": 22.69651, "nodes_created": 0, "properties_set": 10000.0, "engine": "c", "phase": "matrix"}
+{"size": 10000, "mode": "unique", "operation": "merge_existing", "seconds": 0.030006017000232532, "server_ms": 24.359399, "nodes_created": 0, "properties_set": 10000.0, "engine": "c", "phase": "matrix"}
+{"size": 10000, "mode": "range", "operation": "match_update", "seconds": 0.027313393999975233, "server_ms": 21.48282, "nodes_created": 0, "properties_set": 10000.0, "engine": "c", "phase": "matrix"}
+{"kind": "finished", "engine": "c", "phase": "matrix"}

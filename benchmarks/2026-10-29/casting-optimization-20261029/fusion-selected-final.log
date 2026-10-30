@@ -1,0 +1,45 @@
+
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[None] PASSED [  2%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[] PASSED [  5%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[0] PASSED [  8%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[False] PASSED [ 10%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[-0.0] PASSED [ 13%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[9223372036854775808] PASSED [ 16%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[\xe9 \xb7 \u6771\u4eac] PASSED [ 18%]
+../candidate/test/util/test_fusion_equivalence.py::test_keyless_fragments_still_apply_ordered_union PASSED [ 21%]
+../candidate/test/util/test_fusion_equivalence.py::test_keyed_single_observation_does_not_normalize_its_list PASSED [ 24%]
+../candidate/test/util/test_fusion_equivalence.py::test_leading_keyless_fields_keep_the_existing_mutation_and_order PASSED [ 27%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_only_observations_still_produce_one_fresh_document PASSED [ 29%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_do_not_hide_unhashable_identity_errors[identity0] PASSED [ 32%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_do_not_hide_unhashable_identity_errors[identity1] PASSED [ 35%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_do_not_hide_unhashable_identity_errors[identity2] PASSED [ 37%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_do_not_hide_unhashable_identity_errors[identity3] PASSED [ 40%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_do_not_hide_unhashable_union_errors PASSED [ 43%]
+../candidate/test/util/test_fusion_equivalence.py::test_custom_identity_hash_is_still_called_in_the_same_order PASSED [ 45%]
+../candidate/test/util/test_fusion_equivalence.py::test_identity_callback_cannot_hide_an_invalid_appended_observation PASSED [ 48%]
+../candidate/test/util/test_fusion_equivalence.py::test_appended_mapping_subclass_keeps_its_items_callback PASSED [ 51%]
+../candidate/test/util/test_fusion_equivalence.py::test_invalid_copy_from_an_appended_mapping_keeps_its_error PASSED [ 54%]
+../candidate/test/util/test_fusion_equivalence.py::test_mapping_subclass_callbacks_and_tags_are_preserved PASSED [ 56%]
+../candidate/test/util/test_fusion_equivalence.py::test_invalid_later_observations_are_not_silently_removed[None] PASSED [ 59%]
+../candidate/test/util/test_fusion_equivalence.py::test_invalid_later_observations_are_not_silently_removed[1] PASSED [ 62%]
+../candidate/test/util/test_fusion_equivalence.py::test_invalid_later_observations_are_not_silently_removed[bad2] PASSED [ 64%]
+../candidate/test/util/test_fusion_equivalence.py::test_custom_key_names_are_checked_even_for_empty_observations PASSED [ 67%]
+../candidate/test/util/test_fusion_equivalence.py::test_list_subclass_is_not_read_more_often PASSED [ 70%]
+../candidate/test/util/test_fusion_equivalence.py::test_cyclic_payload_keeps_the_existing_shallow_reference PASSED [ 72%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_observations_are_neutral_for_values_errors_and_mutation PASSED [ 75%]
+../candidate/test/util/test_fusion_equivalence.py::test_plain_and_subclassed_lists_agree_on_full_fusion PASSED [ 78%]
+../candidate/test/util/test_merge.py::test_merge_simple PASSED           [ 81%]
+../candidate/test/util/test_merge.py::test_merge_simple_two_doc PASSED   [ 83%]
+../candidate/test/util/test_merge.py::test_merge_nodiscriminant PASSED   [ 86%]
+../candidate/test/util/test_merge.py::test_merge PASSED                  [ 89%]
+../candidate/test/util/test_merge.py::test_merge_no_index_keys_dict PASSED [ 91%]
+../candidate/test/util/test_merge.py::test_merge_no_index_keys_vertexrep PASSED [ 94%]
+../candidate/test/util/test_merge.py::test_merge_vertexreps_with_mixed_flags_fuse_per_flag_group PASSED [ 97%]
+../candidate/test/util/test_merge.py::test_merge_keyless_vertexreps_with_mixed_flags_stay_apart PASSED [100%]
+
+============================= slowest 25 durations =============================
+2.77s call     test/util/test_fusion_equivalence.py::test_plain_and_subclassed_lists_agree_on_full_fusion
+2.04s call     test/util/test_fusion_equivalence.py::test_empty_observations_are_neutral_for_values_errors_and_mutation
+
+(23 durations < 0.005s hidden.  Use -vv to show these durations.)
+============================== 37 passed in 4.86s ==============================

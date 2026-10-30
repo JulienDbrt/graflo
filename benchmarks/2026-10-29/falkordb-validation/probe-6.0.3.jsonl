@@ -1,0 +1,8 @@
+{"kind": "batch", "size": 100, "indexed": false, "seconds": 0.0007106559996827855}
+{"kind": "batch", "size": 1000, "indexed": false, "seconds": 0.0035026109999307664}
+{"kind": "batch", "size": 50000, "indexed": true, "seconds": 70.61610641099969}
+{"kind": "catalog", "constraints": [{"type": "UNIQUE", "label": "person", "properties": ["tenant", "id"], "entitytype": "NODE", "status": "OPERATIONAL"}, {"type": "UNIQUE", "label": "person", "properties": ["name", "born"], "entitytype": "NODE", "status": "OPERATIONAL"}], "indexes": [["person", ["tenant", "id", "name", "born"], {"tenant": ["RANGE"], "id": ["RANGE"], "name": ["RANGE"], "born": ["RANGE"]}, {"tenant": {}, "id": {}, "name": {}, "born": {}}, "english", [], "NODE", "OPERATIONAL", {"fields": [{"name": "range:tenant"}, {"name": "range:tenant:numeric:arr"}, {"name": "range:tenant:string:arr"}, {"name": "range:id"}, {"name": "range:id:numeric:arr"}, {"name": "range:id:string:arr"}, {"name": "range:name"}, {"name": "range:name:numeric:arr"}, {"name": "range:name:string:arr"}, {"name": "range:born"}, {"name": "range:born:numeric:arr"}, {"name": "range:born:string:arr"}, {"name": "NONE_INDEXABLE_FIELDS"}]}]]}
+{"kind": "constraint", "name": "identity", "rejected": true, "error": "unique constraint violation on node of type person"}
+{"kind": "constraint", "name": "secondary", "rejected": true, "error": "unique constraint violation on node of type person"}
+{"kind": "rows", "rows": [{"tenant": "a", "id": "1", "name": "Alice", "born": 1990}, {"tenant": "b", "id": "1", "name": "Alice", "born": 1991}]}
+{"kind": "deleted", "constraints": [], "rows": []}

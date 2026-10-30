@@ -1,0 +1,5 @@
+c trials 3 initial 27.18 mixed 29.13 server peak MiB 154.0 client peak MiB 388.2
+rust trials 3 initial 21.14 mixed 22.04 server peak MiB 181.3 client peak MiB 381.9
+edge trials 3 initial 20.85 mixed 26.31 server peak MiB 188.2 client peak MiB 408.0
+completed 9 reads 41383 errors 0
+/evidence/rapport.html

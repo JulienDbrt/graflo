@@ -1,0 +1,24 @@
+{"kind": "metadata", "started_at": "2026-10-28T23:07:17.808503+00:00", "python": "3.11.13", "machine": "aarch64", "packages": {"falkordb": "1.8.1", "redis": "8.1.0"}, "server": "8.10.2", "config": {"THREAD_COUNT": ["THREAD_COUNT", 2], "OMP_THREAD_COUNT": ["OMP_THREAD_COUNT", 2], "MAX_QUEUED_QUERIES": ["MAX_QUEUED_QUERIES", 4294967295], "TIMEOUT": ["TIMEOUT", 0], "TIMEOUT_DEFAULT": ["TIMEOUT_DEFAULT", 0], "TIMEOUT_MAX": ["TIMEOUT_MAX", 0], "RESULTSET_SIZE": ["RESULTSET_SIZE", -1]}, "engine": "c", "phase": "parse"}
+{"kind": "parameter_only", "documents": 1000, "repeat": 0, "seconds": 0.0010329419997106015, "server_reported_ms": 0.221996, "formatting_seconds": 0.000526783000168507, "payload_bytes": 125906, "engine": "c", "phase": "parse"}
+{"kind": "generated_range", "documents": 1000, "repeat": 0, "seconds": 0.00011820700001408113, "server_reported_ms": 0.041374, "engine": "c", "phase": "parse"}
+{"kind": "parameter_only", "documents": 1000, "repeat": 1, "seconds": 0.0009646099997553392, "server_reported_ms": 0.13404, "formatting_seconds": 0.0005142840000189608, "payload_bytes": 125906, "engine": "c", "phase": "parse"}
+{"kind": "generated_range", "documents": 1000, "repeat": 1, "seconds": 0.00012483099999371916, "server_reported_ms": 0.041208, "engine": "c", "phase": "parse"}
+{"kind": "parameter_only", "documents": 1000, "repeat": 2, "seconds": 0.0009298189997934969, "server_reported_ms": 0.124248, "formatting_seconds": 0.0005236160000094969, "payload_bytes": 125906, "engine": "c", "phase": "parse"}
+{"kind": "generated_range", "documents": 1000, "repeat": 2, "seconds": 0.00011149900001328206, "server_reported_ms": 0.037083, "engine": "c", "phase": "parse"}
+{"kind": "parameter_only", "documents": 5000, "repeat": 0, "seconds": 0.00432005599986951, "server_reported_ms": 0.549033, "formatting_seconds": 0.0025912500000231375, "payload_bytes": 633906, "engine": "c", "phase": "parse"}
+{"kind": "generated_range", "documents": 5000, "repeat": 0, "seconds": 0.000136871999984578, "server_reported_ms": 0.065416, "engine": "c", "phase": "parse"}
+{"kind": "parameter_only", "documents": 5000, "repeat": 1, "seconds": 0.004164432999914425, "server_reported_ms": 0.502992, "formatting_seconds": 0.0025497090000499156, "payload_bytes": 633906, "engine": "c", "phase": "parse"}
+{"kind": "generated_range", "documents": 5000, "repeat": 1, "seconds": 0.00012862299990956672, "server_reported_ms": 0.059749, "engine": "c", "phase": "parse"}
+{"kind": "parameter_only", "documents": 5000, "repeat": 2, "seconds": 0.004246140000304877, "server_reported_ms": 0.4662, "formatting_seconds": 0.0025640419999035657, "payload_bytes": 633906, "engine": "c", "phase": "parse"}
+{"kind": "generated_range", "documents": 5000, "repeat": 2, "seconds": 0.00012078999998266227, "server_reported_ms": 0.053874, "engine": "c", "phase": "parse"}
+{"kind": "parameter_only", "documents": 10000, "repeat": 0, "seconds": 0.008176327000001038, "server_reported_ms": 0.941277, "formatting_seconds": 0.0052357079998728295, "payload_bytes": 1268906, "engine": "c", "phase": "parse"}
+{"kind": "generated_range", "documents": 10000, "repeat": 0, "seconds": 0.0002175800000259187, "server_reported_ms": 0.083082, "engine": "c", "phase": "parse"}
+{"kind": "parameter_only", "documents": 10000, "repeat": 1, "seconds": 0.008242117000008875, "server_reported_ms": 0.877277, "formatting_seconds": 0.004992544999822712, "payload_bytes": 1268906, "engine": "c", "phase": "parse"}
+{"kind": "generated_range", "documents": 10000, "repeat": 1, "seconds": 0.0001661220003370545, "server_reported_ms": 0.081957, "engine": "c", "phase": "parse"}
+{"kind": "parameter_only", "documents": 10000, "repeat": 2, "seconds": 0.009258518000024196, "server_reported_ms": 0.976818, "formatting_seconds": 0.005191457999899285, "payload_bytes": 1268906, "engine": "c", "phase": "parse"}
+{"kind": "generated_range", "documents": 10000, "repeat": 2, "seconds": 0.00020195500019326573, "server_reported_ms": 0.106915, "engine": "c", "phase": "parse"}
+{"kind": "parameter_only", "documents": 25000, "repeat": 0, "seconds": 0.021353697999984433, "server_reported_ms": 2.397462, "formatting_seconds": 0.013638780000292172, "payload_bytes": 3188906, "engine": "c", "phase": "parse"}
+{"kind": "generated_range", "documents": 25000, "repeat": 0, "seconds": 0.0002998289996867243, "server_reported_ms": 0.176706, "engine": "c", "phase": "parse"}
+{"kind": "parameter_only", "documents": 50000, "repeat": 0, "seconds": 0.04160683000009158, "server_reported_ms": 4.96467, "formatting_seconds": 0.027304060000005848, "payload_bytes": 6388906, "engine": "c", "phase": "parse"}
+{"kind": "generated_range", "documents": 50000, "repeat": 0, "seconds": 0.0006940719999875, "server_reported_ms": 0.293703, "engine": "c", "phase": "parse"}
+{"kind": "finished", "finished_at": "2026-10-28T23:07:18.016004+00:00", "engine": "c", "phase": "parse"}

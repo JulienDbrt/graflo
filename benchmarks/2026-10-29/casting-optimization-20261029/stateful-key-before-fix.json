@@ -1,0 +1,16 @@
+{
+  "base": {
+    "payload": 42,
+    "leading": {
+      "payload": 42
+    },
+    "rows": 1
+  },
+  "candidate": {
+    "payload": null,
+    "leading": {
+      "payload": 42
+    },
+    "rows": 1
+  }
+}

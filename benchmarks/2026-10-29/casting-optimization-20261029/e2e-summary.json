@@ -1,0 +1,226 @@
+{
+  "pairs": 4,
+  "measured_runs": 8,
+  "all_typed_hashes_equal": true,
+  "passed": true,
+  "validated_items": 800000,
+  "validated_categories": 8000,
+  "validated_edges": 800000,
+  "metrics": {
+    "seconds": {
+      "paired_speedups": [
+        1.0104587591440126,
+        1.0260825654574324,
+        1.0244228371455342,
+        1.0273720448356114
+      ],
+      "median_speedup": 1.0252527013014832,
+      "median_time_reduction_percent": 2.4630709355290326,
+      "durations": {
+        "base": [
+          20.518818037002347,
+          20.9510344549999,
+          20.96744856699661,
+          20.994061309000244
+        ],
+        "candidate": [
+          20.30643789399619,
+          20.418468415999087,
+          20.467572379995545,
+          20.434721204001107
+        ]
+      }
+    },
+    "client_cpu_seconds": {
+      "paired_speedups": [
+        1.024293537670423,
+        1.0310366056336508,
+        1.0304644852713587,
+        1.041541916590211
+      ],
+      "median_speedup": 1.0307505454525048,
+      "median_time_reduction_percent": 2.983315952455312,
+      "durations": {
+        "base": [
+          13.914563312999999,
+          14.15671121,
+          14.221479895,
+          14.249842824
+        ],
+        "candidate": [
+          13.584546618,
+          13.730561197,
+          13.801038365,
+          13.681487607000001
+        ]
+      }
+    },
+    "server_cpu_seconds": {
+      "paired_speedups": [
+        0.9838860639020265,
+        1.002276739767269,
+        1.0136799393721783,
+        0.9977121789450342
+      ],
+      "median_speedup": 0.9999944593561516,
+      "median_time_reduction_percent": -0.0005540674547388491,
+      "durations": {
+        "base": [
+          6.609965,
+          6.702859,
+          6.761453,
+          6.744242
+        ],
+        "candidate": [
+          6.718222,
+          6.687633,
+          6.670205,
+          6.759707
+        ]
+      }
+    }
+  },
+  "results": [
+    "e2e/base-0/result.json",
+    "e2e/candidate-0/result.json",
+    "e2e/base-1/result.json",
+    "e2e/candidate-1/result.json",
+    "e2e/base-2/result.json",
+    "e2e/candidate-2/result.json",
+    "e2e/base-3/result.json",
+    "e2e/candidate-3/result.json"
+  ],
+  "index_listing_order_difference": "index-listing-order-audit.json",
+  "memory": "Kernel lifetime peaks include startup and are recorded before exhaustive verification; no causal memory reduction claim.",
+  "memory_peaks_at_ingestion_end": [
+    {
+      "variant": "base",
+      "trial": 0,
+      "kernel_peaks_at_ingestion_end": {
+        "server": {
+          "VmHWM": 116748288,
+          "VmRSS": 116748288
+        },
+        "client": {
+          "VmHWM": 206032896,
+          "VmRSS": 206032896
+        },
+        "server_cgroup_peak": 130977792,
+        "client_cgroup_peak": 337739776
+      }
+    },
+    {
+      "variant": "candidate",
+      "trial": 0,
+      "kernel_peaks_at_ingestion_end": {
+        "server": {
+          "VmHWM": 118063104,
+          "VmRSS": 118063104
+        },
+        "client": {
+          "VmHWM": 206123008,
+          "VmRSS": 206123008
+        },
+        "server_cgroup_peak": 114520064,
+        "client_cgroup_peak": 274755584
+      }
+    },
+    {
+      "variant": "base",
+      "trial": 1,
+      "kernel_peaks_at_ingestion_end": {
+        "server": {
+          "VmHWM": 118202368,
+          "VmRSS": 118202368
+        },
+        "client": {
+          "VmHWM": 206155776,
+          "VmRSS": 206155776
+        },
+        "server_cgroup_peak": 114499584,
+        "client_cgroup_peak": 260681728
+      }
+    },
+    {
+      "variant": "candidate",
+      "trial": 1,
+      "kernel_peaks_at_ingestion_end": {
+        "server": {
+          "VmHWM": 117678080,
+          "VmRSS": 117678080
+        },
+        "client": {
+          "VmHWM": 206049280,
+          "VmRSS": 206049280
+        },
+        "server_cgroup_peak": 96206848,
+        "client_cgroup_peak": 192032768
+      }
+    },
+    {
+      "variant": "base",
+      "trial": 2,
+      "kernel_peaks_at_ingestion_end": {
+        "server": {
+          "VmHWM": 116862976,
+          "VmRSS": 116862976
+        },
+        "client": {
+          "VmHWM": 206032896,
+          "VmRSS": 206032896
+        },
+        "server_cgroup_peak": 95506432,
+        "client_cgroup_peak": 194789376
+      }
+    },
+    {
+      "variant": "candidate",
+      "trial": 2,
+      "kernel_peaks_at_ingestion_end": {
+        "server": {
+          "VmHWM": 119095296,
+          "VmRSS": 119095296
+        },
+        "client": {
+          "VmHWM": 206000128,
+          "VmRSS": 206000128
+        },
+        "server_cgroup_peak": 98566144,
+        "client_cgroup_peak": 200159232
+      }
+    },
+    {
+      "variant": "base",
+      "trial": 3,
+      "kernel_peaks_at_ingestion_end": {
+        "server": {
+          "VmHWM": 118009856,
+          "VmRSS": 118009856
+        },
+        "client": {
+          "VmHWM": 206151680,
+          "VmRSS": 206151680
+        },
+        "server_cgroup_peak": 96960512,
+        "client_cgroup_peak": 191221760
+      }
+    },
+    {
+      "variant": "candidate",
+      "trial": 3,
+      "kernel_peaks_at_ingestion_end": {
+        "server": {
+          "VmHWM": 118222848,
+          "VmRSS": 118222848
+        },
+        "client": {
+          "VmHWM": 206127104,
+          "VmRSS": 206127104
+        },
+        "server_cgroup_peak": 119267328,
+        "client_cgroup_peak": 265674752
+      }
+    }
+  ],
+  "interpretation": "Exploratory corroboration; only four pairs on a shared host, no outliers excluded."
+}

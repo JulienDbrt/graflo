@@ -1,0 +1,1 @@
+{"cpu_quota_nano":2000000000,"cpuset":"2,3","memory_limit":2147483648,"pid_mode":"container:dfc6b0f76977cec113b756222fccfd8bd746039442521d6bf808929f6b4a3e7f","network_mode":"container:dfc6b0f76977cec113b756222fccfd8bd746039442521d6bf808929f6b4a3e7f","oom_killed":false,"running":true,"image":"sha256:7f6ac2ad1b991ca69f91c39c5447ec9050e95c0a940747b15ec61daca1a5d4b7"}

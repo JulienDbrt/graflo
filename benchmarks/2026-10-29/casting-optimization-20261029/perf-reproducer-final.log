@@ -1,0 +1,19 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.13, pytest-9.1.1, pluggy-1.7.0
+cachedir: /tmp/pytest-perf-final
+rootdir: /candidate
+configfile: pytest.ini
+plugins: xdist-3.8.0, timeout-2.4.0, hypothesis-6.170.9, anyio-4.15.1, platformdirs-4.13.5
+timeout: 300.0s
+timeout method: thread
+timeout func_only: False
+collected 1 item
+
+../candidate/test/hq/test_cast_fusion_perf.py::test_cast_fusion_throughput_preserves_values {"documents": 10000, "batch_size": 1000, "python": "3.11.13", "cast_executor": "inline", "n_cores": 1, "fusion_sha256": "57622c4942ef8b7e4c3f4bafc62d38ab85da5a9d1794cb92f6cf34db77e520cd", "samples": [{"cpu_seconds": 0.6224904149999999, "seconds": 0.622505507999449}, {"cpu_seconds": 0.6087794519999998, "seconds": 0.6091071970004123}, {"cpu_seconds": 0.6000904980000001, "seconds": 0.6001354199979687}, {"cpu_seconds": 0.633347455, "seconds": 0.6333368479972705}, {"cpu_seconds": 0.604653962, "seconds": 0.6046209129999625}, {"cpu_seconds": 0.6051701229999997, "seconds": 0.6051611150032841}, {"cpu_seconds": 0.6505372940000003, "seconds": 0.650481659999059}], "values_checked": true}
+PASSED
+
+============================= slowest 25 durations =============================
+4.59s call     test/hq/test_cast_fusion_perf.py::test_cast_fusion_throughput_preserves_values
+
+(2 durations < 0.005s hidden.  Use -vv to show these durations.)
+============================== 1 passed in 4.62s ===============================

@@ -1,0 +1,28 @@
+Contrôle de placement CPU ajouté avant de conclure sur les performances
+
+Le cpuset {2,3} commun laisse les threads des deux interpréteurs migrer entre
+deux CPU logiques. La capture cpu-placement-audit.json le confirme. Les fortes
+variations des paires courtes ne permettent pas d'attribuer sûrement les écarts
+au code. Les données précédentes et la confirmation en cours sont conservées,
+sans filtrage des passages défavorables, comme mesures exploratoires.
+
+Nouveau protocole plus contraint : les deux interpréteurs sont fixés au même
+CPU logique 2 AVANT l'import de GraFlo et la création des threads. Le parent
+les exécute séquentiellement, toujours en ordre AB/BA équilibré. Démarrage,
+échauffement et oracle typé restent hors intervalle. Ne rien changer au code
+de production pendant ces mesures.
+
+Exécuter systématiquement, indépendamment du résultat précédent :
+- une campagne A/A (deux copies de la même référence), 12 paires de 5 000 docs ;
+- la matrice complète A/B de 76 paires ;
+- la confirmation A/B de 12 paires sur 50 000 docs.
+
+Mêmes seuils, exprimés sans approximation : baisse médiane du temps CPU >= 3 %
+(accélération >= 1/0,97) et borne basse IC95 d'accélération > 1 sur confirmation.
+Toute régression CPU fiable > 2 % est une alerte. Le contrôle A/A ne doit pas
+indiquer un gain systématique avec un intervalle excluant 1 ; sinon le banc
+reste insuffisamment contrôlé et aucune revendication de gain n'est faite.
+Les anciennes mesures ne sont pas agrégées avec le nouveau protocole.
+
+Il s'agit d'un contrôle méthodologique, pas d'une suppression d'outliers. Tous
+les résultats, y compris inconclusifs ou défavorables, apparaîtront au rapport.

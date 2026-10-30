@@ -1,0 +1,14 @@
+base {"ready": true, "source": "/repo", "loaded_module": "/repo/graflo/architecture/graph_types/merge.py", "fusion_sha256": "e2822ce33f5c7ccd1732e4c1451a67b1d1df34fabc73fa720811920bb41348e9", "gc_threshold": [700, 10, 10], "affinity": [2]}
+candidate {"ready": true, "source": "/candidate", "loaded_module": "/candidate/graflo/architecture/graph_types/merge.py", "fusion_sha256": "57622c4942ef8b7e4c3f4bafc62d38ab85da5a9d1794cb92f6cf34db77e520cd", "gc_threshold": [700, 10, 10], "affinity": [2]}
+{"block": 0, "case": "etl", "batch": 1000, "cpu_speedup": 0.829721333411898, "wall_speedup": 0.8291890819971199, "exact": true}
+{"block": 1, "case": "etl", "batch": 1000, "cpu_speedup": 0.9534595434495373, "wall_speedup": 0.9534612965289504, "exact": true}
+{"block": 2, "case": "etl", "batch": 1000, "cpu_speedup": 0.8723894792022905, "wall_speedup": 0.8730166317839918, "exact": true}
+{"block": 3, "case": "etl", "batch": 1000, "cpu_speedup": 0.9648300782984273, "wall_speedup": 0.9693487498807526, "exact": true}
+{"block": 4, "case": "etl", "batch": 1000, "cpu_speedup": 1.321377272436556, "wall_speedup": 1.3280144615386809, "exact": true}
+{"block": 5, "case": "etl", "batch": 1000, "cpu_speedup": 1.0704671065993465, "wall_speedup": 1.0781307399037636, "exact": true}
+{"block": 6, "case": "etl", "batch": 1000, "cpu_speedup": 0.9901170863238874, "wall_speedup": 0.9855598820652413, "exact": true}
+{"block": 7, "case": "etl", "batch": 1000, "cpu_speedup": 0.7935458787232291, "wall_speedup": 0.7906345991779333, "exact": true}
+{"block": 8, "case": "etl", "batch": 1000, "cpu_speedup": 1.3324647472607498, "wall_speedup": 1.3251958910698411, "exact": true}
+{"block": 9, "case": "etl", "batch": 1000, "cpu_speedup": 0.9585389298558327, "wall_speedup": 0.9579125378781798, "exact": true}
+{"block": 10, "case": "etl", "batch": 1000, "cpu_speedup": 0.9296655028396298, "wall_speedup": 0.928724778620134, "exact": true}
+{"block": 11, "case": "etl", "batch": 1000, "cpu_speedup": 1.0867163299324984, "wall_speedup": 1.0874684033619322, "exact": true}

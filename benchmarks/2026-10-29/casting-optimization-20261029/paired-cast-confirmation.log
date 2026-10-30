@@ -1,0 +1,14 @@
+base {"ready": true, "source": "/repo", "loaded_module": "/repo/graflo/architecture/graph_types/merge.py", "fusion_sha256": "e2822ce33f5c7ccd1732e4c1451a67b1d1df34fabc73fa720811920bb41348e9", "gc_threshold": [700, 10, 10]}
+candidate {"ready": true, "source": "/candidate", "loaded_module": "/candidate/graflo/architecture/graph_types/merge.py", "fusion_sha256": "9dcc51c9f0a76e49cfdb33187dae73648228ca5f2f01cf6594db6b81e30bf6d9", "gc_threshold": [700, 10, 10]}
+{"block": 0, "case": "etl", "batch": 1000, "cpu_speedup": 1.052852793521266, "wall_speedup": 1.0534448418177296, "exact": true}
+{"block": 1, "case": "etl", "batch": 1000, "cpu_speedup": 1.024850278067134, "wall_speedup": 1.025002494816272, "exact": true}
+{"block": 2, "case": "etl", "batch": 1000, "cpu_speedup": 1.000114545333207, "wall_speedup": 1.0001143003619803, "exact": true}
+{"block": 3, "case": "etl", "batch": 1000, "cpu_speedup": 0.9343036206970156, "wall_speedup": 0.9341490491246649, "exact": true}
+{"block": 4, "case": "etl", "batch": 1000, "cpu_speedup": 0.9565442564917825, "wall_speedup": 0.956616435993394, "exact": true}
+{"block": 5, "case": "etl", "batch": 1000, "cpu_speedup": 1.0305012794999389, "wall_speedup": 1.0307423112348058, "exact": true}
+{"block": 6, "case": "etl", "batch": 1000, "cpu_speedup": 1.017502753212503, "wall_speedup": 1.0177648800319603, "exact": true}
+{"block": 7, "case": "etl", "batch": 1000, "cpu_speedup": 1.0440384091181902, "wall_speedup": 1.0435266476178744, "exact": true}
+{"block": 8, "case": "etl", "batch": 1000, "cpu_speedup": 1.1800167637127057, "wall_speedup": 1.1793233353129977, "exact": true}
+{"block": 9, "case": "etl", "batch": 1000, "cpu_speedup": 1.0181899283032845, "wall_speedup": 1.0182408363549045, "exact": true}
+{"block": 10, "case": "etl", "batch": 1000, "cpu_speedup": 1.0876199787144314, "wall_speedup": 1.0878509275432269, "exact": true}
+{"block": 11, "case": "etl", "batch": 1000, "cpu_speedup": 1.057580526713042, "wall_speedup": 1.0572176900380106, "exact": true}

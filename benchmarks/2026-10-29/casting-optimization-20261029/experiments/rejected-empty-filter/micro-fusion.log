@@ -1,0 +1,7 @@
+singleton_dict paired CPU speedup 0.988 range 0.918 1.06
+singleton_rep paired CPU speedup 0.989 range 0.778 1.029
+six_empty_fragments paired CPU speedup 1.534 range 1.502 1.596
+all_empty paired CPU speedup 0.838 range 0.77 0.935
+two_keyed paired CPU speedup 0.925 range 0.842 0.979
+64_keyed paired CPU speedup 1.007 range 0.918 1.152
+64_reps paired CPU speedup 0.987 range 0.679 1.313

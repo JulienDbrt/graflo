@@ -1,0 +1,8 @@
+{"kind": "metadata", "modules": [["name", "vectorset", "ver", 1, "path", "", "args", []], ["name", "graph", "ver", 999999, "path", "/var/lib/falkordb/bin/falkordb.so", "args", ["THREAD_COUNT", "2", "OMP_THREAD_COUNT", "2"]]], "engine": "rust-edge", "phase": "large"}
+{"size": 25000, "mode": "range", "operation": "merge_new", "seconds": 0.11325858600048377, "server_ms": 66.532328, "nodes_created": 25000.0, "properties_set": 50000.0, "engine": "rust-edge", "phase": "large"}
+{"size": 25000, "mode": "range", "operation": "merge_new", "seconds": 0.09762740400037728, "server_ms": 51.650161, "nodes_created": 25000.0, "properties_set": 50000.0, "engine": "rust-edge", "phase": "large"}
+{"size": 25000, "mode": "range", "operation": "merge_new", "seconds": 0.09346630600066419, "server_ms": 48.763433, "nodes_created": 25000.0, "properties_set": 50000.0, "engine": "rust-edge", "phase": "large"}
+{"size": 50000, "mode": "range", "operation": "merge_new", "seconds": 0.2131069919996662, "server_ms": 111.258283, "nodes_created": 50000.0, "properties_set": 100000.0, "engine": "rust-edge", "phase": "large"}
+{"size": 50000, "mode": "range", "operation": "merge_new", "seconds": 0.20396069999969768, "server_ms": 107.48317, "nodes_created": 50000.0, "properties_set": 100000.0, "engine": "rust-edge", "phase": "large"}
+{"size": 50000, "mode": "range", "operation": "merge_new", "seconds": 0.19306847099960578, "server_ms": 102.570016, "nodes_created": 50000.0, "properties_set": 100000.0, "engine": "rust-edge", "phase": "large"}
+{"kind": "finished", "engine": "rust-edge", "phase": "large"}

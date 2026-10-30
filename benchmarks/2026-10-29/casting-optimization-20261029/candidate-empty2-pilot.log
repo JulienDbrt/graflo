@@ -1,0 +1,1 @@
+{"documents": 10000, "executor": "inline", "cores": 1, "profiled": false, "warm_start_seconds": 0.1995068030009861, "seconds": [2.0225025360014115, 1.5984565419967112, 1.8398448940024537]}

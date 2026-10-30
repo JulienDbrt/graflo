@@ -1,0 +1,21 @@
+Confirmation préparée avant d'observer le dernier candidat
+
+Le candidat précédent « dictionnaires seuls » a 2,5 % de gain médian à 1 000
+documents par lot, IC95 apparié [0,9967 ; 1,0741] en accélération : objectif non
+atteint, résultat compatible avec zéro. Tous les résultats sont conservés.
+
+Dernier candidat : même chemin dédié aux dictionnaires et déplacement, sans
+modifier leurs corps, des quatre fonctions auxiliaires de fusion générique au
+niveau du module. Ceci évite les allocations répétées de fonctions/closures,
+sans changer les vérifications ni l'ordre des accès.
+
+Mesurer une matrice complète de 76 paires comme précédemment, puis une unique
+confirmation indépendante de 12 paires sur 50 000 documents ETL, lots de 1 000.
+Les critères restent ceux de acceptance-before-paired-run.txt : cible médiane
+CPU >= 3 %, IC95 au-dessus de 1 ; aucun écart sémantique et investigation de
+toute régression fiable > 2 %. Le résultat de confirmation est publié même
+s'il est inconclusif ; aucune nouvelle tentative pour faire passer un seuil.
+
+L'oracle est désormais fondé sur les champs bruts des modèles et leurs références
+partagées, avec attentes de données et d'extrémités de relations indépendantes.
+Les racines des modules chargés sont vérifiées, puis mesurées séquentiellement.

@@ -1,0 +1,37 @@
+1:  3230dfb2 ! 1:  a1f734ec fix(falkordb): validate numeric parameters across C and Rust
+    @@ CHANGELOG.md: All notable changes to this project will be documented in this fil
+      The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+      and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+      
+    --## [
+     +## [Unreleased]
+    - 
+    - ### Changed
+    - 
+    -@@ CHANGELOG.md: and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
+    - - **Memgraph** builds a multi-field vertex index or identity as one composite index (Memgraph 3.2
+    -   or later) and no longer creates indexes while writing. The Docker default is 3.14.0.
+    - - **FalkorDB** enforces identities and `unique: true` indexes with uniqueness constraints.
+    ++
+    ++### Changed
+    ++
+     +- **FalkorDB**: the Docker default is 4.22.3; the connector is also checked against 6.0.3.
+    - - **PostgreSQL** builds declared edge indexes.
+    - - **Neo4j**: a declared uniqueness constraint the server refuses is an error; only the identity
+    -   falls back to a plain index.
+    - 
+    ++
+     +### Fixed
+     +
+     +- **FalkorDB** refuses integer parameters outside the signed 64-bit range before sending them,
+     +  avoiding silent truncation on 4.x. Server parameter-parsing failures raise `ValueError` on 6.x.
+     +
+    - ## [1.24.0]
+    + ## [1.24.1]
+      
+    - ### Changed
+    + ### Added
+     
+      ## docker/README.md ##
+     @@ docker/README.md: config = PostgresConfig.from_docker_env()
+2:  a20d2459 = 2:  686ce68e docs(falkordb): document Rust batch-size guidance

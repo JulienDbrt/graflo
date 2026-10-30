@@ -1,0 +1,24 @@
+{"value": 9223372036854775807, "mode": "scalar", "rows": [[9223372036854775807]]}
+{"value": 9223372036854775807, "mode": "list", "rows": [[9223372036854775807]]}
+{"value": 9223372036854775807, "mode": "literal", "rows": [[9223372036854775807]]}
+{"value": -9223372036854775808, "mode": "scalar", "rows": [[-9223372036854775808]]}
+{"value": -9223372036854775808, "mode": "list", "rows": [[-9223372036854775808]]}
+{"value": -9223372036854775808, "mode": "literal", "rows": [[-9223372036854775808]]}
+{"value": 9223372036854775808, "mode": "scalar", "rows": [[9223372036854775807]]}
+{"value": 9223372036854775808, "mode": "list", "rows": [[9223372036854775807]]}
+{"value": 9223372036854775808, "mode": "literal", "error": "Integer overflow '9223372036854775808'", "type": "ResponseError"}
+{"value": -9223372036854775809, "mode": "scalar", "rows": [[-9223372036854775808]]}
+{"value": -9223372036854775809, "mode": "list", "rows": [[-9223372036854775808]]}
+{"value": -9223372036854775809, "mode": "literal", "error": "Integer overflow '-9223372036854775809'", "type": "ResponseError"}
+{"value": 18446744073709551615, "mode": "scalar", "rows": [[9223372036854775807]]}
+{"value": 18446744073709551615, "mode": "list", "rows": [[9223372036854775807]]}
+{"value": 18446744073709551615, "mode": "literal", "error": "Integer overflow '18446744073709551615'", "type": "ResponseError"}
+{"value": 1e-308, "mode": "scalar", "rows": [[1e-308]]}
+{"value": 1e-308, "mode": "list", "rows": [[1e-308]]}
+{"value": 1e-308, "mode": "literal", "error": "Float overflow '1e-308'", "type": "ResponseError"}
+{"value": 1e+308, "mode": "scalar", "rows": [[1e+308]]}
+{"value": 1e+308, "mode": "list", "rows": [[1e+308]]}
+{"value": 1e+308, "mode": "literal", "rows": [[1e+308]]}
+{"value": -0.0, "mode": "scalar", "rows": [[-0.0]]}
+{"value": -0.0, "mode": "list", "rows": [[-0.0]]}
+{"value": -0.0, "mode": "literal", "rows": [[-0.0]]}

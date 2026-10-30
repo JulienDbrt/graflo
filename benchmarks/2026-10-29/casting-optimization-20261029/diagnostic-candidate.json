@@ -1,0 +1,113 @@
+{
+  "semantic": {
+    "graph": {
+      "vertices": {
+        "Item": [
+          {
+            "id": "urn:item:0",
+            "tenant": "tenant0",
+            "seq": "0",
+            "title": "  Élément 0 · 東京  ",
+            "score": "0.25",
+            "revision": "1",
+            "payload": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "category": "0"
+          },
+          {
+            "id": "urn:item:0",
+            "tenant": "tenant2",
+            "seq": "2",
+            "title": "  Élément 2 · 東京  ",
+            "score": "2.25",
+            "revision": "1",
+            "payload": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "category": "0"
+          }
+        ]
+      },
+      "edges": {},
+      "linear": [
+        {
+          "Item": [
+            {
+              "id": "urn:item:0",
+              "tenant": "tenant0",
+              "seq": "0",
+              "title": "  Élément 0 · 東京  ",
+              "score": "0.25",
+              "revision": "1",
+              "payload": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "category": "0"
+            }
+          ]
+        },
+        {
+          "Item": [
+            {
+              "id": "urn:item:0",
+              "tenant": "tenant2",
+              "seq": "2",
+              "title": "  Élément 2 · 東京  ",
+              "score": "2.25",
+              "revision": "1",
+              "payload": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              "category": "0"
+            }
+          ]
+        }
+      ],
+      "attached": {},
+      "attached_by": {}
+    },
+    "failures": [
+      {
+        "resource_name": "items",
+        "doc_index": 1,
+        "exception_type": "TypeError",
+        "message": "unhashable type: 'dict'",
+        "failure_kind": "document",
+        "doc_preview": {
+          "category": "0",
+          "id": {
+            "bad": 1
+          },
+          "payload": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "revision": "1",
+          "score": "1.25",
+          "seq": "1",
+          "tenant": "tenant1",
+          "title": "  Élément 1 · 東京  "
+        },
+        "location_path": null,
+        "transform_label": null,
+        "nulled_fields": null
+      },
+      {
+        "resource_name": "items",
+        "doc_index": 3,
+        "exception_type": "TypeError",
+        "message": "unhashable type: 'dict'",
+        "failure_kind": "document",
+        "doc_preview": {
+          "category": "0",
+          "id": {
+            "bad": 3
+          },
+          "payload": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "revision": "1",
+          "score": "3.25",
+          "seq": "3",
+          "tenant": "tenant3",
+          "title": "  Élément 3 · 東京  "
+        },
+        "location_path": null,
+        "transform_label": null,
+        "nulled_fields": null
+      }
+    ]
+  },
+  "raw_tracebacks": [
+    "Traceback (most recent call last):\n  File \"/candidate/graflo/hq/document_caster.py\", line 330, in _cast_chunk\n    out.append(runtime.cast_document(doc))\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/candidate/graflo/architecture/pipeline/runtime/resource.py\", line 394, in cast_document\n    extraction_ctx = self._executor.extract(work_doc)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/candidate/graflo/architecture/pipeline/runtime/executor.py\", line 25, in extract\n    return self.root(extraction_ctx, doc=doc)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/candidate/graflo/architecture/pipeline/runtime/actor/wrapper.py\", line 159, in __call__\n    ctx = self.actor(ctx, lindex, *nargs, **kwargs)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/candidate/graflo/architecture/pipeline/runtime/actor/vertex.py\", line 359, in __call__\n    merged = fuse_doc_basis(agg, index_keys=tuple(key_fields))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/candidate/graflo/architecture/graph_types/merge.py\", line 72, in fuse_doc_basis\n    return _fuse_dicts(cast(list[dict], docs), index_keys, union_fields)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/candidate/graflo/architecture/graph_types/merge.py\", line 125, in _fuse_dicts\n    if index in positions:\n       ^^^^^^^^^^^^^^^^^^\nTypeError: unhashable type: 'dict'\n",
+    "Traceback (most recent call last):\n  File \"/candidate/graflo/hq/document_caster.py\", line 330, in _cast_chunk\n    out.append(runtime.cast_document(doc))\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/candidate/graflo/architecture/pipeline/runtime/resource.py\", line 394, in cast_document\n    extraction_ctx = self._executor.extract(work_doc)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/candidate/graflo/architecture/pipeline/runtime/executor.py\", line 25, in extract\n    return self.root(extraction_ctx, doc=doc)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/candidate/graflo/architecture/pipeline/runtime/actor/wrapper.py\", line 159, in __call__\n    ctx = self.actor(ctx, lindex, *nargs, **kwargs)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/candidate/graflo/architecture/pipeline/runtime/actor/vertex.py\", line 359, in __call__\n    merged = fuse_doc_basis(agg, index_keys=tuple(key_fields))\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/candidate/graflo/architecture/graph_types/merge.py\", line 72, in fuse_doc_basis\n    return _fuse_dicts(cast(list[dict], docs), index_keys, union_fields)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/candidate/graflo/architecture/graph_types/merge.py\", line 125, in _fuse_dicts\n    if index in positions:\n       ^^^^^^^^^^^^^^^^^^\nTypeError: unhashable type: 'dict'\n"
+  ]
+}

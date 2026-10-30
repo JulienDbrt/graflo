@@ -1,0 +1,9 @@
+{
+  "semantic_equal": true,
+  "raw_tracebacks_equal": false,
+  "expected_difference": "new helper names, source paths and line numbers; original tracebacks preserved",
+  "failure_indices": [
+    1,
+    3
+  ]
+}

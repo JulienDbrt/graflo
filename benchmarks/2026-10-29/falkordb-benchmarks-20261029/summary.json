@@ -1,0 +1,1286 @@
+{
+  "generated_at": "2026-10-28T23:12:56.065151+00:00",
+  "commit": "3230dfb28d05380b5e0517ec7d6c88fc88f3fe2e",
+  "limits": {
+    "database_cpu": 2,
+    "database_memory_bytes": 2147483648,
+    "client_cpu": 2,
+    "client_memory_bytes": 2147483648,
+    "thread_count": 2,
+    "omp_thread_count": 2
+  },
+  "engines": {
+    "c": {
+      "kind": "metadata",
+      "started_at": "2026-10-28T23:06:24.579431+00:00",
+      "python": "3.11.13",
+      "machine": "aarch64",
+      "packages": {
+        "falkordb": "1.8.1",
+        "redis": "8.1.0"
+      },
+      "server": "8.10.2",
+      "config": {
+        "THREAD_COUNT": [
+          "THREAD_COUNT",
+          2
+        ],
+        "OMP_THREAD_COUNT": [
+          "OMP_THREAD_COUNT",
+          2
+        ],
+        "MAX_QUEUED_QUERIES": [
+          "MAX_QUEUED_QUERIES",
+          4294967295
+        ],
+        "TIMEOUT": [
+          "TIMEOUT",
+          0
+        ],
+        "TIMEOUT_DEFAULT": [
+          "TIMEOUT_DEFAULT",
+          0
+        ],
+        "TIMEOUT_MAX": [
+          "TIMEOUT_MAX",
+          0
+        ],
+        "RESULTSET_SIZE": [
+          "RESULTSET_SIZE",
+          -1
+        ]
+      },
+      "engine": "c",
+      "phase": "realistic"
+    },
+    "rust": {
+      "kind": "metadata",
+      "started_at": "2026-10-28T23:09:45.163651+00:00",
+      "python": "3.11.13",
+      "machine": "aarch64",
+      "packages": {
+        "falkordb": "1.8.1",
+        "redis": "8.1.0"
+      },
+      "server": "8.10.2",
+      "config": {
+        "THREAD_COUNT": [
+          "THREAD_COUNT",
+          2
+        ],
+        "OMP_THREAD_COUNT": [
+          "OMP_THREAD_COUNT",
+          2
+        ],
+        "MAX_QUEUED_QUERIES": [
+          "MAX_QUEUED_QUERIES",
+          10000
+        ],
+        "TIMEOUT": [
+          "TIMEOUT",
+          0
+        ],
+        "TIMEOUT_DEFAULT": [
+          "TIMEOUT_DEFAULT",
+          0
+        ],
+        "TIMEOUT_MAX": [
+          "TIMEOUT_MAX",
+          0
+        ],
+        "RESULTSET_SIZE": [
+          "RESULTSET_SIZE",
+          -1
+        ]
+      },
+      "engine": "rust",
+      "phase": "realistic"
+    }
+  },
+  "ingest": [
+    {
+      "engine": "c",
+      "indexed": false,
+      "batch_size": 1,
+      "documents_per_second": {
+        "median": 1856.93903365188,
+        "min": 1775.2042264974873,
+        "max": 1874.5352217620296,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 5.385206417000063,
+        "min": 5.3346556970000165,
+        "max": 5.633154681999713,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "c",
+      "indexed": false,
+      "batch_size": 100,
+      "documents_per_second": {
+        "median": 2956.4161200590274,
+        "min": 2887.617205693374,
+        "max": 3052.692039858906,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 3.3824737770000866,
+        "min": 3.2757971880000696,
+        "max": 3.4630628949998936,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "c",
+      "indexed": false,
+      "batch_size": 1000,
+      "documents_per_second": {
+        "median": 3357.206065323629,
+        "min": 3350.709952077184,
+        "max": 3380.6774800519006,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 2.978667322000092,
+        "min": 2.9579869890003465,
+        "max": 2.9844421459997648,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "c",
+      "indexed": false,
+      "batch_size": 10000,
+      "documents_per_second": {
+        "median": 263265.1891569104,
+        "min": 262419.4739591109,
+        "max": 267762.2426586782,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 0.0379845130000831,
+        "min": 0.037346565000007104,
+        "max": 0.03810692800016113,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "c",
+      "indexed": true,
+      "batch_size": 1,
+      "documents_per_second": {
+        "median": 6237.381267010922,
+        "min": 6166.642692609106,
+        "max": 6243.686240088216,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 1.6032369310000831,
+        "min": 1.601617957000144,
+        "max": 1.6216279260002011,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "c",
+      "indexed": true,
+      "batch_size": 100,
+      "documents_per_second": {
+        "median": 124416.0269388386,
+        "min": 118513.87207251148,
+        "max": 128439.3026936561,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 0.08037549700020463,
+        "min": 0.07785778800007392,
+        "max": 0.08437830799994117,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "c",
+      "indexed": true,
+      "batch_size": 1000,
+      "documents_per_second": {
+        "median": 147638.17526951732,
+        "min": 142133.71675630094,
+        "max": 149040.26786312173,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 0.06773315899999943,
+        "min": 0.06709596100017734,
+        "max": 0.07035628300036478,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "c",
+      "indexed": true,
+      "batch_size": 10000,
+      "documents_per_second": {
+        "median": 152114.81577587474,
+        "min": 150012.16598706914,
+        "max": 154200.5256325969,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 0.06573981600013212,
+        "min": 0.06485062199999447,
+        "max": 0.06666125999981887,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "indexed": false,
+      "batch_size": 1,
+      "documents_per_second": {
+        "median": 1961.2766814684899,
+        "min": 1862.4533123905555,
+        "max": 1992.8723076515591,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 5.098719673000232,
+        "min": 5.017882963000375,
+        "max": 5.369262108999919,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "indexed": false,
+      "batch_size": 100,
+      "documents_per_second": {
+        "median": 2728.5245170218122,
+        "min": 2725.728961116806,
+        "max": 2748.774777829479,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 3.6649844770004165,
+        "min": 3.6379844869998124,
+        "max": 3.6687433500001134,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "indexed": false,
+      "batch_size": 1000,
+      "documents_per_second": {
+        "median": 2746.287198697273,
+        "min": 2729.2280442475844,
+        "max": 2800.5548247502275,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 3.6412797629991474,
+        "min": 3.5707210269993084,
+        "max": 3.6640397350001876,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "indexed": false,
+      "batch_size": 10000,
+      "documents_per_second": {
+        "median": 3441.473241944448,
+        "min": 3421.076256721825,
+        "max": 3484.8010520605712,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 2.9057323119996,
+        "min": 2.869604275999336,
+        "max": 2.9230567369995697,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "indexed": true,
+      "batch_size": 1,
+      "documents_per_second": {
+        "median": 8502.808976499622,
+        "min": 7691.380336665996,
+        "max": 9369.043077500231,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 1.1760819309993167,
+        "min": 1.0673448630004714,
+        "max": 1.3001567419996718,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "indexed": true,
+      "batch_size": 100,
+      "documents_per_second": {
+        "median": 125717.47592132278,
+        "min": 125566.81488072808,
+        "max": 134336.1328628915,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 0.0795434359997671,
+        "min": 0.07444013599979371,
+        "max": 0.07963887599998998,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "indexed": true,
+      "batch_size": 1000,
+      "documents_per_second": {
+        "median": 138198.8275933927,
+        "min": 131502.20717935337,
+        "max": 140276.45684037285,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 0.07235951399979967,
+        "min": 0.07128780000039114,
+        "max": 0.07604435099983675,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "indexed": true,
+      "batch_size": 10000,
+      "documents_per_second": {
+        "median": 3407.678876938601,
+        "min": 3295.170714613988,
+        "max": 3527.7277067690256,
+        "samples": 3
+      },
+      "seconds": {
+        "median": 2.934548812000685,
+        "min": 2.8346859029998086,
+        "max": 3.0347441350004374,
+        "samples": 3
+      }
+    }
+  ],
+  "operations": [
+    {
+      "engine": "c",
+      "indexed": false,
+      "kind": "point_lookup",
+      "operations_per_second": {
+        "median": 4283.381494966845,
+        "min": 3753.227188961426,
+        "max": 4465.549624306473,
+        "samples": 3
+      },
+      "latency_p50_ms": {
+        "median": 0.22112099986770772,
+        "min": 0.22018349977770413,
+        "max": 0.24895450019357668,
+        "samples": 3
+      },
+      "latency_p95_ms": {
+        "median": 0.3639130999999906,
+        "min": 0.352281500090612,
+        "max": 0.3843746000939063,
+        "samples": 3
+      },
+      "latency_p99_ms": {
+        "median": 0.5048733901003181,
+        "min": 0.41800426015470293,
+        "max": 0.553325500000028,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "c",
+      "indexed": false,
+      "kind": "point_update",
+      "operations_per_second": {
+        "median": 1283.4733293653208,
+        "min": 1167.904291923189,
+        "max": 1284.0597490448372,
+        "samples": 3
+      },
+      "latency_p50_ms": {
+        "median": 0.7706129999860423,
+        "min": 0.7572170000003098,
+        "max": 0.7859244999508519,
+        "samples": 3
+      },
+      "latency_p95_ms": {
+        "median": 0.8603130502251587,
+        "min": 0.8581023499800721,
+        "max": 1.2634876501124377,
+        "samples": 3
+      },
+      "latency_p99_ms": {
+        "median": 1.2045347000366722,
+        "min": 0.9735000795717497,
+        "max": 1.7165857898225998,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "c",
+      "indexed": false,
+      "kind": "category_count",
+      "operations_per_second": {
+        "median": 2153.616472299866,
+        "min": 2122.1166959578386,
+        "max": 2259.039546739765,
+        "samples": 3
+      },
+      "latency_p50_ms": {
+        "median": 0.438513499830151,
+        "min": 0.43586800006778503,
+        "max": 0.45343049987423,
+        "samples": 3
+      },
+      "latency_p95_ms": {
+        "median": 0.5730427498974677,
+        "min": 0.4712780999852839,
+        "max": 0.652570550028031,
+        "samples": 3
+      },
+      "latency_p99_ms": {
+        "median": 0.7294865800577097,
+        "min": 0.5276393999565697,
+        "max": 0.8889172499812047,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "c",
+      "indexed": true,
+      "kind": "point_lookup",
+      "operations_per_second": {
+        "median": 8584.765740932036,
+        "min": 7721.771894946142,
+        "max": 8709.377016049946,
+        "samples": 3
+      },
+      "latency_p50_ms": {
+        "median": 0.1038315001551382,
+        "min": 0.09662349998507125,
+        "max": 0.11272699998698954,
+        "samples": 3
+      },
+      "latency_p95_ms": {
+        "median": 0.13959974996851088,
+        "min": 0.12445810029930726,
+        "max": 0.1596258503468561,
+        "samples": 3
+      },
+      "latency_p99_ms": {
+        "median": 0.1856299999781182,
+        "min": 0.16269648998786554,
+        "max": 0.2980372199999681,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "c",
+      "indexed": true,
+      "kind": "point_update",
+      "operations_per_second": {
+        "median": 9538.421931882443,
+        "min": 7065.0774528601105,
+        "max": 11338.61346104985,
+        "samples": 3
+      },
+      "latency_p50_ms": {
+        "median": 0.10339400000702881,
+        "min": 0.07974899995133455,
+        "max": 0.10776899989650701,
+        "samples": 3
+      },
+      "latency_p95_ms": {
+        "median": 0.12303760001941529,
+        "min": 0.11941614998249861,
+        "max": 0.18632130002060793,
+        "samples": 3
+      },
+      "latency_p99_ms": {
+        "median": 0.23468223033432747,
+        "min": 0.13004692038975918,
+        "max": 0.6505207002328339,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "c",
+      "indexed": true,
+      "kind": "category_count",
+      "operations_per_second": {
+        "median": 5234.105030598323,
+        "min": 3943.9745790410316,
+        "max": 7070.697393113633,
+        "samples": 3
+      },
+      "latency_p50_ms": {
+        "median": 0.14603899990106584,
+        "min": 0.1348309999684716,
+        "max": 0.14820549995420151,
+        "samples": 3
+      },
+      "latency_p95_ms": {
+        "median": 0.3397825000320154,
+        "min": 0.1878800499525823,
+        "max": 0.5764994500168508,
+        "samples": 3
+      },
+      "latency_p99_ms": {
+        "median": 0.6494147598550492,
+        "min": 0.28883700000278606,
+        "max": 2.6904644697788105,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "indexed": false,
+      "kind": "point_lookup",
+      "operations_per_second": {
+        "median": 3120.5771669472997,
+        "min": 2178.3093927408477,
+        "max": 3344.958513643492,
+        "samples": 3
+      },
+      "latency_p50_ms": {
+        "median": 0.25064300007215934,
+        "min": 0.24772600045253057,
+        "max": 0.317325499963772,
+        "samples": 3
+      },
+      "latency_p95_ms": {
+        "median": 0.6449401500503876,
+        "min": 0.5833015498865279,
+        "max": 1.209559550625272,
+        "samples": 3
+      },
+      "latency_p99_ms": {
+        "median": 0.9266472301260349,
+        "min": 0.8373911494982158,
+        "max": 1.5185370304970982,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "indexed": false,
+      "kind": "point_update",
+      "operations_per_second": {
+        "median": 878.4582281538625,
+        "min": 697.9474256105642,
+        "max": 1079.1543472415292,
+        "samples": 3
+      },
+      "latency_p50_ms": {
+        "median": 1.0135749998880783,
+        "min": 0.8553704997211753,
+        "max": 1.3215440003477852,
+        "samples": 3
+      },
+      "latency_p95_ms": {
+        "median": 1.7157072996724305,
+        "min": 1.4225584498490207,
+        "max": 2.1777240503979534,
+        "samples": 3
+      },
+      "latency_p99_ms": {
+        "median": 1.9711826504408234,
+        "min": 1.648338279337621,
+        "max": 3.1364482194840093,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "indexed": false,
+      "kind": "category_count",
+      "operations_per_second": {
+        "median": 2009.214781379588,
+        "min": 1726.2912114421604,
+        "max": 2938.5966852173815,
+        "samples": 3
+      },
+      "latency_p50_ms": {
+        "median": 0.38154899993969593,
+        "min": 0.3124704999208916,
+        "max": 0.3978240001742961,
+        "samples": 3
+      },
+      "latency_p95_ms": {
+        "median": 1.0917580999830532,
+        "min": 0.4850597001677656,
+        "max": 1.3044176496805442,
+        "samples": 3
+      },
+      "latency_p99_ms": {
+        "median": 1.7674199606244616,
+        "min": 0.8488817600118637,
+        "max": 1.8479882298015526,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "indexed": true,
+      "kind": "point_lookup",
+      "operations_per_second": {
+        "median": 7520.148357553875,
+        "min": 7456.211070557805,
+        "max": 8228.55942912477,
+        "samples": 3
+      },
+      "latency_p50_ms": {
+        "median": 0.11556949993973831,
+        "min": 0.11323499984428054,
+        "max": 0.12152950012023211,
+        "samples": 3
+      },
+      "latency_p95_ms": {
+        "median": 0.1941919005730596,
+        "min": 0.1812097502806863,
+        "max": 0.2650423001796296,
+        "samples": 3
+      },
+      "latency_p99_ms": {
+        "median": 0.2904973101794892,
+        "min": 0.2612166301150856,
+        "max": 0.5652353599816698,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "indexed": true,
+      "kind": "point_update",
+      "operations_per_second": {
+        "median": 7807.103339769434,
+        "min": 7805.363580532563,
+        "max": 8036.78856058839,
+        "samples": 3
+      },
+      "latency_p50_ms": {
+        "median": 0.11325650029903045,
+        "min": 0.10977600004480337,
+        "max": 0.11888250037372927,
+        "samples": 3
+      },
+      "latency_p95_ms": {
+        "median": 0.1884137500383076,
+        "min": 0.16876185063665608,
+        "max": 0.26513585048633065,
+        "samples": 3
+      },
+      "latency_p99_ms": {
+        "median": 0.37558695016741683,
+        "min": 0.27566184980059905,
+        "max": 0.46815480032819307,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "indexed": true,
+      "kind": "category_count",
+      "operations_per_second": {
+        "median": 4958.683136398169,
+        "min": 4885.170763740118,
+        "max": 5489.612801726867,
+        "samples": 3
+      },
+      "latency_p50_ms": {
+        "median": 0.1677899999776855,
+        "min": 0.15659949986002175,
+        "max": 0.17887600006361026,
+        "samples": 3
+      },
+      "latency_p95_ms": {
+        "median": 0.3328167001654945,
+        "min": 0.2687158505523256,
+        "max": 0.46747390056225413,
+        "samples": 3
+      },
+      "latency_p99_ms": {
+        "median": 0.6255157899886398,
+        "min": 0.3927820595254146,
+        "max": 0.7410236801479185,
+        "samples": 3
+      }
+    }
+  ],
+  "parameters": [
+    {
+      "engine": "c",
+      "documents": 1000,
+      "seconds": {
+        "median": 0.0009646099997553392,
+        "min": 0.0009298189997934969,
+        "max": 0.0010329419997106015,
+        "samples": 3
+      },
+      "server_reported_ms": {
+        "median": 0.13404,
+        "min": 0.124248,
+        "max": 0.221996,
+        "samples": 3
+      },
+      "formatting_seconds": {
+        "median": 0.0005236160000094969,
+        "min": 0.0005142840000189608,
+        "max": 0.000526783000168507,
+        "samples": 3
+      },
+      "payload_bytes": {
+        "median": 125906,
+        "min": 125906,
+        "max": 125906,
+        "samples": 3
+      },
+      "range_seconds": {
+        "median": 0.00011820700001408113,
+        "min": 0.00011149900001328206,
+        "max": 0.00012483099999371916,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "c",
+      "documents": 5000,
+      "seconds": {
+        "median": 0.004246140000304877,
+        "min": 0.004164432999914425,
+        "max": 0.00432005599986951,
+        "samples": 3
+      },
+      "server_reported_ms": {
+        "median": 0.502992,
+        "min": 0.4662,
+        "max": 0.549033,
+        "samples": 3
+      },
+      "formatting_seconds": {
+        "median": 0.0025640419999035657,
+        "min": 0.0025497090000499156,
+        "max": 0.0025912500000231375,
+        "samples": 3
+      },
+      "payload_bytes": {
+        "median": 633906,
+        "min": 633906,
+        "max": 633906,
+        "samples": 3
+      },
+      "range_seconds": {
+        "median": 0.00012862299990956672,
+        "min": 0.00012078999998266227,
+        "max": 0.000136871999984578,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "c",
+      "documents": 10000,
+      "seconds": {
+        "median": 0.008242117000008875,
+        "min": 0.008176327000001038,
+        "max": 0.009258518000024196,
+        "samples": 3
+      },
+      "server_reported_ms": {
+        "median": 0.941277,
+        "min": 0.877277,
+        "max": 0.976818,
+        "samples": 3
+      },
+      "formatting_seconds": {
+        "median": 0.005191457999899285,
+        "min": 0.004992544999822712,
+        "max": 0.0052357079998728295,
+        "samples": 3
+      },
+      "payload_bytes": {
+        "median": 1268906,
+        "min": 1268906,
+        "max": 1268906,
+        "samples": 3
+      },
+      "range_seconds": {
+        "median": 0.00020195500019326573,
+        "min": 0.0001661220003370545,
+        "max": 0.0002175800000259187,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "c",
+      "documents": 25000,
+      "seconds": {
+        "median": 0.021353697999984433,
+        "min": 0.021353697999984433,
+        "max": 0.021353697999984433,
+        "samples": 1
+      },
+      "server_reported_ms": {
+        "median": 2.397462,
+        "min": 2.397462,
+        "max": 2.397462,
+        "samples": 1
+      },
+      "formatting_seconds": {
+        "median": 0.013638780000292172,
+        "min": 0.013638780000292172,
+        "max": 0.013638780000292172,
+        "samples": 1
+      },
+      "payload_bytes": {
+        "median": 3188906,
+        "min": 3188906,
+        "max": 3188906,
+        "samples": 1
+      },
+      "range_seconds": {
+        "median": 0.0002998289996867243,
+        "min": 0.0002998289996867243,
+        "max": 0.0002998289996867243,
+        "samples": 1
+      }
+    },
+    {
+      "engine": "c",
+      "documents": 50000,
+      "seconds": {
+        "median": 0.04160683000009158,
+        "min": 0.04160683000009158,
+        "max": 0.04160683000009158,
+        "samples": 1
+      },
+      "server_reported_ms": {
+        "median": 4.96467,
+        "min": 4.96467,
+        "max": 4.96467,
+        "samples": 1
+      },
+      "formatting_seconds": {
+        "median": 0.027304060000005848,
+        "min": 0.027304060000005848,
+        "max": 0.027304060000005848,
+        "samples": 1
+      },
+      "payload_bytes": {
+        "median": 6388906,
+        "min": 6388906,
+        "max": 6388906,
+        "samples": 1
+      },
+      "range_seconds": {
+        "median": 0.0006940719999875,
+        "min": 0.0006940719999875,
+        "max": 0.0006940719999875,
+        "samples": 1
+      }
+    },
+    {
+      "engine": "rust",
+      "documents": 1000,
+      "seconds": {
+        "median": 0.0014655169998150086,
+        "min": 0.0014251740003601299,
+        "max": 0.00169757200001186,
+        "samples": 3
+      },
+      "server_reported_ms": {
+        "median": 0.005001,
+        "min": 0.004959,
+        "max": 0.008668,
+        "samples": 3
+      },
+      "formatting_seconds": {
+        "median": 0.000518081999871356,
+        "min": 0.0005070379993412644,
+        "max": 0.000542213000699121,
+        "samples": 3
+      },
+      "payload_bytes": {
+        "median": 125906,
+        "min": 125906,
+        "max": 125906,
+        "samples": 3
+      },
+      "range_seconds": {
+        "median": 9.906500054057688e-05,
+        "min": 8.852100017975317e-05,
+        "max": 0.00011323500075377524,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "documents": 5000,
+      "seconds": {
+        "median": 0.007495455000025686,
+        "min": 0.006900438000229769,
+        "max": 0.008843859999615233,
+        "samples": 3
+      },
+      "server_reported_ms": {
+        "median": 0.013879,
+        "min": 0.013254,
+        "max": 0.01442,
+        "samples": 3
+      },
+      "formatting_seconds": {
+        "median": 0.0028795199996238807,
+        "min": 0.0025629450001360965,
+        "max": 0.003623363999395224,
+        "samples": 3
+      },
+      "payload_bytes": {
+        "median": 633906,
+        "min": 633906,
+        "max": 633906,
+        "samples": 3
+      },
+      "range_seconds": {
+        "median": 0.0002090500001941109,
+        "min": 0.0002017560000240337,
+        "max": 0.00022492799962492427,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "documents": 10000,
+      "seconds": {
+        "median": 0.01351651699951617,
+        "min": 0.013419492999673821,
+        "max": 0.013873642999897129,
+        "samples": 3
+      },
+      "server_reported_ms": {
+        "median": 0.018755,
+        "min": 0.018171,
+        "max": 0.019212,
+        "samples": 3
+      },
+      "formatting_seconds": {
+        "median": 0.00534860999960074,
+        "min": 0.0052933460001440835,
+        "max": 0.005614465000689961,
+        "samples": 3
+      },
+      "payload_bytes": {
+        "median": 1268906,
+        "min": 1268906,
+        "max": 1268906,
+        "samples": 3
+      },
+      "range_seconds": {
+        "median": 0.0002040070003204164,
+        "min": 0.0001855450000221026,
+        "max": 0.0002128429996446357,
+        "samples": 3
+      }
+    },
+    {
+      "engine": "rust",
+      "documents": 25000,
+      "seconds": {
+        "median": 0.03572173099928477,
+        "min": 0.03572173099928477,
+        "max": 0.03572173099928477,
+        "samples": 1
+      },
+      "server_reported_ms": {
+        "median": 0.038301,
+        "min": 0.038301,
+        "max": 0.038301,
+        "samples": 1
+      },
+      "formatting_seconds": {
+        "median": 0.015232800999910978,
+        "min": 0.015232800999910978,
+        "max": 0.015232800999910978,
+        "samples": 1
+      },
+      "payload_bytes": {
+        "median": 3188906,
+        "min": 3188906,
+        "max": 3188906,
+        "samples": 1
+      },
+      "range_seconds": {
+        "median": 0.0003143249996355735,
+        "min": 0.0003143249996355735,
+        "max": 0.0003143249996355735,
+        "samples": 1
+      }
+    },
+    {
+      "engine": "rust",
+      "documents": 50000,
+      "seconds": {
+        "median": 0.09013538100043661,
+        "min": 0.09013538100043661,
+        "max": 0.09013538100043661,
+        "samples": 1
+      },
+      "server_reported_ms": {
+        "median": 0.070308,
+        "min": 0.070308,
+        "max": 0.070308,
+        "samples": 1
+      },
+      "formatting_seconds": {
+        "median": 0.027552698999897984,
+        "min": 0.027552698999897984,
+        "max": 0.027552698999897984,
+        "samples": 1
+      },
+      "payload_bytes": {
+        "median": 6388906,
+        "min": 6388906,
+        "max": 6388906,
+        "samples": 1
+      },
+      "range_seconds": {
+        "median": 0.000469653000436665,
+        "min": 0.000469653000436665,
+        "max": 0.000469653000436665,
+        "samples": 1
+      }
+    }
+  ],
+  "findings": {
+    "rust_batch_1000_vs_10000_speedup": 40.5551205334078,
+    "rust_parameter_only_50000_seconds": 0.09013538100043661,
+    "interpretation": "Stable MergeOp creates one batch before matching the next. IncludePending pairs previously created nodes with every incoming argument row, then a filter discards nonmatches. Unique new identities incur near-quadratic intermediate work.",
+    "practical_setting": "With schema/indexes defined, use --batch-size 1000 as an initial setting for 6.0.3 and measure the workload."
+  },
+  "diagnosis": {
+    "date": "2026-10-29 Europe/Madrid",
+    "scope": "Native FalkorDB Python SDK; no GraFlo imports. Fresh graph per timed call.",
+    "resources": {
+      "database_cpu_quota": 2,
+      "database_cpuset": "0,1",
+      "database_memory_bytes": 2147483648,
+      "client_cpu_quota": 2,
+      "client_cpuset": "2,3",
+      "client_memory_bytes": 2147483648,
+      "THREAD_COUNT": 2,
+      "OMP_THREAD_COUNT": 2,
+      "host_shared": true
+    },
+    "query": "UNWIND $data AS row MERGE (n:Item {id: row.id}) ON MATCH SET n += row ON CREATE SET n += row",
+    "payload": "Distinct text identity plus 100-character payload; range index on Item.id.",
+    "stable_rust_6_0_3_merge_new_10000": {
+      "median_seconds": 2.5885290919995896,
+      "min_seconds": 2.575144098999772,
+      "max_seconds": 2.5911251349998565,
+      "samples": 3
+    },
+    "edge_merge_new_10000": {
+      "median_seconds": 0.03846884900031,
+      "min_seconds": 0.03711973200006469,
+      "max_seconds": 0.041951597999286605,
+      "samples": 3
+    },
+    "median_speedup": 67.28896650842685,
+    "edge_merge_new_25000": {
+      "median_seconds": 0.09762740400037728,
+      "min_seconds": 0.09346630600066419,
+      "max_seconds": 0.11325858600048377,
+      "samples": 3
+    },
+    "edge_merge_new_50000": {
+      "median_seconds": 0.20396069999969768,
+      "min_seconds": 0.19306847099960578,
+      "max_seconds": 0.2131069919996662,
+      "samples": 3
+    },
+    "native_profile": {
+      "stable_pending_records": 44974080,
+      "edge_pending_records": 0,
+      "batch_size": 1024,
+      "formula": "sum(min(1024,N-start)*start for start in range(0,N,1024))"
+    },
+    "root_cause": "Stable MergeOp creates one batch before matching the next. IncludePending pairs previously created nodes with every incoming argument row, then a filter discards nonmatches. Unique new identities incur near-quadratic intermediate work.",
+    "boundary_profiles": [
+      {
+        "size": 1023,
+        "seconds": 0.0044378869997672155,
+        "pending_records": 0
+      },
+      {
+        "size": 1024,
+        "seconds": 0.0038037300000723917,
+        "pending_records": 0
+      },
+      {
+        "size": 1025,
+        "seconds": 0.0039688110000497545,
+        "pending_records": 1024
+      },
+      {
+        "size": 1100,
+        "seconds": 0.009282392000386608,
+        "pending_records": 77824
+      },
+      {
+        "size": 1500,
+        "seconds": 0.034022578000076464,
+        "pending_records": 487424
+      },
+      {
+        "size": 2048,
+        "seconds": 0.06797803100016608,
+        "pending_records": 1048576
+      },
+      {
+        "size": 2049,
+        "seconds": 0.06942821599932358,
+        "pending_records": 1050624
+      }
+    ],
+    "correctness": {
+      "c": [
+        {
+          "kind": "boundary_correctness",
+          "size": 2,
+          "nodes": 2,
+          "expected": 2,
+          "passed": true,
+          "engine": "c",
+          "phase": "correctness"
+        },
+        {
+          "kind": "boundary_correctness",
+          "size": 1025,
+          "nodes": 2,
+          "expected": 2,
+          "passed": true,
+          "engine": "c",
+          "phase": "correctness"
+        },
+        {
+          "kind": "boundary_correctness",
+          "size": 3000,
+          "nodes": 2,
+          "expected": 2,
+          "passed": true,
+          "engine": "c",
+          "phase": "correctness"
+        },
+        {
+          "kind": "duplicates_correctness",
+          "size": 3000,
+          "nodes": 7,
+          "expected": 7,
+          "passed": true,
+          "engine": "c",
+          "phase": "correctness"
+        }
+      ],
+      "rust": [
+        {
+          "kind": "boundary_correctness",
+          "size": 2,
+          "nodes": 2,
+          "expected": 2,
+          "passed": true,
+          "engine": "rust",
+          "phase": "correctness"
+        },
+        {
+          "kind": "boundary_correctness",
+          "size": 1025,
+          "nodes": 1,
+          "expected": 2,
+          "passed": false,
+          "engine": "rust",
+          "phase": "correctness"
+        },
+        {
+          "kind": "boundary_correctness",
+          "size": 3000,
+          "nodes": 1,
+          "expected": 2,
+          "passed": false,
+          "engine": "rust",
+          "phase": "correctness"
+        },
+        {
+          "kind": "duplicates_correctness",
+          "size": 3000,
+          "nodes": 7,
+          "expected": 7,
+          "passed": true,
+          "engine": "rust",
+          "phase": "correctness"
+        }
+      ],
+      "edge": [
+        {
+          "kind": "boundary_correctness",
+          "size": 2,
+          "nodes": 2,
+          "expected": 2,
+          "passed": true,
+          "engine": "rust-edge",
+          "phase": "correctness"
+        },
+        {
+          "kind": "boundary_correctness",
+          "size": 1025,
+          "nodes": 2,
+          "expected": 2,
+          "passed": true,
+          "engine": "rust-edge",
+          "phase": "correctness"
+        },
+        {
+          "kind": "boundary_correctness",
+          "size": 3000,
+          "nodes": 2,
+          "expected": 2,
+          "passed": true,
+          "engine": "rust-edge",
+          "phase": "correctness"
+        },
+        {
+          "kind": "duplicates_correctness",
+          "size": 3000,
+          "nodes": 7,
+          "expected": 7,
+          "passed": true,
+          "engine": "rust-edge",
+          "phase": "correctness"
+        }
+      ]
+    },
+    "upstream_pr": "https://github.com/FalkorDB/FalkorDB/pull/3067",
+    "upstream_merge_commit": "b47d6d6a3c563818fec2f2655ad6f92583e2a62f",
+    "upstream_merged_at": "2026-10-28T23:01:57Z",
+    "edge_image_digest": "sha256:3d08d1a1536394210d7f435bcfc777a58ba9d21f58f23cf2b86918772028b941",
+    "image_provenance": "Official promotion job 123153842387 logs map rc-mg-b47d6d6a3c563818fec2f2655ad6f92583e2a62f to this exact edge/edge-rs digest.",
+    "limitations": [
+      "Local ARM64 shared host; three timing samples per confirmed comparison.",
+      "Edge is a development image, not a stable release; no broad compatibility validation of this image.",
+      "Native-SDK timings differ from the earlier GraFlo ingestion protocol; do not combine their absolute times.",
+      "Files with warmup-concurrent in their name are excluded from timing conclusions."
+    ],
+    "publication": "Local only; no push or PR before 2026-10-30 Europe/Madrid."
+  }
+}

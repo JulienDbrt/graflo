@@ -1,0 +1,567 @@
+From 3230dfb28d05380b5e0517ec7d6c88fc88f3fe2e Mon Sep 17 00:00:00 2001
+From: juliendbrt <jdabert@sigilum.fr>
+Date: Wed, 28 Oct 2026 23:49:06 +0100
+Subject: [PATCH 1/2] fix(falkordb): validate numeric parameters across C and
+ Rust
+
+---
+ CHANGELOG.md                                 |   8 +-
+ docker/README.md                             |  12 ++
+ docker/falkordb/.env                         |   2 +-
+ graflo/db/falkordb/conn.py                   |  49 ++++-
+ test/backends/test_falkordb_parameters.py    |  98 +++++++++
+ test/db/falkordbs/test_index_contract.py     | 200 +++++++++++++++++++
+ test/db/falkordbs/test_numeric_parameters.py |  58 ++++++
+ 7 files changed, 415 insertions(+), 12 deletions(-)
+ create mode 100644 test/backends/test_falkordb_parameters.py
+ create mode 100644 test/db/falkordbs/test_index_contract.py
+ create mode 100644 test/db/falkordbs/test_numeric_parameters.py
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 089fe2d..644acf2 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
+ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+ 
+-## [
++## [Unreleased]
+ 
+ ### Changed
+ 
+@@ -15,10 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
+ - **Memgraph** builds a multi-field vertex index or identity as one composite index (Memgraph 3.2
+   or later) and no longer creates indexes while writing. The Docker default is 3.14.0.
+ - **FalkorDB** enforces identities and `unique: true` indexes with uniqueness constraints.
++- **FalkorDB**: the Docker default is 4.22.3; the connector is also checked against 6.0.3.
+ - **PostgreSQL** builds declared edge indexes.
+ - **Neo4j**: a declared uniqueness constraint the server refuses is an error; only the identity
+   falls back to a plain index.
+ 
++### Fixed
++
++- **FalkorDB** refuses integer parameters outside the signed 64-bit range before sending them,
++  avoiding silent truncation on 4.x. Server parameter-parsing failures raise `ValueError` on 6.x.
++
+ ## [1.24.0]
+ 
+ ### Changed
+diff --git a/docker/README.md b/docker/README.md
+index ccdb986..17e72b5 100644
+--- a/docker/README.md
++++ b/docker/README.md
+@@ -158,6 +158,18 @@ config = PostgresConfig.from_docker_env()
+ 
+ FalkorDB is a Redis-based graph database that supports OpenCypher.
+ 
++The default image is `falkordb/falkordb:v4.22.3` (the C engine). The connector
++suite is also tested locally against `falkordb/falkordb:6.0.3` (the Rust engine).
++To test either release, set `IMAGE_VERSION` in `docker/falkordb/.env`, start the
++service and run `uv run pytest test/db/falkordbs`. Use a separate data volume for
++each engine.
++
++Integer query parameters must fit in the signed 64-bit range; larger integers
++raise `OverflowError` before a query is sent. The Rust engine also refuses
++subnormal floating-point parameters, such as `1e-308`, which the C engine
++accepts. Server parameter-parsing failures raise `ValueError`; other query
++errors retain their driver exception.
++
+ **Programmatic Connection:**
+ ```python
+ from graflo.connections import FalkordbConfig
+diff --git a/docker/falkordb/.env b/docker/falkordb/.env
+index 1246127..4f5f801 100644
+--- a/docker/falkordb/.env
++++ b/docker/falkordb/.env
+@@ -4,7 +4,7 @@
+ # Container settings
+ SPEC=graflo
+ CONTAINER_NAME="${SPEC}.falkordb"
+-IMAGE_VERSION=falkordb/falkordb:v4.22.0
++IMAGE_VERSION=falkordb/falkordb:v4.22.3
+ 
+ # Connection settings
+ FALKORDB_HOST=localhost
+diff --git a/graflo/db/falkordb/conn.py b/graflo/db/falkordb/conn.py
+index 7959ca2..caa420b 100644
+--- a/graflo/db/falkordb/conn.py
++++ b/graflo/db/falkordb/conn.py
+@@ -31,6 +31,7 @@ from urllib.parse import urlparse
+ 
+ from falkordb import FalkorDB
+ from falkordb.graph import Graph
++from redis.exceptions import ResponseError
+ 
+ from graflo.architecture.graph_types import EdgeDirection, GraphContainer, Index
+ from graflo.architecture.schema import Schema
+@@ -67,6 +68,23 @@ from graflo.onto import AggregationType, DBType
+ logger = logging.getLogger(__name__)
+ 
+ 
++def _validate_integer_parameters(value: Any) -> None:
++    """Reject integers the server cannot represent, including nested parameters.
++
++    FalkorDB stores signed 64-bit integers. The C engine can silently clamp an
++    overflowing parameter, while the Rust engine refuses it.
++    """
++    if isinstance(value, int):
++        if not -(2**63) <= value < 2**63:
++            raise OverflowError("FalkorDB integers must fit in the signed 64-bit range")
++    elif isinstance(value, dict):
++        for item in value.values():
++            _validate_integer_parameters(item)
++    elif isinstance(value, (list, tuple)):
++        for item in value:
++            _validate_integer_parameters(item)
++
++
+ class FalkordbConnection(Connection):
+     """FalkorDB-specific implementation of the Connection interface.
+ 
+@@ -130,19 +148,30 @@ class FalkordbConnection(Connection):
+ 
+         Returns:
+             QueryResult: FalkorDB result object containing result_set and statistics
++
++        Raises:
++            OverflowError: An integer parameter is outside the signed 64-bit range.
++            ValueError: The server cannot parse a parameter value.
+         """
+         if self.graph is None:
+             raise RuntimeError("Connection is closed")
+-        # Pass params as keyword argument if the client supports it, otherwise as positional
+-        # Try params keyword first, fall back to positional
+-        if kwargs:
+-            try:
+-                result = self.graph.query(query, params=kwargs)
+-            except TypeError:
+-                # Fall back to positional argument if params keyword not supported
+-                result = self.graph.query(query, kwargs)
+-        else:
+-            result = self.graph.query(query)
++        _validate_integer_parameters(kwargs)
++        try:
++            if kwargs:
++                try:
++                    result = self.graph.query(query, params=kwargs)
++                except TypeError:
++                    result = self.graph.query(query, kwargs)
++            else:
++                result = self.graph.query(query)
++        except ResponseError as error:
++            # 6.x reports rejected numeric parameters (including subnormal
++            # floats) as a Redis error instead of a Python value error.
++            if str(error).startswith("Failed to parse the value of parameter "):
++                raise ValueError(
++                    f"FalkorDB rejected a query parameter: {error}"
++                ) from error
++            raise
+         return result
+ 
+     def close(self):
+diff --git a/test/backends/test_falkordb_parameters.py b/test/backends/test_falkordb_parameters.py
+new file mode 100644
+index 0000000..5fa0855
+--- /dev/null
++++ b/test/backends/test_falkordb_parameters.py
+@@ -0,0 +1,98 @@
++"""FalkorDB parameters are checked before writes and preserve valid numbers."""
++
++from __future__ import annotations
++
++from typing import Any, cast
++
++import pytest
++from redis.exceptions import ResponseError
++
++from graflo.db.falkordb.conn import FalkordbConnection
++
++
++class _Graph:
++    """Record query parameters or raise the supplied driver error."""
++
++    def __init__(self, error: Exception | None = None) -> None:
++        self.error = error
++        self.calls: list[dict[str, Any] | None] = []
++        self.result = object()
++
++    def query(self, query: str, params: dict[str, Any] | None = None) -> object:
++        """Record one query attempt, retaining the original numeric types."""
++        self.calls.append(params)
++        if self.error is not None:
++            raise self.error
++        return self.result
++
++
++def _connection(error: Exception | None = None) -> tuple[FalkordbConnection, _Graph]:
++    """Build a connection without contacting a server."""
++    graph = _Graph(error)
++    conn = cast(Any, object.__new__(FalkordbConnection))
++    conn.graph = graph
++    return conn, graph
++
++
++@pytest.mark.parametrize("value", [-(2**63), 2**63 - 1, 2**53 + 1, 0, True, False])
++def test_valid_integer_parameters_keep_their_value_and_type(value: int) -> None:
++    """Large integers stay exact, and booleans remain booleans."""
++    db, graph = _connection()
++
++    assert db.execute("RETURN $value", value=value) is graph.result
++    assert graph.calls == [{"value": value}]
++    params = graph.calls[0]
++    assert params is not None
++    assert type(params["value"]) is type(value)
++
++
++@pytest.mark.parametrize("value", [2**63, -(2**63) - 1, 2**64 - 1])
++@pytest.mark.parametrize("container", ["scalar", "list", "tuple", "map"])
++def test_overflowing_parameters_are_refused_before_querying(
++    value: int, container: str
++) -> None:
++    """Neither engine gets an integer it could clamp or reject differently."""
++    nested = {"scalar": value, "list": [value], "tuple": (value,), "map": {"x": value}}
++    db, graph = _connection()
++
++    with pytest.raises(OverflowError, match="signed 64-bit"):
++        db.execute("RETURN $value", value=nested[container])
++
++    assert graph.calls == []
++
++
++def test_an_overflowing_batch_writes_none_of_its_documents() -> None:
++    """A bad value in the last document cannot leave earlier documents written."""
++    db, graph = _connection()
++
++    with pytest.raises(OverflowError, match="signed 64-bit"):
++        db.upsert_docs_batch(
++            [{"id": "valid", "value": 1}, {"id": "invalid", "value": 2**63}],
++            "number",
++            match_keys=["id"],
++        )
++
++    assert graph.calls == []
++
++
++def test_a_server_parameter_refusal_is_a_value_error() -> None:
++    """Expose a rejected parameter as invalid input and preserve its cause."""
++    error = ResponseError("Failed to parse the value of parameter 'value'")
++    db, _ = _connection(error)
++
++    with pytest.raises(ValueError, match="query parameter") as caught:
++        db.execute("RETURN $value", value=1e-308)
++
++    assert caught.value.__cause__ is error
++
++
++@pytest.mark.parametrize("message", ["unique constraint violation", "Invalid input"])
++def test_other_server_errors_keep_their_driver_type(message: str) -> None:
++    """Constraint and Cypher errors retain their original error semantics."""
++    error = ResponseError(message)
++    db, _ = _connection(error)
++
++    with pytest.raises(ResponseError) as caught:
++        db.execute("RETURN $value", value=1)
++
++    assert caught.value is error
+diff --git a/test/db/falkordbs/test_index_contract.py b/test/db/falkordbs/test_index_contract.py
+new file mode 100644
+index 0000000..d75e076
+--- /dev/null
++++ b/test/db/falkordbs/test_index_contract.py
+@@ -0,0 +1,200 @@
++"""Live index catalogues and composite constraints on both FalkorDB engines."""
++
++import time
++from typing import Any
++
++import pytest
++from redis.exceptions import ResponseError
++
++from graflo.architecture.schema import Schema
++from graflo.connections.onto import FalkordbConfig
++from graflo.db.cypher import cypher_name
++from graflo.db.manager import ConnectionManager
++
++
++def _schema(label: str) -> Schema:
++    """A composite identity, a unique secondary key and a unique edge key."""
++    return Schema.model_validate(
++        {
++            "metadata": {"name": "indexed_people"},
++            "core_schema": {
++                "vertex_config": {
++                    "vertices": [
++                        {
++                            "name": label,
++                            "properties": ["tenant", "id", "email", "region", "active"],
++                            "identity": ["tenant", "id"],
++                        }
++                    ]
++                },
++                "edge_config": {
++                    "edges": [
++                        {
++                            "source": label,
++                            "target": label,
++                            "relation": "KNOWS",
++                            "properties": ["code", "scope"],
++                        }
++                    ]
++                },
++            },
++            "db_profile": {
++                "db_flavor": "falkordb",
++                "vertex_indexes": {
++                    label: [
++                        {"fields": ["region", "email"], "unique": True},
++                        {"fields": ["active", "tenant"]},
++                    ]
++                },
++                "edge_specs": [
++                    {
++                        "source": label,
++                        "target": label,
++                        "relation": "KNOWS",
++                        "indexes": [{"fields": ["scope", "code"], "unique": True}],
++                    }
++                ],
++            },
++        }
++    )
++
++
++def _ready_constraints(db: Any) -> list[dict[str, Any]]:
++    """Wait for asynchronous constraint creation, failing on a refused key."""
++    deadline = time.monotonic() + 5
++    while True:
++        constraints = db.graph.list_constraints()
++        assert all(row["status"] != "FAILED" for row in constraints), constraints
++        if len(constraints) == 3 and all(
++            row["status"] == "OPERATIONAL" for row in constraints
++        ):
++            return constraints
++        if time.monotonic() >= deadline:
++            pytest.fail(f"Constraints did not become operational: {constraints}")
++        time.sleep(0.01)
++
++
++@pytest.mark.parametrize("identity", [0, 0.0, False])
++def test_composite_identity_and_declared_indexes(
++    conn_conf: FalkordbConfig,
++    test_graph_name: str,
++    clean_db: None,
++    identity: float,
++) -> None:
++    """Repeated DDL, false-like keys and composite uniqueness agree in 4.x/6.x."""
++    label = test_graph_name
++    schema = _schema(label)
++    with ConnectionManager(connection_config=conn_conf) as db:
++        for _ in range(2):
++            db.define_indexes(schema)
++        constraints = _ready_constraints(db)
++        assert {
++            (row["entitytype"], row["label"], frozenset(row["properties"]))
++            for row in constraints
++        } == {
++            ("NODE", label, frozenset(["tenant", "id"])),
++            ("NODE", label, frozenset(["region", "email"])),
++            ("RELATIONSHIP", "KNOWS", frozenset(["scope", "code"])),
++        }
++        indexes = db.execute(
++            "CALL db.indexes() YIELD label, properties, entitytype "
++            "RETURN label, properties, entitytype"
++        ).result_set
++        assert {row[0]: set(row[1]) for row in indexes} == {
++            label: {"tenant", "id", "region", "email", "active"},
++            "KNOWS": {"scope", "code"},
++        }
++
++        db.upsert_docs_batch(
++            [
++                {
++                    "tenant": "a",
++                    "id": identity,
++                    "email": "alice",
++                    "region": "es",
++                    "active": False,
++                },
++                {
++                    "tenant": "b",
++                    "id": identity,
++                    "email": "alice",
++                    "region": "fr",
++                    "active": False,
++                },
++            ],
++            label,
++            ["tenant", "id"],
++        )
++        db.upsert_docs_batch(
++            [{"tenant": "a", "id": identity, "active": True}],
++            label,
++            ["tenant", "id"],
++        )
++        assert sorted(db.fetch_docs(label), key=lambda row: row["tenant"]) == [
++            {
++                "tenant": "a",
++                "id": identity,
++                "email": "alice",
++                "region": "es",
++                "active": True,
++            },
++            {
++                "tenant": "b",
++                "id": identity,
++                "email": "alice",
++                "region": "fr",
++                "active": False,
++            },
++        ]
++        for props in [
++            {"tenant": "a", "id": identity},
++            {"tenant": "c", "id": identity, "email": "alice", "region": "es"},
++        ]:
++            with pytest.raises(ResponseError, match="[Uu]nique"):
++                db.execute(
++                    f"CREATE (n:{cypher_name(label)}) SET n = $props", props=props
++                )
++        assert len(db.fetch_docs(label)) == 2
++
++
++def test_composite_edge_constraint_and_cleanup(
++    conn_conf: FalkordbConfig, test_graph_name: str, clean_db: None
++) -> None:
++    """Edge uniqueness covers the field combination and is removed by cleanup."""
++    label = test_graph_name
++    with ConnectionManager(connection_config=conn_conf) as db:
++        db.define_indexes(_schema(label))
++        _ready_constraints(db)
++        db.upsert_docs_batch(
++            [{"tenant": "a", "id": "1"}, {"tenant": "b", "id": "1"}],
++            label,
++            ["tenant", "id"],
++        )
++        for scope in ["one", "two"]:
++            db.insert_edges_batch(
++                [
++                    [
++                        {"tenant": "a", "id": "1"},
++                        {"tenant": "b", "id": "1"},
++                        {"scope": scope, "code": "same"},
++                    ]
++                ],
++                label,
++                label,
++                "KNOWS",
++                ("tenant", "id"),
++                ("tenant", "id"),
++                relationship_merge_properties=("scope", "code"),
++            )
++        with pytest.raises(ResponseError, match="[Uu]nique"):
++            db.execute(
++                f"MATCH (a:{cypher_name(label)} {{tenant: 'a'}}), "
++                f"(b:{cypher_name(label)} {{tenant: 'b'}}) "
++                "CREATE (a)-[:KNOWS {scope: 'one', code: 'same'}]->(b)"
++            )
++        assert db.execute("MATCH ()-[r:KNOWS]->() RETURN count(r)").result_set == [[2]]
++        db.delete_graph_structure(delete_all=True)
++        assert db.graph.list_constraints() == []
++        assert db.fetch_docs(label) == []
++        db.define_indexes(_schema(label))
++        _ready_constraints(db)
+diff --git a/test/db/falkordbs/test_numeric_parameters.py b/test/db/falkordbs/test_numeric_parameters.py
+new file mode 100644
+index 0000000..1e7782e
+--- /dev/null
++++ b/test/db/falkordbs/test_numeric_parameters.py
+@@ -0,0 +1,58 @@
++"""Numeric writes and rejected parameters on the C and Rust engines."""
++
++import sys
++
++import pytest
++
++from graflo.connections.onto import FalkordbConfig
++from graflo.db.manager import ConnectionManager
++
++
++@pytest.mark.parametrize(
++    "value",
++    [-(2**63), 2**63 - 1, 2**53 + 1, 0, True, False, sys.float_info.min, 1e308],
++)
++def test_numeric_properties_preserve_their_value_and_type(
++    conn_conf: FalkordbConfig, test_graph_name: str, clean_db: None, value: float
++) -> None:
++    """Integers stay exact; floating results retain the server's wire precision."""
++    with ConnectionManager(connection_config=conn_conf) as db:
++        db.upsert_docs_batch([{"id": "1", "value": value}], "number", ["id"])
++
++        (doc,) = db.fetch_docs("number")
++        assert type(doc["value"]) is type(value)
++        if isinstance(value, float):
++            assert doc["value"] == pytest.approx(value, rel=1e-14, abs=0)
++        else:
++            assert doc["value"] == value
++
++
++@pytest.mark.parametrize("value", [2**63, -(2**63) - 1, 2**64 - 1])
++def test_integer_overflow_does_not_write_a_partial_batch(
++    conn_conf: FalkordbConfig, test_graph_name: str, clean_db: None, value: int
++) -> None:
++    """Overflow is explicit on both engines, before any document is written."""
++    with ConnectionManager(connection_config=conn_conf) as db:
++        with pytest.raises(OverflowError, match="signed 64-bit"):
++            db.upsert_docs_batch(
++                [{"id": "valid", "value": 1}, {"id": "invalid", "value": value}],
++                "number",
++                ["id"],
++            )
++
++        assert db.fetch_docs("number") == []
++
++
++@pytest.mark.parametrize("value", [1e-308, -1e-308, 5e-324, -5e-324])
++def test_subnormal_floats_round_trip_or_are_explicitly_refused(
++    conn_conf: FalkordbConfig, test_graph_name: str, clean_db: None, value: float
++) -> None:
++    """4.x accepts subnormals; 6.0.3 refuses their parameter representation."""
++    with ConnectionManager(connection_config=conn_conf) as db:
++        try:
++            db.upsert_docs_batch([{"id": "1", "value": value}], "number", ["id"])
++        except ValueError as error:
++            assert "query parameter" in str(error)
++            assert db.fetch_docs("number") == []
++        else:
++            assert db.fetch_docs("number") == [{"id": "1", "value": value}]
+-- 
+2.56.0
+
+
+From a20d2459d360e70e3571f14c5353ef0edfb517ed Mon Sep 17 00:00:00 2001
+From: juliendbrt <jdabert@sigilum.fr>
+Date: Thu, 29 Oct 2026 00:14:28 +0100
+Subject: [PATCH 2/2] docs(falkordb): document Rust batch-size guidance
+
+---
+ docker/README.md | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/docker/README.md b/docker/README.md
+index 17e72b5..b187a51 100644
+--- a/docker/README.md
++++ b/docker/README.md
+@@ -164,6 +164,10 @@ To test either release, set `IMAGE_VERSION` in `docker/falkordb/.env`, start the
+ service and run `uv run pytest test/db/falkordbs`. Use a separate data volume for
+ each engine.
+ 
++On 6.0.3, large write batches can be much slower than smaller ones even with
++indexes. For ingestion, start with `--batch-size 1000` (the default is 10000)
++and measure your workload.
++
+ Integer query parameters must fit in the signed 64-bit range; larger integers
+ raise `OverflowError` before a query is sent. The Rust engine also refuses
+ subnormal floating-point parameters, such as `1e-308`, which the C engine
+-- 
+2.56.0
+

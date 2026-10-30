@@ -1,0 +1,68 @@
+
+test/backends/test_falkordb_parameters.py::test_valid_integer_parameters_keep_their_value_and_type[-9223372036854775808] PASSED [  2%]
+test/backends/test_falkordb_parameters.py::test_valid_integer_parameters_keep_their_value_and_type[9223372036854775807] PASSED [  5%]
+test/backends/test_falkordb_parameters.py::test_valid_integer_parameters_keep_their_value_and_type[9007199254740993] PASSED [  8%]
+test/backends/test_falkordb_parameters.py::test_valid_integer_parameters_keep_their_value_and_type[0] PASSED [ 10%]
+test/backends/test_falkordb_parameters.py::test_valid_integer_parameters_keep_their_value_and_type[True] PASSED [ 13%]
+test/backends/test_falkordb_parameters.py::test_valid_integer_parameters_keep_their_value_and_type[False] PASSED [ 16%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[scalar-9223372036854775808] PASSED [ 18%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[scalar--9223372036854775809] PASSED [ 21%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[scalar-18446744073709551615] PASSED [ 24%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[list-9223372036854775808] PASSED [ 27%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[list--9223372036854775809] PASSED [ 29%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[list-18446744073709551615] PASSED [ 32%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[tuple-9223372036854775808] PASSED [ 35%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[tuple--9223372036854775809] PASSED [ 37%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[tuple-18446744073709551615] PASSED [ 40%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[map-9223372036854775808] PASSED [ 43%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[map--9223372036854775809] PASSED [ 45%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[map-18446744073709551615] PASSED [ 48%]
+test/backends/test_falkordb_parameters.py::test_an_overflowing_batch_writes_none_of_its_documents PASSED [ 51%]
+test/backends/test_falkordb_parameters.py::test_a_server_parameter_refusal_is_a_value_error PASSED [ 54%]
+test/backends/test_falkordb_parameters.py::test_other_server_errors_keep_their_driver_type[unique constraint violation] PASSED [ 56%]
+test/backends/test_falkordb_parameters.py::test_other_server_errors_keep_their_driver_type[Invalid input] PASSED [ 59%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_round_trip_exactly[-9223372036854775808] PASSED [ 62%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_round_trip_exactly[9223372036854775807] PASSED [ 64%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_round_trip_exactly[9007199254740993] PASSED [ 67%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_round_trip_exactly[0] PASSED [ 70%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_round_trip_exactly[True] PASSED [ 72%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_round_trip_exactly[False] PASSED [ 75%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_round_trip_exactly[2.2250738585072014e-308] FAILED [ 78%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_round_trip_exactly[1e+308] PASSED [ 81%]
+test/db/falkordbs/test_numeric_parameters.py::test_integer_overflow_does_not_write_a_partial_batch[9223372036854775808] PASSED [ 83%]
+test/db/falkordbs/test_numeric_parameters.py::test_integer_overflow_does_not_write_a_partial_batch[-9223372036854775809] PASSED [ 86%]
+test/db/falkordbs/test_numeric_parameters.py::test_integer_overflow_does_not_write_a_partial_batch[18446744073709551615] PASSED [ 89%]
+test/db/falkordbs/test_numeric_parameters.py::test_subnormal_floats_round_trip_or_are_explicitly_refused[1e-308] PASSED [ 91%]
+test/db/falkordbs/test_numeric_parameters.py::test_subnormal_floats_round_trip_or_are_explicitly_refused[-1e-308] PASSED [ 94%]
+test/db/falkordbs/test_numeric_parameters.py::test_subnormal_floats_round_trip_or_are_explicitly_refused[5e-324] PASSED [ 97%]
+test/db/falkordbs/test_numeric_parameters.py::test_subnormal_floats_round_trip_or_are_explicitly_refused[-5e-324] PASSED [100%]
+
+=================================== FAILURES ===================================
+_____ test_numeric_properties_round_trip_exactly[2.2250738585072014e-308] ______
+
+conn_conf = FalkordbConfig(uri='redis://localhost:6379', username=None, password=None, database='testgraph_a9b40e42', schema_name=None, request_timeout=60.0, proxy_name=None, alias=None)
+test_graph_name = 'testgraph_a9b40e42', clean_db = None
+value = 2.2250738585072014e-308
+
+    @pytest.mark.parametrize(
+        "value",
+        [-(2**63), 2**63 - 1, 2**53 + 1, 0, True, False, sys.float_info.min, 1e308],
+    )
+    def test_numeric_properties_round_trip_exactly(
+        conn_conf: FalkordbConfig, test_graph_name: str, clean_db: None, value: int | float
+    ) -> None:
+        """Valid numeric properties retain their exact value and numeric type."""
+        with ConnectionManager(connection_config=conn_conf) as db:
+            db.upsert_docs_batch([{"id": "1", "value": value}], "number", ["id"])
+    
+            (doc,) = db.fetch_docs("number")
+>           assert doc["value"] == value
+E           assert 2.2250738585072e-308 == 2.2250738585072014e-308
+
+test/db/falkordbs/test_numeric_parameters.py:23: AssertionError
+============================= slowest 25 durations =============================
+
+(25 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+FAILED test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_round_trip_exactly[2.2250738585072014e-308]
+========================= 1 failed, 36 passed in 0.08s =========================

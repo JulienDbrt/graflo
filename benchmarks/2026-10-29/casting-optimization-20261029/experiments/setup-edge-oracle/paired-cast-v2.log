@@ -1,0 +1,10 @@
+base {"ready": true, "source": "/repo", "loaded_module": "/repo/graflo/architecture/graph_types/merge.py", "fusion_sha256": "e2822ce33f5c7ccd1732e4c1451a67b1d1df34fabc73fa720811920bb41348e9", "gc_threshold": [700, 10, 10]}
+candidate {"ready": true, "source": "/candidate", "loaded_module": "/candidate/graflo/architecture/graph_types/merge.py", "fusion_sha256": "e2e8423a06c9ba8f7d6399716145597f477a5babeae69cf1307b45b66f99c621", "gc_threshold": [700, 10, 10]}
+Traceback (most recent call last):
+  File "/evidence/paired_cast.py", line 44, in <module>
+    row=ask(variant,request)
+        ^^^^^^^^^^^^^^^^^^^^
+  File "/evidence/paired_cast.py", line 25, in ask
+    if 'error' in result:raise RuntimeError(json.dumps(result))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: {"error": "KeyError('seq')", "traceback": "Traceback (most recent call last):\n  File \"/evidence/cast_worker.py\", line 120, in <module>\n    result=loop.run_until_complete(run_case(request['case'],request['documents'],request['batch_size']))\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/lib/python3.11/asyncio/base_events.py\", line 654, in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n  File \"/evidence/cast_worker.py\", line 100, in run_case\n    i=source['seq']\n      ~~~~~~^^^^^^^\nKeyError: 'seq'\n"}

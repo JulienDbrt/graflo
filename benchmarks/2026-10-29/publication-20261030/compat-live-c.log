@@ -1,0 +1,261 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.13, pytest-9.1.1, pluggy-1.7.0
+cachedir: /tmp/pytest-cache
+rootdir: /repo
+configfile: pytest.ini
+plugins: xdist-3.8.0, timeout-2.4.0, hypothesis-6.170.9, anyio-4.15.1, platformdirs-4.13.5
+timeout: 300.0s
+timeout method: thread
+timeout func_only: False
+collected 209 items
+
+test/db/falkordbs/test_access_guard.py::test_a_hidden_vertex_is_never_matched PASSED [  0%]
+test/db/falkordbs/test_access_guard.py::test_a_scoped_delete_removes_exactly_its_scope PASSED [  0%]
+test/db/falkordbs/test_access_guard.py::test_a_union_field_holds_every_writer_s_zones PASSED [  1%]
+test/db/falkordbs/test_access_guard.py::test_the_short_path_through_a_hidden_vertex_is_not_taken PASSED [  1%]
+test/db/falkordbs/test_db_creation.py::test_connection_initialization PASSED [  2%]
+test/db/falkordbs/test_db_creation.py::test_fetch_docs_with_filter PASSED [  2%]
+test/db/falkordbs/test_db_creation.py::test_fetch_docs_with_limit PASSED [  3%]
+test/db/falkordbs/test_db_creation.py::test_fetch_docs_with_projection PASSED [  3%]
+test/db/falkordbs/test_db_creation.py::test_insert_edges PASSED          [  4%]
+test/db/falkordbs/test_db_creation.py::test_upsert_single_node PASSED    [  4%]
+test/db/falkordbs/test_db_creation.py::test_upsert_updates_existing_node PASSED [  5%]
+test/db/falkordbs/test_db_creation.py::test_delete_graph PASSED          [  5%]
+test/db/falkordbs/test_db_creation.py::test_create_graph PASSED          [  6%]
+test/db/falkordbs/test_db_index.py::test_create_vertex_index PASSED      [  6%]
+test/db/falkordbs/test_db_index.py::test_create_edge_index PASSED        [  7%]
+test/db/falkordbs/test_db_index.py::test_manual_index_creation PASSED    [  7%]
+test/db/falkordbs/test_edge_cases.py::TestCypherInjection::test_injection_via_node_property_value PASSED [  8%]
+test/db/falkordbs/test_edge_cases.py::TestCypherInjection::test_injection_via_label_name PASSED [  8%]
+test/db/falkordbs/test_edge_cases.py::TestCypherInjection::test_injection_via_match_keys PASSED [  9%]
+test/db/falkordbs/test_edge_cases.py::TestUnicodeTorture::test_emoji_overload PASSED [  9%]
+test/db/falkordbs/test_edge_cases.py::TestUnicodeTorture::test_rtl_and_bidi_text PASSED [ 10%]
+test/db/falkordbs/test_edge_cases.py::TestUnicodeTorture::test_null_bytes_and_control_chars PASSED [ 10%]
+test/db/falkordbs/test_edge_cases.py::TestUnicodeTorture::test_unicode_normalization_attacks PASSED [ 11%]
+test/db/falkordbs/test_edge_cases.py::TestUnicodeTorture::test_zero_width_characters PASSED [ 11%]
+test/db/falkordbs/test_edge_cases.py::TestBoundaryConditions::test_empty_batch PASSED [ 11%]
+test/db/falkordbs/test_edge_cases.py::TestBoundaryConditions::test_empty_document PASSED [ 12%]
+test/db/falkordbs/test_edge_cases.py::TestBoundaryConditions::test_very_long_string PASSED [ 12%]
+test/db/falkordbs/test_edge_cases.py::TestBoundaryConditions::test_extreme_numbers PASSED [ 13%]
+test/db/falkordbs/test_edge_cases.py::TestBoundaryConditions::test_special_float_values 
+-------------------------------- live log call ---------------------------------
+WARNING  graflo.db.falkordb.conn:conn.py:311 Skipping property 'value' with invalid value: nan
+WARNING  graflo.db.falkordb.conn:conn.py:311 Skipping property 'value' with invalid value: inf
+WARNING  graflo.db.falkordb.conn:conn.py:311 Skipping property 'value' with invalid value: -inf
+PASSED                                                                   [ 13%]
+test/db/falkordbs/test_edge_cases.py::TestBoundaryConditions::test_wide_document PASSED [ 14%]
+test/db/falkordbs/test_edge_cases.py::TestBoundaryConditions::test_deeply_nested_dict PASSED [ 14%]
+test/db/falkordbs/test_edge_cases.py::TestBoundaryConditions::test_negative_limit PASSED [ 15%]
+test/db/falkordbs/test_edge_cases.py::TestBoundaryConditions::test_zero_limit PASSED [ 15%]
+test/db/falkordbs/test_edge_cases.py::TestBoundaryConditions::test_float_limit PASSED [ 16%]
+test/db/falkordbs/test_edge_cases.py::TestTypeConfusion::test_string_number_collision PASSED [ 16%]
+test/db/falkordbs/test_edge_cases.py::TestTypeConfusion::test_none_values PASSED [ 17%]
+test/db/falkordbs/test_edge_cases.py::TestTypeConfusion::test_boolean_values PASSED [ 17%]
+test/db/falkordbs/test_edge_cases.py::TestTypeConfusion::test_list_values PASSED [ 18%]
+test/db/falkordbs/test_edge_cases.py::TestTypeConfusion::test_dict_property_value PASSED [ 18%]
+test/db/falkordbs/test_edge_cases.py::TestMalformedInputs::test_empty_match_keys PASSED [ 19%]
+test/db/falkordbs/test_edge_cases.py::TestMalformedInputs::test_missing_match_key_in_doc PASSED [ 19%]
+test/db/falkordbs/test_edge_cases.py::TestMalformedInputs::test_non_string_property_names 
+-------------------------------- live log call ---------------------------------
+WARNING  graflo.db.falkordb.conn:conn.py:301 Skipping non-string property key: 123 (type: int)
+WARNING  graflo.db.falkordb.conn:conn.py:301 Skipping non-string property key: None (type: NoneType)
+WARNING  graflo.db.falkordb.conn:conn.py:301 Skipping non-string property key: (1, 2) (type: tuple)
+PASSED                                                                   [ 20%]
+test/db/falkordbs/test_edge_cases.py::TestMalformedInputs::test_reserved_property_names PASSED [ 20%]
+test/db/falkordbs/test_edge_cases.py::TestMalformedInputs::test_special_characters_in_property_names PASSED [ 21%]
+test/db/falkordbs/test_edge_cases.py::TestPathologicalGraphs::test_bidirectional_edges PASSED [ 21%]
+test/db/falkordbs/test_edge_cases.py::TestPathologicalGraphs::test_long_chain PASSED [ 22%]
+test/db/falkordbs/test_edge_cases.py::TestPathologicalGraphs::test_star_topology PASSED [ 22%]
+test/db/falkordbs/test_edge_cases.py::TestPathologicalGraphs::test_self_loop PASSED [ 22%]
+test/db/falkordbs/test_edge_cases.py::TestPathologicalGraphs::test_multiple_edges_same_nodes PASSED [ 23%]
+test/db/falkordbs/test_edge_cases.py::TestPathologicalGraphs::test_complete_graph PASSED [ 23%]
+test/db/falkordbs/test_edge_cases.py::TestConcurrencyChaos::test_concurrent_inserts PASSED [ 24%]
+test/db/falkordbs/test_edge_cases.py::TestConcurrencyChaos::test_concurrent_read_write PASSED [ 24%]
+test/db/falkordbs/test_edge_cases.py::TestConcurrencyChaos::test_concurrent_upsert_same_key PASSED [ 25%]
+test/db/falkordbs/test_edge_cases.py::TestStateCorruption::test_operations_after_close PASSED [ 25%]
+test/db/falkordbs/test_edge_cases.py::TestStateCorruption::test_double_close PASSED [ 26%]
+test/db/falkordbs/test_edge_cases.py::TestStateCorruption::test_nested_context_managers PASSED [ 26%]
+test/db/falkordbs/test_edge_cases.py::TestAggregationEdgeCases::test_aggregate_with_null_values PASSED [ 27%]
+test/db/falkordbs/test_edge_cases.py::TestAggregationEdgeCases::test_aggregate_empty_collection PASSED [ 27%]
+test/db/falkordbs/test_edge_cases.py::TestAggregationEdgeCases::test_aggregate_discriminant_with_nulls PASSED [ 28%]
+test/db/falkordbs/test_edge_cases.py::TestFilterEdgeCases::test_filter_non_existent_field PASSED [ 28%]
+test/db/falkordbs/test_edge_cases.py::TestFilterEdgeCases::test_filter_with_special_characters PASSED [ 29%]
+test/db/falkordbs/test_edge_cases.py::TestEdgeOperationsEdgeCases::test_edge_between_non_existent_nodes PASSED [ 29%]
+test/db/falkordbs/test_edge_cases.py::TestEdgeOperationsEdgeCases::test_edge_with_empty_properties PASSED [ 30%]
+test/db/falkordbs/test_edge_cases.py::TestEdgeOperationsEdgeCases::test_edge_with_none_properties PASSED [ 30%]
+test/db/falkordbs/test_edge_cases.py::TestBatchStress::test_large_batch_insert PASSED [ 31%]
+test/db/falkordbs/test_edge_cases.py::TestBatchStress::test_batch_with_duplicates PASSED [ 31%]
+test/db/falkordbs/test_edge_cases.py::TestBatchStress::test_rapid_fire_small_batches PASSED [ 32%]
+test/db/falkordbs/test_edge_cases.py::TestMemoryExhaustion::test_exponential_property_growth PASSED [ 32%]
+test/db/falkordbs/test_edge_cases.py::TestMemoryExhaustion::test_million_tiny_properties PASSED [ 33%]
+test/db/falkordbs/test_edge_cases.py::TestMemoryExhaustion::test_recursive_json_like_string PASSED [ 33%]
+test/db/falkordbs/test_edge_cases.py::TestMemoryExhaustion::test_binary_payload_in_string PASSED [ 33%]
+test/db/falkordbs/test_edge_cases.py::TestCartesianProductBomb::test_unanchored_match_storm PASSED [ 34%]
+test/db/falkordbs/test_edge_cases.py::TestCartesianProductBomb::test_dense_multi_hop_path PASSED [ 34%]
+test/db/falkordbs/test_edge_cases.py::TestMalformedEncoding::test_overlong_utf8_sequences PASSED [ 35%]
+test/db/falkordbs/test_edge_cases.py::TestMalformedEncoding::test_utf8_bom_injection PASSED [ 35%]
+test/db/falkordbs/test_edge_cases.py::TestMalformedEncoding::test_surrogate_pairs PASSED [ 36%]
+test/db/falkordbs/test_edge_cases.py::TestMalformedEncoding::test_private_use_area_flood PASSED [ 36%]
+test/db/falkordbs/test_edge_cases.py::TestPropertyKeySmuggling::test_cypher_keywords_as_keys PASSED [ 37%]
+test/db/falkordbs/test_edge_cases.py::TestPropertyKeySmuggling::test_operators_in_keys PASSED [ 37%]
+test/db/falkordbs/test_edge_cases.py::TestPropertyKeySmuggling::test_internal_property_names PASSED [ 38%]
+test/db/falkordbs/test_edge_cases.py::TestPropertyKeySmuggling::test_whitespace_only_keys PASSED [ 38%]
+test/db/falkordbs/test_edge_cases.py::TestTemporalAnomalies::test_epoch_boundaries PASSED [ 39%]
+test/db/falkordbs/test_edge_cases.py::TestTemporalAnomalies::test_datetime_strings_as_injection PASSED [ 39%]
+test/db/falkordbs/test_edge_cases.py::TestGraphAlgorithmExploits::test_lollipop_graph PASSED [ 40%]
+test/db/falkordbs/test_edge_cases.py::TestGraphAlgorithmExploits::test_cycle_detection_nightmare PASSED [ 40%]
+test/db/falkordbs/test_edge_cases.py::TestGraphAlgorithmExploits::test_barbell_graph PASSED [ 41%]
+test/db/falkordbs/test_edge_cases.py::TestConnectionTorture::test_rapid_connect_disconnect PASSED [ 41%]
+test/db/falkordbs/test_edge_cases.py::TestConnectionTorture::test_interleaved_operations PASSED [ 42%]
+test/db/falkordbs/test_edge_cases.py::TestConnectionTorture::test_massive_transaction PASSED [ 42%]
+test/db/falkordbs/test_edge_cases.py::TestQueryInjectionAdvanced::test_comment_injection PASSED [ 43%]
+test/db/falkordbs/test_edge_cases.py::TestQueryInjectionAdvanced::test_parameter_pollution PASSED [ 43%]
+test/db/falkordbs/test_edge_cases.py::TestQueryInjectionAdvanced::test_label_injection_via_value PASSED [ 44%]
+test/db/falkordbs/test_edge_cases.py::TestQueryInjectionAdvanced::test_unicode_homoglyph_injection PASSED [ 44%]
+test/db/falkordbs/test_edge_cases.py::TestDataTypeTorture::test_scientific_notation_extremes PASSED [ 44%]
+test/db/falkordbs/test_edge_cases.py::TestDataTypeTorture::test_integer_overflow_boundaries PASSED [ 45%]
+test/db/falkordbs/test_edge_cases.py::TestDataTypeTorture::test_string_that_looks_like_number PASSED [ 45%]
+test/db/falkordbs/test_edge_cases.py::TestDataTypeTorture::test_uuid_collisions PASSED [ 46%]
+test/db/falkordbs/test_edge_cases.py::TestDataTypeTorture::test_empty_string_variations PASSED [ 46%]
+test/db/falkordbs/test_edge_cases.py::TestFilterSadism::test_deeply_nested_boolean_filter PASSED [ 47%]
+test/db/falkordbs/test_edge_cases.py::TestFilterSadism::test_filter_with_regex_metacharacters PASSED [ 47%]
+test/db/falkordbs/test_edge_cases.py::TestFilterSadism::test_filter_empty_value PASSED [ 48%]
+test/db/falkordbs/test_edge_cases.py::TestFilterSadism::test_filter_null_vs_missing PASSED [ 48%]
+test/db/falkordbs/test_edge_cases.py::TestDeadlockHell::test_circular_update_dependency PASSED [ 49%]
+test/db/falkordbs/test_edge_cases.py::TestDeadlockHell::test_phantom_read_scenario PASSED [ 49%]
+test/db/falkordbs/test_edge_cases.py::TestDeadlockHell::test_self_referential_update PASSED [ 50%]
+test/db/falkordbs/test_edge_cases.py::TestReDoS::test_filter_with_potential_redos PASSED [ 50%]
+test/db/falkordbs/test_edge_cases.py::TestReDoS::test_evil_regex_patterns_as_values PASSED [ 51%]
+test/db/falkordbs/test_edge_cases.py::TestLabelAbuse::test_very_long_label_name PASSED [ 51%]
+test/db/falkordbs/test_edge_cases.py::TestLabelAbuse::test_numeric_label_name PASSED [ 52%]
+test/db/falkordbs/test_edge_cases.py::TestLabelAbuse::test_unicode_label_names PASSED [ 52%]
+test/db/falkordbs/test_edge_cases.py::TestLabelAbuse::test_reserved_label_names PASSED [ 53%]
+test/db/falkordbs/test_edge_cases.py::TestQueryComplexity::test_deeply_nested_optional_match PASSED [ 53%]
+test/db/falkordbs/test_edge_cases.py::TestQueryComplexity::test_with_chain_explosion PASSED [ 54%]
+test/db/falkordbs/test_edge_cases.py::TestQueryComplexity::test_union_bomb PASSED [ 54%]
+test/db/falkordbs/test_edge_cases.py::TestSchemaEvolution::test_add_remove_properties_rapidly PASSED [ 55%]
+test/db/falkordbs/test_edge_cases.py::TestSchemaEvolution::test_property_type_mutation PASSED [ 55%]
+test/db/falkordbs/test_edge_cases.py::TestBoundaryValueAnalysis::test_string_length_boundaries PASSED [ 55%]
+test/db/falkordbs/test_edge_cases.py::TestBoundaryValueAnalysis::test_array_length_boundaries PASSED [ 56%]
+test/db/falkordbs/test_edge_cases.py::TestBoundaryValueAnalysis::test_property_count_boundaries PASSED [ 56%]
+test/db/falkordbs/test_edge_cases.py::TestPathologicalIds::test_collision_prone_ids PASSED [ 57%]
+test/db/falkordbs/test_edge_cases.py::TestPathologicalIds::test_lookalike_ids PASSED [ 57%]
+test/db/falkordbs/test_edge_cases.py::TestPathologicalIds::test_id_with_sql_keywords PASSED [ 58%]
+test/db/falkordbs/test_functional.py::TestDataCoherence::test_composite_key_partial_collision PASSED [ 58%]
+test/db/falkordbs/test_functional.py::TestDataCoherence::test_out_of_order_versioned_updates PASSED [ 59%]
+test/db/falkordbs/test_functional.py::TestDataCoherence::test_partial_update_preserves_fields PASSED [ 59%]
+test/db/falkordbs/test_functional.py::TestDataCoherence::test_null_value_behavior PASSED [ 60%]
+test/db/falkordbs/test_functional.py::TestDataCoherence::test_empty_string_vs_null_distinction PASSED [ 60%]
+test/db/falkordbs/test_functional.py::TestMultiSourceSync::test_conflicting_updates_same_entity PASSED [ 61%]
+test/db/falkordbs/test_functional.py::TestMultiSourceSync::test_uuid_collision_handling PASSED [ 61%]
+test/db/falkordbs/test_functional.py::TestRelationships::test_orphan_cleanup_with_detach_delete PASSED [ 62%]
+test/db/falkordbs/test_functional.py::TestRelationships::test_diamond_dependency_paths PASSED [ 62%]
+test/db/falkordbs/test_functional.py::TestRelationships::test_cycle_detection PASSED [ 63%]
+test/db/falkordbs/test_functional.py::TestRelationships::test_multiple_relationship_types PASSED [ 63%]
+test/db/falkordbs/test_functional.py::TestPolymorphicRelationships::test_heterogeneous_targets PASSED [ 64%]
+test/db/falkordbs/test_functional.py::TestETLScenarios::test_whitespace_in_match_keys PASSED [ 64%]
+test/db/falkordbs/test_functional.py::TestETLScenarios::test_case_sensitivity PASSED [ 65%]
+test/db/falkordbs/test_functional.py::TestETLScenarios::test_partial_field_import PASSED [ 65%]
+test/db/falkordbs/test_functional.py::TestETLScenarios::test_mixed_type_timestamps PASSED [ 66%]
+test/db/falkordbs/test_functional.py::TestSchemaEvolution::test_new_required_field PASSED [ 66%]
+test/db/falkordbs/test_functional.py::TestSchemaEvolution::test_field_rename_migration PASSED [ 66%]
+test/db/falkordbs/test_functional.py::TestSchemaEvolution::test_type_migration PASSED [ 67%]
+test/db/falkordbs/test_functional.py::TestQueryEdgeCases::test_filter_nonexistent_value PASSED [ 67%]
+test/db/falkordbs/test_functional.py::TestQueryEdgeCases::test_contradictory_conditions PASSED [ 68%]
+test/db/falkordbs/test_functional.py::TestQueryEdgeCases::test_projection_nonexistent_field PASSED [ 68%]
+test/db/falkordbs/test_functional.py::TestQueryEdgeCases::test_limit_exceeds_dataset PASSED [ 69%]
+test/db/falkordbs/test_functional.py::TestQueryEdgeCases::test_aggregate_mixed_types PASSED [ 69%]
+test/db/falkordbs/test_functional.py::TestTraversalEdgeCases::test_zero_length_path PASSED [ 70%]
+test/db/falkordbs/test_functional.py::TestTraversalEdgeCases::test_intermediate_node_filter PASSED [ 70%]
+test/db/falkordbs/test_functional.py::TestTransactionalRobustness::test_batch_with_invalid_document 
+-------------------------------- live log call ---------------------------------
+WARNING  graflo.db.falkordb.conn:conn.py:311 Skipping property 'name' with invalid value: nan
+PASSED                                                                   [ 71%]
+test/db/falkordbs/test_functional.py::TestTransactionalRobustness::test_no_unique_constraint PASSED [ 71%]
+test/db/falkordbs/test_functional.py::TestTransactionalRobustness::test_connection_recovery PASSED [ 72%]
+test/db/falkordbs/test_functional.py::TestPerformanceEdgeCases::test_cartesian_product SKIPPED [ 72%]
+test/db/falkordbs/test_functional.py::TestPerformanceEdgeCases::test_unbounded_path SKIPPED [ 73%]
+test/db/falkordbs/test_functional.py::TestPerformanceEdgeCases::test_contains_filter SKIPPED [ 73%]
+test/db/falkordbs/test_functional.py::TestCommonMistakes::test_edge_before_nodes PASSED [ 74%]
+test/db/falkordbs/test_functional.py::TestCommonMistakes::test_type_mismatch_in_match_key PASSED [ 74%]
+test/db/falkordbs/test_functional.py::TestCommonMistakes::test_typo_in_field_name PASSED [ 75%]
+test/db/falkordbs/test_functional.py::TestCommonMistakes::test_empty_string_id PASSED [ 75%]
+test/db/falkordbs/test_functional.py::TestDataQuality::test_duplicate_variations PASSED [ 76%]
+test/db/falkordbs/test_functional.py::TestDataQuality::test_unicode_homoglyphs PASSED [ 76%]
+test/db/falkordbs/test_functional.py::TestDataQuality::test_invisible_characters PASSED [ 77%]
+test/db/falkordbs/test_functional.py::TestDataQuality::test_date_format_variations PASSED [ 77%]
+test/db/falkordbs/test_functional.py::TestComplexOperationConsistency::test_read_your_writes PASSED [ 77%]
+test/db/falkordbs/test_functional.py::TestComplexOperationConsistency::test_interleaved_labels PASSED [ 78%]
+test/db/falkordbs/test_functional.py::TestComplexOperationConsistency::test_bulk_update_consistency PASSED [ 78%]
+test/db/falkordbs/test_functional.py::TestComplexOperationConsistency::test_delete_cascade_consistency PASSED [ 79%]
+test/db/falkordbs/test_functional.py::TestComplexOperationConsistency::test_atomic_transfer PASSED [ 79%]
+test/db/falkordbs/test_index_contract.py::test_composite_identity_and_declared_indexes[0] PASSED [ 80%]
+test/db/falkordbs/test_index_contract.py::test_composite_identity_and_declared_indexes[0.0] PASSED [ 80%]
+test/db/falkordbs/test_index_contract.py::test_composite_identity_and_declared_indexes[False] PASSED [ 81%]
+test/db/falkordbs/test_index_contract.py::test_composite_edge_constraint_and_cleanup PASSED [ 81%]
+test/db/falkordbs/test_ingest.py::test_aggregation_count PASSED          [ 82%]
+test/db/falkordbs/test_ingest.py::test_aggregation_min_max_avg PASSED    [ 82%]
+test/db/falkordbs/test_ingest.py::test_aggregation_sorted_unique PASSED  [ 83%]
+test/db/falkordbs/test_ingest.py::test_ingest PASSED                     [ 83%]
+test/db/falkordbs/test_ingest.py::test_keep_absent_documents PASSED      [ 84%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_preserve_their_value_and_type[-9223372036854775808] PASSED [ 84%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_preserve_their_value_and_type[9223372036854775807] PASSED [ 85%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_preserve_their_value_and_type[9007199254740993] PASSED [ 85%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_preserve_their_value_and_type[0] PASSED [ 86%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_preserve_their_value_and_type[True] PASSED [ 86%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_preserve_their_value_and_type[False] PASSED [ 87%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_preserve_their_value_and_type[2.2250738585072014e-308] PASSED [ 87%]
+test/db/falkordbs/test_numeric_parameters.py::test_numeric_properties_preserve_their_value_and_type[1e+308] PASSED [ 88%]
+test/db/falkordbs/test_numeric_parameters.py::test_integer_overflow_does_not_write_a_partial_batch[9223372036854775808] PASSED [ 88%]
+test/db/falkordbs/test_numeric_parameters.py::test_integer_overflow_does_not_write_a_partial_batch[-9223372036854775809] PASSED [ 88%]
+test/db/falkordbs/test_numeric_parameters.py::test_integer_overflow_does_not_write_a_partial_batch[18446744073709551615] PASSED [ 89%]
+test/db/falkordbs/test_numeric_parameters.py::test_subnormal_floats_round_trip_or_are_explicitly_refused[1e-308] PASSED [ 89%]
+test/db/falkordbs/test_numeric_parameters.py::test_subnormal_floats_round_trip_or_are_explicitly_refused[-1e-308] PASSED [ 90%]
+test/db/falkordbs/test_numeric_parameters.py::test_subnormal_floats_round_trip_or_are_explicitly_refused[5e-324] PASSED [ 90%]
+test/db/falkordbs/test_numeric_parameters.py::test_subnormal_floats_round_trip_or_are_explicitly_refused[-5e-324] PASSED [ 91%]
+test/db/falkordbs/test_performance.py::TestThroughput::test_single_insert_throughput SKIPPED [ 91%]
+test/db/falkordbs/test_performance.py::TestThroughput::test_batch_insert_throughput SKIPPED [ 92%]
+test/db/falkordbs/test_performance.py::TestThroughput::test_read_throughput SKIPPED [ 92%]
+test/db/falkordbs/test_performance.py::TestThroughput::test_query_throughput SKIPPED [ 93%]
+test/db/falkordbs/test_performance.py::TestScalability::test_insert_scaling SKIPPED [ 93%]
+test/db/falkordbs/test_performance.py::TestScalability::test_query_scaling_with_data_volume SKIPPED [ 94%]
+test/db/falkordbs/test_performance.py::TestConcurrency::test_concurrent_writes SKIPPED [ 94%]
+test/db/falkordbs/test_performance.py::TestConcurrency::test_concurrent_reads SKIPPED [ 95%]
+test/db/falkordbs/test_performance.py::TestConcurrency::test_mixed_read_write_load SKIPPED [ 95%]
+test/db/falkordbs/test_performance.py::TestBatchSizing::test_optimal_batch_size SKIPPED [ 96%]
+test/db/falkordbs/test_performance.py::TestBatchSizing::test_batch_size_memory_impact SKIPPED [ 96%]
+test/db/falkordbs/test_performance.py::TestSustainedLoad::test_sustained_write_load SKIPPED [ 97%]
+test/db/falkordbs/test_performance.py::TestSustainedLoad::test_sustained_mixed_load SKIPPED [ 97%]
+test/db/falkordbs/test_performance.py::TestLimits::test_max_property_count SKIPPED [ 98%]
+test/db/falkordbs/test_performance.py::TestLimits::test_max_batch_size SKIPPED [ 98%]
+test/db/falkordbs/test_performance.py::TestLimits::test_connection_pool_stress SKIPPED [ 99%]
+test/db/falkordbs/test_performance.py::TestGraphOperationsLoad::test_edge_creation_throughput SKIPPED [ 99%]
+test/db/falkordbs/test_performance.py::TestGraphOperationsLoad::test_traversal_performance SKIPPED [100%]
+
+============================= slowest 25 durations =============================
+1.00s call     test/db/falkordbs/test_edge_cases.py::TestGraphAlgorithmExploits::test_barbell_graph
+0.46s call     test/db/falkordbs/test_ingest.py::test_ingest
+0.27s call     test/db/falkordbs/test_edge_cases.py::TestMemoryExhaustion::test_million_tiny_properties
+0.22s call     test/db/falkordbs/test_edge_cases.py::TestConnectionTorture::test_massive_transaction
+0.05s call     test/db/falkordbs/test_edge_cases.py::TestConcurrencyChaos::test_concurrent_read_write
+0.05s setup    test/db/falkordbs/test_edge_cases.py::TestBoundaryConditions::test_special_float_values
+0.04s call     test/db/falkordbs/test_edge_cases.py::TestBatchStress::test_large_batch_insert
+0.03s setup    test/db/falkordbs/test_access_guard.py::test_a_hidden_vertex_is_never_matched
+0.03s call     test/db/falkordbs/test_edge_cases.py::TestConnectionTorture::test_rapid_connect_disconnect
+0.03s call     test/db/falkordbs/test_edge_cases.py::TestConcurrencyChaos::test_concurrent_upsert_same_key
+0.02s teardown test/db/falkordbs/test_edge_cases.py::TestConnectionTorture::test_massive_transaction
+0.02s call     test/db/falkordbs/test_access_guard.py::test_the_short_path_through_a_hidden_vertex_is_not_taken
+0.01s call     test/db/falkordbs/test_edge_cases.py::TestCartesianProductBomb::test_unanchored_match_storm
+0.01s call     test/db/falkordbs/test_edge_cases.py::TestMalformedInputs::test_non_string_property_names
+0.01s call     test/db/falkordbs/test_edge_cases.py::TestBoundaryConditions::test_special_float_values
+0.01s call     test/db/falkordbs/test_edge_cases.py::TestBoundaryValueAnalysis::test_array_length_boundaries
+0.01s call     test/db/falkordbs/test_edge_cases.py::TestBoundaryConditions::test_wide_document
+0.01s setup    test/db/falkordbs/test_access_guard.py::test_a_union_field_holds_every_writer_s_zones
+0.01s setup    test/db/falkordbs/test_access_guard.py::test_the_short_path_through_a_hidden_vertex_is_not_taken
+0.01s call     test/db/falkordbs/test_edge_cases.py::TestDeadlockHell::test_phantom_read_scenario
+0.01s call     test/db/falkordbs/test_access_guard.py::test_a_scoped_delete_removes_exactly_its_scope
+0.01s call     test/db/falkordbs/test_edge_cases.py::TestPathologicalGraphs::test_long_chain
+0.01s call     test/db/falkordbs/test_edge_cases.py::TestBoundaryValueAnalysis::test_property_count_boundaries
+0.01s call     test/db/falkordbs/test_edge_cases.py::TestConnectionTorture::test_interleaved_operations
+0.01s call     test/db/falkordbs/test_edge_cases.py::TestPathologicalGraphs::test_star_topology
+======================= 188 passed, 21 skipped in 5.15s ========================

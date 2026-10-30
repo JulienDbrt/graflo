@@ -1,0 +1,14 @@
+{
+  "base": {
+    "outcome": "raised",
+    "error_type": "TypeError",
+    "message": "expected dict, got NoneType",
+    "hash_calls": 2,
+    "input_length": 2
+  },
+  "candidate": {
+    "outcome": "returned",
+    "hash_calls": 2,
+    "input_length": 2
+  }
+}

@@ -1,0 +1,111 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.13, pytest-9.1.1, pluggy-1.7.0
+rootdir: /candidate
+configfile: pytest.ini
+plugins: xdist-3.8.0, timeout-2.4.0, hypothesis-6.170.9, anyio-4.15.1, platformdirs-4.13.5
+timeout: 300.0s
+timeout method: thread
+timeout func_only: False
+collected 66 items
+
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[None] PASSED [  1%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[] PASSED [  3%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[0] PASSED [  4%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[False] PASSED [  6%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[-0.0] PASSED [  7%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[9223372036854775808] PASSED [  9%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[\xe9 \xb7 \u6771\u4eac] PASSED [ 10%]
+../candidate/test/util/test_fusion_equivalence.py::test_keyless_fragments_still_apply_ordered_union PASSED [ 12%]
+../candidate/test/util/test_fusion_equivalence.py::test_keyed_single_observation_does_not_normalize_its_list PASSED [ 13%]
+../candidate/test/util/test_fusion_equivalence.py::test_leading_keyless_fields_keep_the_existing_mutation_and_order PASSED [ 15%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_only_observations_still_produce_one_fresh_document PASSED [ 16%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_do_not_hide_unhashable_identity_errors[identity0] PASSED [ 18%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_do_not_hide_unhashable_identity_errors[identity1] PASSED [ 19%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_do_not_hide_unhashable_identity_errors[identity2] PASSED [ 21%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_do_not_hide_unhashable_identity_errors[identity3] PASSED [ 22%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_do_not_hide_unhashable_union_errors PASSED [ 24%]
+../candidate/test/util/test_fusion_equivalence.py::test_custom_identity_hash_is_still_called_in_the_same_order PASSED [ 25%]
+../candidate/test/util/test_fusion_equivalence.py::test_identity_callback_cannot_hide_an_invalid_appended_observation PASSED [ 27%]
+../candidate/test/util/test_fusion_equivalence.py::test_appended_mapping_subclass_keeps_its_items_callback PASSED [ 28%]
+../candidate/test/util/test_fusion_equivalence.py::test_invalid_copy_from_an_appended_mapping_keeps_its_error PASSED [ 30%]
+../candidate/test/util/test_fusion_equivalence.py::test_mapping_subclass_callbacks_and_tags_are_preserved PASSED [ 31%]
+../candidate/test/util/test_fusion_equivalence.py::test_invalid_later_observations_are_not_silently_removed[None] PASSED [ 33%]
+../candidate/test/util/test_fusion_equivalence.py::test_invalid_later_observations_are_not_silently_removed[1] PASSED [ 34%]
+../candidate/test/util/test_fusion_equivalence.py::test_invalid_later_observations_are_not_silently_removed[bad2] PASSED [ 36%]
+../candidate/test/util/test_fusion_equivalence.py::test_custom_key_names_are_checked_even_for_empty_observations PASSED [ 37%]
+../candidate/test/util/test_fusion_equivalence.py::test_key_callback_can_fill_an_earlier_empty_observation PASSED [ 39%]
+../candidate/test/util/test_fusion_equivalence.py::test_list_subclass_is_not_read_more_often PASSED [ 40%]
+../candidate/test/util/test_fusion_equivalence.py::test_cyclic_payload_keeps_the_existing_shallow_reference PASSED [ 42%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_observations_are_neutral_for_values_errors_and_mutation PASSED [ 43%]
+../candidate/test/util/test_fusion_equivalence.py::test_plain_and_subclassed_lists_agree_on_full_fusion PASSED [ 45%]
+../candidate/test/util/test_merge.py::test_merge_simple PASSED           [ 46%]
+../candidate/test/util/test_merge.py::test_merge_simple_two_doc PASSED   [ 48%]
+../candidate/test/util/test_merge.py::test_merge_nodiscriminant PASSED   [ 50%]
+../candidate/test/util/test_merge.py::test_merge PASSED                  [ 51%]
+../candidate/test/util/test_merge.py::test_merge_no_index_keys_dict PASSED [ 53%]
+../candidate/test/util/test_merge.py::test_merge_no_index_keys_vertexrep PASSED [ 54%]
+../candidate/test/util/test_merge.py::test_merge_vertexreps_with_mixed_flags_fuse_per_flag_group PASSED [ 56%]
+../candidate/test/util/test_merge.py::test_merge_keyless_vertexreps_with_mixed_flags_stay_apart PASSED [ 57%]
+../candidate/test/hq/test_cast_dispatch.py::TestModesAgree::test_chunking_does_not_change_the_graph[1] PASSED [ 59%]
+../candidate/test/hq/test_cast_dispatch.py::TestModesAgree::test_chunking_does_not_change_the_graph[2] PASSED [ 60%]
+../candidate/test/hq/test_cast_dispatch.py::TestModesAgree::test_chunking_does_not_change_the_graph[4] PASSED [ 62%]
+../candidate/test/hq/test_cast_dispatch.py::TestModesAgree::test_worker_processes_produce_the_same_graph PASSED [ 63%]
+../candidate/test/hq/test_cast_dispatch.py::TestModesAgree::test_document_order_is_preserved_across_chunks PASSED [ 65%]
+../candidate/test/hq/test_cast_dispatch.py::TestModesAgree::test_an_empty_batch_is_handled PASSED [ 66%]
+../candidate/test/hq/test_cast_dispatch.py::TestPerDocumentErrorsStayPerDocument::test_skip_reports_one_failure_and_keeps_the_rest[inline] PASSED [ 68%]
+../candidate/test/hq/test_cast_dispatch.py::TestPerDocumentErrorsStayPerDocument::test_skip_reports_one_failure_and_keeps_the_rest[thread] PASSED [ 69%]
+../candidate/test/hq/test_cast_dispatch.py::TestPerDocumentErrorsStayPerDocument::test_skip_reports_one_failure_and_keeps_the_rest[process] PASSED [ 71%]
+../candidate/test/hq/test_cast_dispatch.py::TestPerDocumentErrorsStayPerDocument::test_fail_propagates[inline] PASSED [ 72%]
+../candidate/test/hq/test_cast_dispatch.py::TestPerDocumentErrorsStayPerDocument::test_fail_propagates[thread] PASSED [ 74%]
+../candidate/test/hq/test_cast_dispatch.py::TestPerDocumentErrorsStayPerDocument::test_fail_propagates[process] PASSED [ 75%]
+../candidate/test/hq/test_cast_dispatch.py::TestPerDocumentErrorsStayPerDocument::test_a_worker_failure_keeps_the_original_exception_type PASSED [ 77%]
+../candidate/test/hq/test_cast_dispatch.py::TestCastByKey::test_records_are_split_by_key_and_failures_keep_their_index[inline] PASSED [ 78%]
+../candidate/test/hq/test_cast_dispatch.py::TestCastByKey::test_records_are_split_by_key_and_failures_keep_their_index[thread] PASSED [ 80%]
+../candidate/test/hq/test_cast_dispatch.py::TestCastByKey::test_records_are_split_by_key_and_failures_keep_their_index[process] PASSED [ 81%]
+../candidate/test/hq/test_cast_dispatch.py::TestCastByKey::test_records_are_split_by_key_and_failures_keep_their_index[dynamic-edges] PASSED [ 83%]
+../candidate/test/hq/test_cast_dispatch.py::TestCastByKey::test_one_key_is_one_plain_batch PASSED [ 84%]
+../candidate/test/hq/test_cast_dispatch.py::TestProcessPathFallsBackRatherThanFailing::test_dynamic_edges_stay_in_process PASSED [ 86%]
+../candidate/test/hq/test_cast_dispatch.py::TestProcessPathFallsBackRatherThanFailing::test_per_document_edge_steps_stay_in_process PASSED [ 87%]
+../candidate/test/hq/test_cast_dispatch.py::TestProcessPathFallsBackRatherThanFailing::test_a_normal_resource_is_process_castable PASSED [ 89%]
+../candidate/test/hq/test_cast_dispatch.py::TestAutoModeSelection::test_auto_stays_inline_on_one_core PASSED [ 90%]
+../candidate/test/hq/test_cast_dispatch.py::TestAutoModeSelection::test_auto_picks_process_with_cores_and_volume PASSED [ 92%]
+../candidate/test/hq/test_cast_dispatch.py::TestAutoModeSelection::test_auto_stays_inline_for_small_batches PASSED [ 93%]
+../candidate/test/hq/test_cast_dispatch.py::TestAutoModeSelection::test_auto_stays_inline_with_dynamic_edges PASSED [ 95%]
+../candidate/test/hq/test_cast_dispatch.py::TestAutoModeSelection::test_explicit_executor_is_respected PASSED [ 96%]
+../candidate/test/hq/test_cast_dispatch.py::TestDynamicEdgesNeverMultiThread::test_thread_mode_collapses_to_single_thread PASSED [ 98%]
+../candidate/test/hq/test_cast_dispatch.py::TestPoolsPerResource::test_two_resources_keep_two_live_pools PASSED [100%]
+
+=============================== warnings summary ===============================
+test/util/test_fusion_equivalence.py::test_empty_observations_are_neutral_for_values_errors_and_mutation
+  /repo/.venv/lib/python3.11/site-packages/hypothesis/_settings.py:847: HypothesisWarning: The database setting is not configured, and the default location is unusable - falling back to an in-memory database for this session.  path=PosixPath('/repo/.hypothesis/examples')
+    self._fallback.database if self._database is not_set else self._database
+
+.venv/lib/python3.11/site-packages/_pytest/cacheprovider.py:469
+  /repo/.venv/lib/python3.11/site-packages/_pytest/cacheprovider.py:469: PytestCacheWarning: could not create cache path /candidate/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/candidate/pytest-cache-files-wzhafyb0'
+    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 25 durations =============================
+2.63s call     test/util/test_fusion_equivalence.py::test_plain_and_subclassed_lists_agree_on_full_fusion
+2.20s call     test/util/test_fusion_equivalence.py::test_empty_observations_are_neutral_for_values_errors_and_mutation
+2.08s call     test/hq/test_cast_dispatch.py::TestPerDocumentErrorsStayPerDocument::test_skip_reports_one_failure_and_keeps_the_rest[process]
+2.01s call     test/hq/test_cast_dispatch.py::TestPerDocumentErrorsStayPerDocument::test_fail_propagates[process]
+1.67s call     test/hq/test_cast_dispatch.py::TestPoolsPerResource::test_two_resources_keep_two_live_pools
+1.07s call     test/hq/test_cast_dispatch.py::TestModesAgree::test_worker_processes_produce_the_same_graph
+0.85s call     test/hq/test_cast_dispatch.py::TestCastByKey::test_records_are_split_by_key_and_failures_keep_their_index[process]
+0.84s call     test/hq/test_cast_dispatch.py::TestPerDocumentErrorsStayPerDocument::test_a_worker_failure_keeps_the_original_exception_type
+0.16s call     test/hq/test_cast_dispatch.py::TestModesAgree::test_chunking_does_not_change_the_graph[4]
+0.06s call     test/hq/test_cast_dispatch.py::TestModesAgree::test_chunking_does_not_change_the_graph[1]
+0.06s call     test/hq/test_cast_dispatch.py::TestModesAgree::test_chunking_does_not_change_the_graph[2]
+0.04s call     test/hq/test_cast_dispatch.py::TestDynamicEdgesNeverMultiThread::test_thread_mode_collapses_to_single_thread
+0.03s call     test/hq/test_cast_dispatch.py::TestModesAgree::test_document_order_is_preserved_across_chunks
+0.01s call     test/hq/test_cast_dispatch.py::TestPerDocumentErrorsStayPerDocument::test_skip_reports_one_failure_and_keeps_the_rest[inline]
+0.01s call     test/hq/test_cast_dispatch.py::TestPerDocumentErrorsStayPerDocument::test_skip_reports_one_failure_and_keeps_the_rest[thread]
+0.01s call     test/hq/test_cast_dispatch.py::TestPerDocumentErrorsStayPerDocument::test_fail_propagates[thread]
+0.01s call     test/hq/test_cast_dispatch.py::TestPerDocumentErrorsStayPerDocument::test_fail_propagates[inline]
+0.01s call     test/hq/test_cast_dispatch.py::TestCastByKey::test_records_are_split_by_key_and_failures_keep_their_index[dynamic-edges]
+0.01s call     test/hq/test_cast_dispatch.py::TestCastByKey::test_records_are_split_by_key_and_failures_keep_their_index[thread]
+0.01s call     test/hq/test_cast_dispatch.py::TestCastByKey::test_records_are_split_by_key_and_failures_keep_their_index[inline]
+
+(5 durations < 0.005s hidden.  Use -vv to show these durations.)
+======================= 66 passed, 2 warnings in 14.02s ========================

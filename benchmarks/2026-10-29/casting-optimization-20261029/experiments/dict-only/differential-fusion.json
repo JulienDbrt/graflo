@@ -1,0 +1,22 @@
+{
+  "generated_examples": 3000,
+  "modes": {
+    "dict": 1356,
+    "fragments": 594,
+    "reps": 568,
+    "mixed": 482
+  },
+  "divergences": 0,
+  "seed": 20261029,
+  "checks": [
+    "types",
+    "float bits",
+    "order",
+    "multiplicity",
+    "error type/args",
+    "input mutation",
+    "shared-reference topology"
+  ],
+  "base_sha256": "e2822ce33f5c7ccd1732e4c1451a67b1d1df34fabc73fa720811920bb41348e9",
+  "candidate_sha256": "e2e8423a06c9ba8f7d6399716145597f477a5babeae69cf1307b45b66f99c621"
+}

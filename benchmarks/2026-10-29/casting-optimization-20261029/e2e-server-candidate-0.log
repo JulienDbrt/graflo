@@ -1,0 +1,15 @@
+1:C 29 Oct 2026 16:15:36.211 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+1:C 29 Oct 2026 16:15:36.211 * Redis version=8.10.2, bits=64, commit=00000000, modified=1, pid=1, just started
+1:C 29 Oct 2026 16:15:36.211 * Configuration loaded
+1:M 29 Oct 2026 16:15:36.211 * monotonic clock: ARM CNTVCT @ 24 ticks/us
+1:M 29 Oct 2026 16:15:36.211 * Running mode=standalone, port=6379.
+1:M 29 Oct 2026 16:15:36.232 * <graph> GraphBLAS JIT restrict to pre-jit kernels
+1:M 29 Oct 2026 16:15:36.236 * <graph> Enabled role change notification
+1:M 29 Oct 2026 16:15:36.236 * <graph> Starting up FalkorDB version 4.22.3.
+1:M 29 Oct 2026 16:15:36.238 * <graph> Thread pool created, using 2 threads.
+1:M 29 Oct 2026 16:15:36.238 * <graph> Maximum number of OpenMP threads set to 2
+1:M 29 Oct 2026 16:15:36.238 * <graph> Query backlog size: 1000
+1:M 29 Oct 2026 16:15:36.238 * Module 'graph' loaded from /var/lib/falkordb/bin/falkordb.so
+1:M 29 Oct 2026 16:15:36.239 * Server initialized
+1:M 29 Oct 2026 16:15:36.239 * Ready to accept connections tcp
+1:M 29 Oct 2026 16:15:36.239 # WARNING: Redis does not require authentication and is not protected by network restrictions. Redis will accept connections from any IP address on any network interface.

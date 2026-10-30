@@ -1,0 +1,24 @@
+{"kind": "metadata", "started_at": "2026-10-28T23:10:59.536935+00:00", "python": "3.11.13", "machine": "aarch64", "packages": {"falkordb": "1.8.1", "redis": "8.1.0"}, "server": "8.10.2", "config": {"THREAD_COUNT": ["THREAD_COUNT", 2], "OMP_THREAD_COUNT": ["OMP_THREAD_COUNT", 2], "MAX_QUEUED_QUERIES": ["MAX_QUEUED_QUERIES", 10000], "TIMEOUT": ["TIMEOUT", 0], "TIMEOUT_DEFAULT": ["TIMEOUT_DEFAULT", 0], "TIMEOUT_MAX": ["TIMEOUT_MAX", 0], "RESULTSET_SIZE": ["RESULTSET_SIZE", -1]}, "engine": "rust", "phase": "parse"}
+{"kind": "parameter_only", "documents": 1000, "repeat": 0, "seconds": 0.00169757200001186, "server_reported_ms": 0.008668, "formatting_seconds": 0.000542213000699121, "payload_bytes": 125906, "engine": "rust", "phase": "parse"}
+{"kind": "generated_range", "documents": 1000, "repeat": 0, "seconds": 0.00011323500075377524, "server_reported_ms": 0.006251, "engine": "rust", "phase": "parse"}
+{"kind": "parameter_only", "documents": 1000, "repeat": 1, "seconds": 0.0014655169998150086, "server_reported_ms": 0.004959, "formatting_seconds": 0.0005070379993412644, "payload_bytes": 125906, "engine": "rust", "phase": "parse"}
+{"kind": "generated_range", "documents": 1000, "repeat": 1, "seconds": 8.852100017975317e-05, "server_reported_ms": 0.005585, "engine": "rust", "phase": "parse"}
+{"kind": "parameter_only", "documents": 1000, "repeat": 2, "seconds": 0.0014251740003601299, "server_reported_ms": 0.005001, "formatting_seconds": 0.000518081999871356, "payload_bytes": 125906, "engine": "rust", "phase": "parse"}
+{"kind": "generated_range", "documents": 1000, "repeat": 2, "seconds": 9.906500054057688e-05, "server_reported_ms": 0.005709, "engine": "rust", "phase": "parse"}
+{"kind": "parameter_only", "documents": 5000, "repeat": 0, "seconds": 0.008843859999615233, "server_reported_ms": 0.01442, "formatting_seconds": 0.003623363999395224, "payload_bytes": 633906, "engine": "rust", "phase": "parse"}
+{"kind": "generated_range", "documents": 5000, "repeat": 0, "seconds": 0.0002017560000240337, "server_reported_ms": 0.022088, "engine": "rust", "phase": "parse"}
+{"kind": "parameter_only", "documents": 5000, "repeat": 1, "seconds": 0.007495455000025686, "server_reported_ms": 0.013879, "formatting_seconds": 0.0028795199996238807, "payload_bytes": 633906, "engine": "rust", "phase": "parse"}
+{"kind": "generated_range", "documents": 5000, "repeat": 1, "seconds": 0.0002090500001941109, "server_reported_ms": 0.02038, "engine": "rust", "phase": "parse"}
+{"kind": "parameter_only", "documents": 5000, "repeat": 2, "seconds": 0.006900438000229769, "server_reported_ms": 0.013254, "formatting_seconds": 0.0025629450001360965, "payload_bytes": 633906, "engine": "rust", "phase": "parse"}
+{"kind": "generated_range", "documents": 5000, "repeat": 2, "seconds": 0.00022492799962492427, "server_reported_ms": 0.023006, "engine": "rust", "phase": "parse"}
+{"kind": "parameter_only", "documents": 10000, "repeat": 0, "seconds": 0.013419492999673821, "server_reported_ms": 0.018755, "formatting_seconds": 0.005614465000689961, "payload_bytes": 1268906, "engine": "rust", "phase": "parse"}
+{"kind": "generated_range", "documents": 10000, "repeat": 0, "seconds": 0.0001855450000221026, "server_reported_ms": 0.040552, "engine": "rust", "phase": "parse"}
+{"kind": "parameter_only", "documents": 10000, "repeat": 1, "seconds": 0.01351651699951617, "server_reported_ms": 0.018171, "formatting_seconds": 0.0052933460001440835, "payload_bytes": 1268906, "engine": "rust", "phase": "parse"}
+{"kind": "generated_range", "documents": 10000, "repeat": 1, "seconds": 0.0002128429996446357, "server_reported_ms": 0.038634, "engine": "rust", "phase": "parse"}
+{"kind": "parameter_only", "documents": 10000, "repeat": 2, "seconds": 0.013873642999897129, "server_reported_ms": 0.019212, "formatting_seconds": 0.00534860999960074, "payload_bytes": 1268906, "engine": "rust", "phase": "parse"}
+{"kind": "generated_range", "documents": 10000, "repeat": 2, "seconds": 0.0002040070003204164, "server_reported_ms": 0.033925, "engine": "rust", "phase": "parse"}
+{"kind": "parameter_only", "documents": 25000, "repeat": 0, "seconds": 0.03572173099928477, "server_reported_ms": 0.038301, "formatting_seconds": 0.015232800999910978, "payload_bytes": 3188906, "engine": "rust", "phase": "parse"}
+{"kind": "generated_range", "documents": 25000, "repeat": 0, "seconds": 0.0003143249996355735, "server_reported_ms": 0.085479, "engine": "rust", "phase": "parse"}
+{"kind": "parameter_only", "documents": 50000, "repeat": 0, "seconds": 0.09013538100043661, "server_reported_ms": 0.070308, "formatting_seconds": 0.027552698999897984, "payload_bytes": 6388906, "engine": "rust", "phase": "parse"}
+{"kind": "generated_range", "documents": 50000, "repeat": 0, "seconds": 0.000469653000436665, "server_reported_ms": 0.168665, "engine": "rust", "phase": "parse"}
+{"kind": "finished", "finished_at": "2026-10-28T23:10:59.849419+00:00", "engine": "rust", "phase": "parse"}

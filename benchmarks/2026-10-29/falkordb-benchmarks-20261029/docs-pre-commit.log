@@ -1,0 +1,12 @@
+check for merge conflicts................................................Passed
+check for added large files..............................................Passed
+fix end of files.........................................................Passed
+trim trailing whitespace.................................................Passed
+pretty format json...................................(no files to check)Skipped
+ruff check...........................................(no files to check)Skipped
+ruff format..............................................................Passed
+ty check.............................................(no files to check)Skipped
+rebuild ontology viz.................................(no files to check)Skipped
+no external doc paths....................................................Passed
+Pretty format YAML...................................(no files to check)Skipped
+toml-sort............................................(no files to check)Skipped

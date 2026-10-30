@@ -1,0 +1,102 @@
+
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[None] PASSED [  2%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[] PASSED [  4%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[0] PASSED [  6%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[False] PASSED [  8%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[-0.0] PASSED [ 11%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[9223372036854775808] PASSED [ 13%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_preserve_typed_values_and_shallow_copy[\xe9 \xb7 \u6771\u4eac] PASSED [ 15%]
+../candidate/test/util/test_fusion_equivalence.py::test_keyless_fragments_still_apply_ordered_union PASSED [ 17%]
+../candidate/test/util/test_fusion_equivalence.py::test_keyed_single_observation_does_not_normalize_its_list PASSED [ 20%]
+../candidate/test/util/test_fusion_equivalence.py::test_leading_keyless_fields_keep_the_existing_mutation_and_order PASSED [ 22%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_only_observations_still_produce_one_fresh_document PASSED [ 24%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_do_not_hide_unhashable_identity_errors[identity0] PASSED [ 26%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_do_not_hide_unhashable_identity_errors[identity1] PASSED [ 28%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_do_not_hide_unhashable_identity_errors[identity2] PASSED [ 31%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_do_not_hide_unhashable_identity_errors[identity3] PASSED [ 33%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_fragments_do_not_hide_unhashable_union_errors PASSED [ 35%]
+../candidate/test/util/test_fusion_equivalence.py::test_custom_identity_hash_is_still_called_in_the_same_order PASSED [ 37%]
+../candidate/test/util/test_fusion_equivalence.py::test_identity_callback_cannot_hide_an_invalid_appended_observation PASSED [ 40%]
+../candidate/test/util/test_fusion_equivalence.py::test_mapping_subclass_callbacks_and_tags_are_preserved PASSED [ 42%]
+../candidate/test/util/test_fusion_equivalence.py::test_invalid_later_observations_are_not_silently_removed[None] PASSED [ 44%]
+../candidate/test/util/test_fusion_equivalence.py::test_invalid_later_observations_are_not_silently_removed[1] PASSED [ 46%]
+../candidate/test/util/test_fusion_equivalence.py::test_invalid_later_observations_are_not_silently_removed[bad2] PASSED [ 48%]
+../candidate/test/util/test_fusion_equivalence.py::test_custom_key_names_are_checked_even_for_empty_observations PASSED [ 51%]
+../candidate/test/util/test_fusion_equivalence.py::test_list_subclass_is_not_read_more_often PASSED [ 53%]
+../candidate/test/util/test_fusion_equivalence.py::test_cyclic_payload_keeps_the_existing_shallow_reference PASSED [ 55%]
+../candidate/test/util/test_fusion_equivalence.py::test_empty_observations_are_neutral_for_values_errors_and_mutation PASSED [ 57%]
+../candidate/test/util/test_fusion_equivalence.py::test_plain_and_subclassed_lists_agree_on_full_fusion FAILED [ 60%]
+../candidate/test/util/test_merge.py::test_merge_simple PASSED           [ 62%]
+../candidate/test/util/test_merge.py::test_merge_simple_two_doc PASSED   [ 64%]
+../candidate/test/util/test_merge.py::test_merge_nodiscriminant PASSED   [ 66%]
+../candidate/test/util/test_merge.py::test_merge PASSED                  [ 68%]
+../candidate/test/util/test_merge.py::test_merge_no_index_keys_dict PASSED [ 71%]
+../candidate/test/util/test_merge.py::test_merge_no_index_keys_vertexrep PASSED [ 73%]
+../candidate/test/util/test_merge.py::test_merge_vertexreps_with_mixed_flags_fuse_per_flag_group PASSED [ 75%]
+../candidate/test/util/test_merge.py::test_merge_keyless_vertexreps_with_mixed_flags_stay_apart PASSED [ 77%]
+../candidate/test/architecture/test_secondary_identity_assembly.py::TestMergeBasis::test_secondary_only_docs_would_collapse_under_primary_basis PASSED [ 80%]
+../candidate/test/architecture/test_secondary_identity_assembly.py::TestMergeBasis::test_merge_on_selected_fields_keeps_rows_distinct PASSED [ 82%]
+../candidate/test/architecture/test_secondary_identity_assembly.py::TestMergeBasis::test_same_endpoint_type_merges_once_on_the_union PASSED [ 84%]
+../candidate/test/architecture/test_secondary_identity_assembly.py::TestRenderProjection::test_endpoints_project_the_selected_fields PASSED [ 86%]
+../candidate/test/architecture/test_secondary_identity_assembly.py::TestRenderProjection::test_asymmetric_projection PASSED [ 88%]
+../candidate/test/architecture/test_secondary_identity_assembly.py::TestRenderProjection::test_defaults_to_primary_identity PASSED [ 91%]
+../candidate/test/architecture/test_secondary_identity_assembly.py::TestRenderProjection::test_endpoints_without_the_selected_fields_are_dropped PASSED [ 93%]
+../candidate/test/architecture/test_secondary_identity_assembly.py::TestLookupOnlyObservations::test_default_is_written PASSED [ 95%]
+../candidate/test/architecture/test_secondary_identity_assembly.py::TestLookupOnlyObservations::test_flag_survives_merge PASSED [ 97%]
+../candidate/test/architecture/test_secondary_identity_assembly.py::TestLookupOnlyObservations::test_flags_survive_a_merge_of_keyless_observations PASSED [100%]
+
+=================================== FAILURES ===================================
+_____________ test_plain_and_subclassed_lists_agree_on_full_fusion _____________
+
+    @settings(max_examples=examples(500))
+>   @given(
+            
+        docs=st.lists(_docs, max_size=12),
+        keys=st.sampled_from([(), ("id",), ("tenant", "id"), ("id", "id")]),
+        union=st.sampled_from([(), ("zones",), ("id", "zones")]),
+    )
+
+/candidate/test/util/test_fusion_equivalence.py:231: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+docs = [], keys = (), union = ()
+
+    @settings(max_examples=examples(500))
+    @given(
+        docs=st.lists(_docs, max_size=12),
+        keys=st.sampled_from([(), ("id",), ("tenant", "id"), ("id", "id")]),
+        union=st.sampled_from([(), ("zones",), ("id", "zones")]),
+    )
+    def test_plain_and_subclassed_lists_agree_on_full_fusion(docs, keys, union) -> None:
+        plain = deepcopy(docs)
+        general = _ObservationList(deepcopy(docs))
+>       assert _outcome(plain, keys, union) == _outcome(general, keys, union)
+E       AssertionError: assert ('value', (<c... 'list'>, ())) == ('value', (<c...onList'>, ()))
+E         
+E         At index 1 diff: (<class 'list'>, ()) != (<class 'test.util.test_fusion_equivalence._ObservationList'>, ())
+E         
+E         Full diff:
+E           (
+E               'value',
+E               (...
+E         
+E         ...Full output truncated (5 lines hidden), use '-vv' to show
+E       Failing test case: test_plain_and_subclassed_lists_agree_on_full_fusion(
+E           # The test always failed when commented parts were varied together.
+E           docs=[],
+E           keys=(),  # or any other generated value
+E           union=(),  # or any other generated value
+E       )
+E       Explanation:
+E           These lines were always and only run by failing test cases:
+E               /candidate/graflo/architecture/graph_types/merge.py:66
+
+/candidate/test/util/test_fusion_equivalence.py:239: AssertionError
+============================= slowest 25 durations =============================
+1.07s call     test/util/test_fusion_equivalence.py::test_empty_observations_are_neutral_for_values_errors_and_mutation
+0.27s call     test/util/test_fusion_equivalence.py::test_plain_and_subclassed_lists_agree_on_full_fusion
+
+(23 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+FAILED ../candidate/test/util/test_fusion_equivalence.py::test_plain_and_subclassed_lists_agree_on_full_fusion
+========================= 1 failed, 44 passed in 1.69s =========================

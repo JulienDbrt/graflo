@@ -1,0 +1,81 @@
+Reproduction et portée des preuves — 29 octobre 2026
+
+Branche : /Users/julien/graflo/cast-optimization, perf/casting-hot-path.
+Commit : 833ca760e1ae2daacd084d8f1a3ddf84a9b0f022.
+Référence : /Users/julien/graflo/cast-baseline,
+12431f62124988ddd12a949841ef55d9c956ace3.
+Ne pas publier avant le 30 octobre 2026, Europe/Madrid.
+
+Contrôles du dépôt, dans un environnement neuf de chaque checkout :
+  uv sync --frozen --extra dev --extra plot
+  HYPOTHESIS_PROFILE=full uv run --frozen pytest test/util/test_fusion_equivalence.py test/util/test_merge.py test/hq/test_cast_dispatch.py
+  uv run --frozen pytest test --ignore=test/db -n 4 --dist loadfile
+  uv run --frozen pre-commit run --all-files
+  uv run --frozen pytest test/hq/test_cast_fusion_perf.py --run-performance -s
+
+Le dernier test est opt-in et n'établit pas seul une accélération. Pour comparer
+la référence, copier le même fichier de benchmark depuis le commit candidat
+vers le checkout de référence ; garder son contenu identique des deux côtés.
+Le manifeste qu'il importe existe déjà dans le checkout de référence.
+
+Campagne appariée effectivement utilisée :
+  paired_cast.py --cpu 2                  (76 paires, processus persistants)
+  paired_cast.py --confirmation --cpu 2   (12 paires, 50 000 documents)
+  fresh_cast.py                          (12 paires de processus neufs)
+  paired_cast.py --cpu 2 --aa             (12 paires, même référence)
+Ces scripts ont des chemins internes /repo, /candidate, /evidence, /scenario.
+Les fichiers de résultats sont créés exclusivement : utiliser un nouveau
+répertoire de sortie pour recommencer ; ne pas effacer les observations.
+
+Le conteneur de mesure utilise graflo-falkordb-testenv:20261028,
+image locale sha256:7f6ac2ad1b991ca69f91c39c5447ec9050e95c0a940747b15ec61daca1a5d4b7,
+Python 3.11.13/Linux aarch64. Monter référence vers /repo en lecture seule,
+candidat vers /candidate en lecture seule, ce répertoire vers /evidence en
+écriture, et falkordb-etl-benchmarks-20261029 vers /scenario en lecture seule.
+Monter le venv Linux figé /private/tmp/graflo-falkordb-20261028/.venv vers
+/repo/.venv en lecture seule. PYTHONDONTWRITEBYTECODE=1 ; PYTHONPATH remplacé
+par chaque worker selon la source. Quota 2 CPU, cpuset 2,3, mémoire 2 Gio ;
+les workers eux-mêmes se fixent à CPU2 avant tout import et création de thread.
+Exécuter avec uv run --frozen --no-sync pour préserver le venv partagé.
+Le montage de ce venv n'est pas portable sur macOS natif : utiliser Linux.
+environment-final.json explique le décalage des métadonnées editable 1.24.0
+avec les sources contrôlées 1.24.1 et contient les versions des dépendances.
+paired-protocol-final.json et les journaux ready des workers donnent les SHA
+du module réellement importé, l'affinité, les seuils GC et les paramètres.
+
+Sources de données : scenario.py génère les fichiers reproductibles. Copie
+conservée ici : reproduction-inputs/scenario.py. Générer les données dans le
+répertoire monté /scenario avec python scenario.py --documents 100000 ; le
+pilote utilise --documents 2000. Les SHA des fichiers sont archivés à chaque
+ingestion. cases.py dérive les charges de casting du même générateur.
+
+Vérifications différentielles et adversariales, mêmes montages :
+  differential_fusion.py --out /evidence/nouveau-differentiel.json
+  stateful_hash_probe.py --out /evidence/nouveau-hash.json --assert-equivalent
+  stateful_key_probe.py --out /evidence/nouvelle-cle.json --assert-equivalent
+  diagnostic_probe.py --out /evidence/nouveaux-diagnostics.json
+Le dernier doit être lancé séparément avec PYTHONPATH=/repo:/evidence:/scenario
+puis PYTHONPATH=/candidate:/evidence:/scenario. Ne pas lancer python -c depuis
+/repo pour vérifier un import candidat : sys.path[0] peut forcer la référence.
+Les empreintes brutes et modèles Pydantic sont contrôlés avant toute synthèse.
+Les piles brutes sont conservées : leur égalité textuelle n'est pas attendue.
+
+Ingestion complète : run_e2e.py --pilot puis run_e2e.py sur l'hôte Docker.
+Ce script recrée les commandes archivées dans e2e-exact-commands.json.
+Un serveur neuf et un client neuf par passage ; AB/BA/AB/BA ; 100 000 documents.
+Chaque résultat et observation typée est sous e2e/VARIANT-TRIAL/.
+etl_verify.py vérifie exhaustivement les valeurs/types ; summarize_e2e.py
+contrôle ensuite leurs empreintes et les attentes de schéma de chaque passage ;
+index-listing-order-audit.json conserve l'écart d'ordre des labels d'index.
+Le script de reproduction suppose les chemins locaux ci-dessus ; adapter
+uniquement les chemins de montage si l'on reconstruit l'environnement ailleurs.
+Les installations et mesures n'écrivent jamais dans le venv partagé.
+
+Synthèses : summarize_paired.py CHEMIN_JSONL, summarize_e2e.py.
+Graphique : plot_results.py, matplotlib 3.10.7 dans un environnement séparé
+(installation et création du graphique après la fin de tous les chronométrages).
+Rapport : build_report.py, sources JSON conservées et toutes les paires incluses.
+Le script final indique accepted=false : la confirmation persistante et celle
+avec processus neufs divergent. Ne pas transformer ce résultat en promesse de
+gain global. Une nouvelle campagne sur machine calme doit être un protocole
+distinct, pas des répétitions ajoutées jusqu'à obtenir de la significativité.

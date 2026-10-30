@@ -1,0 +1,5 @@
+{"kind": "metadata", "modules": [["name", "graph", "ver", 60003, "path", "/var/lib/falkordb/bin/falkordb.so", "args", ["THREAD_COUNT", "2", "OMP_THREAD_COUNT", "2"]], ["name", "vectorset", "ver", 1, "path", "", "args", []]], "engine": "rust", "phase": "repeat"}
+{"size": 10000, "mode": "range", "operation": "merge_new", "seconds": 2.5885290919995896, "server_ms": 2569.438358, "nodes_created": 10000.0, "properties_set": 20000.0, "engine": "rust", "phase": "repeat"}
+{"size": 10000, "mode": "range", "operation": "merge_new", "seconds": 2.575144098999772, "server_ms": 2556.871602, "nodes_created": 10000.0, "properties_set": 20000.0, "engine": "rust", "phase": "repeat"}
+{"size": 10000, "mode": "range", "operation": "merge_new", "seconds": 2.5911251349998565, "server_ms": 2573.484876, "nodes_created": 10000.0, "properties_set": 20000.0, "engine": "rust", "phase": "repeat"}
+{"kind": "finished", "engine": "rust", "phase": "repeat"}

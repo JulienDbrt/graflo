@@ -1,0 +1,717 @@
+From 833ca760e1ae2daacd084d8f1a3ddf84a9b0f022 Mon Sep 17 00:00:00 2001
+From: juliendbrt <jdabert@sigilum.fr>
+Date: Thu, 29 Oct 2026 17:14:53 +0100
+Subject: [PATCH] perf: streamline document fusion with equivalence coverage
+
+---
+ CHANGELOG.md                             |   7 +
+ graflo/architecture/graph_types/merge.py | 190 ++++++++++----
+ test/hq/test_cast_fusion_perf.py         |  98 +++++++
+ test/util/test_fusion_equivalence.py     | 318 +++++++++++++++++++++++
+ 4 files changed, 558 insertions(+), 55 deletions(-)
+ create mode 100644 test/hq/test_cast_fusion_perf.py
+ create mode 100644 test/util/test_fusion_equivalence.py
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 89d7c1d..b9eccfa 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
+ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+ 
++## [Unreleased]
++
++### Changed
++
++- **Casting**: reduce document-fusion dispatch and temporary function allocations,
++  preserving identity checks, observation order and list-union behaviour.
++
+ ## [1.24.1]
+ 
+ ### Added
+diff --git a/graflo/architecture/graph_types/merge.py b/graflo/architecture/graph_types/merge.py
+index 3a6a026..630bdd0 100644
+--- a/graflo/architecture/graph_types/merge.py
++++ b/graflo/architecture/graph_types/merge.py
+@@ -64,6 +64,12 @@ def fuse_doc_basis(
+     """
+     if not docs:
+         return docs
++    if (
++        type(docs) is list
++        and type(docs[0]) is dict
++        and all(type(doc) is dict for doc in docs)
++    ):
++        return _fuse_dicts(cast(list[dict], docs), index_keys, union_fields)
+     if isinstance(docs[0], VertexRep):
+         groups: dict[tuple[bool, str | None], list[VertexRep]] = {}
+         for rep in docs:
+@@ -79,6 +85,62 @@ def fuse_doc_basis(
+     return _fuse_group(docs, index_keys, union_fields)
+ 
+ 
++def _fuse_dicts(
++    docs: list[dict],
++    index_keys: tuple[str, ...],
++    union_fields: Collection[str],
++) -> list[dict]:
++    """Fuse ordinary dictionaries without per-call closures or rep dispatch.
++
++    Only string key names let us queue empty fragments directly: other keys may
++    raise or have observable hash behaviour even when tested against ``{}``.
++    Keep the fragments until merging, since later key callbacks can fill them.
++    The nonempty observations still use the same key construction and lookup
++    order as the general path, including rejection of unhashable identities.
++    """
++    plain_index_keys = type(index_keys) is tuple and all(
++        type(key) is str for key in index_keys
++    )
++    merged: list[dict] = []
++    positions: dict[tuple, int] = {}
++    pending: list[dict] = []
++    for doc in docs:
++        # A user-defined identity hash can mutate the input list mid-iteration.
++        # Retain per-observation checks, rather than trusting the initial scan.
++        if not isinstance(doc, dict):
++            raise TypeError(f"expected dict, got {type(doc).__name__}")
++        if plain_index_keys and type(doc) is dict and not doc:
++            pending.append(doc)
++            continue
++        if any(key in doc for key in index_keys):
++            index = tuple(sorted((k, v) for k, v in doc.items() if k in index_keys))
++            if pending:
++                target = merged[-1] if merged else doc
++                for fragment in pending:
++                    if type(target) is dict and type(fragment) is dict and not fragment:
++                        continue
++                    _fuse_doc(target, fragment, False, union_fields)
++                pending.clear()
++            if index in positions:
++                _fuse_doc(merged[positions[index]], doc, False, union_fields)
++            else:
++                merged.append(doc.copy())
++                positions[index] = len(merged) - 1
++        else:
++            pending.append(doc)
++    if pending:
++        if merged:
++            target = merged[-1]
++        else:
++            target = {}
++            merged.append(target)
++        for fragment in pending:
++            if type(target) is dict and type(fragment) is dict and not fragment:
++                continue
++            _fuse_doc(target, fragment, False, union_fields)
++    return merged
++
++
+ def _union_update(
+     target: dict[str, Any], source: dict[str, Any], union_fields: Collection[str]
+ ) -> None:
+@@ -92,6 +154,66 @@ def _union_update(
+             target[key] = value
+ 
+ 
++def _get_index_tuple(
++    doc: dict | VertexRep, is_vertexrep: bool, index_keys: tuple[str, ...]
++) -> tuple:
++    """Extract index tuple from a document."""
++    if is_vertexrep:
++        if not isinstance(doc, VertexRep):
++            raise TypeError(f"expected VertexRep, got {type(doc).__name__}")
++        data = doc.vertex
++    else:
++        if not isinstance(doc, dict):
++            raise TypeError(f"expected dict, got {type(doc).__name__}")
++        data = doc
++    return tuple(sorted((k, v) for k, v in data.items() if k in index_keys))
++
++
++def _has_index_keys(
++    doc: dict | VertexRep, is_vertexrep: bool, index_keys: tuple[str, ...]
++) -> bool:
++    """Check if document has any index keys."""
++    if is_vertexrep:
++        if not isinstance(doc, VertexRep):
++            raise TypeError(f"expected VertexRep, got {type(doc).__name__}")
++        return any(k in doc.vertex for k in index_keys)
++    else:
++        if not isinstance(doc, dict):
++            raise TypeError(f"expected dict, got {type(doc).__name__}")
++        return any(k in doc for k in index_keys)
++
++
++def _fuse_doc(
++    target: dict | VertexRep,
++    source: dict | VertexRep,
++    is_vertexrep: bool,
++    union_fields: Collection[str],
++) -> None:
++    """Merge source into target."""
++    if is_vertexrep:
++        if not (isinstance(target, VertexRep) and isinstance(source, VertexRep)):
++            raise TypeError("expected VertexRep for both target and source")
++        _union_update(target.vertex, source.vertex, union_fields)
++    else:
++        if not (isinstance(target, dict) and isinstance(source, dict)):
++            raise TypeError("expected dict for both target and source")
++        _union_update(target, source, union_fields)
++
++
++def _copy_doc(doc: dict | VertexRep, is_vertexrep: bool) -> dict | VertexRep:
++    """Create a copy of a document."""
++    if is_vertexrep:
++        if not isinstance(doc, VertexRep):
++            raise TypeError(f"expected VertexRep, got {type(doc).__name__}")
++        # Copy via the model so observation-level flags (lookup_only) are
++        # carried over rather than silently reset to their defaults.
++        return doc.model_copy(update={"vertex": doc.vertex.copy()})
++    else:
++        if not isinstance(doc, dict):
++            raise TypeError(f"expected dict, got {type(doc).__name__}")
++        return doc.copy()
++
++
+ def _fuse_group(
+     docs: list[dict] | list[VertexRep],
+     index_keys: tuple[str, ...],
+@@ -110,77 +232,35 @@ def _fuse_group(
+     # Type: list[dict] if not is_vertexrep, list[VertexRep] if is_vertexrep
+     pending_non_ids: list[dict | VertexRep] = []
+ 
+-    def get_index_tuple(doc: dict | VertexRep) -> tuple:
+-        """Extract index tuple from a document."""
+-        if is_vertexrep:
+-            if not isinstance(doc, VertexRep):
+-                raise TypeError(f"expected VertexRep, got {type(doc).__name__}")
+-            data = doc.vertex
+-        else:
+-            if not isinstance(doc, dict):
+-                raise TypeError(f"expected dict, got {type(doc).__name__}")
+-            data = doc
+-        return tuple(sorted((k, v) for k, v in data.items() if k in index_keys))
+-
+-    def has_index_keys(doc: dict | VertexRep) -> bool:
+-        """Check if document has any index keys."""
+-        if is_vertexrep:
+-            if not isinstance(doc, VertexRep):
+-                raise TypeError(f"expected VertexRep, got {type(doc).__name__}")
+-            return any(k in doc.vertex for k in index_keys)
+-        else:
+-            if not isinstance(doc, dict):
+-                raise TypeError(f"expected dict, got {type(doc).__name__}")
+-            return any(k in doc for k in index_keys)
+-
+-    def fuse_doc(target: dict | VertexRep, source: dict | VertexRep) -> None:
+-        """Merge source into target."""
+-        if is_vertexrep:
+-            if not (isinstance(target, VertexRep) and isinstance(source, VertexRep)):
+-                raise TypeError("expected VertexRep for both target and source")
+-            _union_update(target.vertex, source.vertex, union_fields)
+-        else:
+-            if not (isinstance(target, dict) and isinstance(source, dict)):
+-                raise TypeError("expected dict for both target and source")
+-            _union_update(target, source, union_fields)
+-
+-    def copy_doc(doc: dict | VertexRep) -> dict | VertexRep:
+-        """Create a copy of a document."""
+-        if is_vertexrep:
+-            if not isinstance(doc, VertexRep):
+-                raise TypeError(f"expected VertexRep, got {type(doc).__name__}")
+-            # Copy via the model so observation-level flags (lookup_only) are
+-            # carried over rather than silently reset to their defaults.
+-            return doc.model_copy(update={"vertex": doc.vertex.copy()})
+-        else:
+-            if not isinstance(doc, dict):
+-                raise TypeError(f"expected dict, got {type(doc).__name__}")
+-            return doc.copy()
+-
+     for doc in docs:
+-        if has_index_keys(doc):
++        if _has_index_keys(doc, is_vertexrep, index_keys):
+             # This is a document with index keys
+-            index_tuple = get_index_tuple(doc)
++            index_tuple = _get_index_tuple(doc, is_vertexrep, index_keys)
+ 
+             # First, handle any accumulated non-ID documents
+             if pending_non_ids:
+                 if merged_docs:
+                     # Merge accumulated non-IDs into the last ID doc
+                     for pending in pending_non_ids:
+-                        fuse_doc(merged_docs[-1], pending)
++                        _fuse_doc(merged_docs[-1], pending, is_vertexrep, union_fields)
+                 else:
+                     # No previous ID doc, merge pending non-IDs into the current ID doc
+                     for pending in pending_non_ids:
+-                        fuse_doc(doc, pending)
++                        _fuse_doc(doc, pending, is_vertexrep, union_fields)
+                 pending_non_ids.clear()
+ 
+             # Handle the current document with index keys
+             if index_tuple in index_to_position:
+                 # Merge into existing document at that position
+-                fuse_doc(merged_docs[index_to_position[index_tuple]], doc)
++                _fuse_doc(
++                    merged_docs[index_to_position[index_tuple]],
++                    doc,
++                    is_vertexrep,
++                    union_fields,
++                )
+             else:
+                 # First occurrence of this index tuple, add new document
+-                merged_docs.append(copy_doc(doc))
++                merged_docs.append(_copy_doc(doc, is_vertexrep))
+                 index_to_position[index_tuple] = len(merged_docs) - 1
+         else:
+             # This is a document without index keys, accumulate it
+@@ -190,7 +270,7 @@ def _fuse_group(
+     if pending_non_ids and merged_docs:
+         # Merge into last ID doc
+         for pending in pending_non_ids:
+-            fuse_doc(merged_docs[-1], pending)
++            _fuse_doc(merged_docs[-1], pending, is_vertexrep, union_fields)
+     elif pending_non_ids:
+         # No documents with index keys: merge all into a single document
+         if is_vertexrep:
+@@ -203,7 +283,7 @@ def _fuse_group(
+         else:
+             merged_doc = {}
+         for pending in pending_non_ids:
+-            fuse_doc(merged_doc, pending)
++            _fuse_doc(merged_doc, pending, is_vertexrep, union_fields)
+         merged_docs.append(merged_doc)
+ 
+     # Type narrowing: return type matches input type due to homogeneous list requirement
+diff --git a/test/hq/test_cast_fusion_perf.py b/test/hq/test_cast_fusion_perf.py
+new file mode 100644
+index 0000000..942fdb6
+--- /dev/null
++++ b/test/hq/test_cast_fusion_perf.py
+@@ -0,0 +1,98 @@
++"""Opt-in casting timings with value checks, without a noisy CI time limit.
++
++Run with ``uv run pytest test/hq/test_cast_fusion_perf.py --run-performance -s``.
++Compare raw timings from clean before/after checkouts under the same CPU and
++dependency configuration; a single checkout does not establish a speedup.
++"""
++
++from __future__ import annotations
++
++import asyncio
++import gc
++import hashlib
++import json
++import platform
++import time
++from pathlib import Path
++
++import pytest
++
++from graflo.architecture.graph_types import merge
++from graflo.hq.document_caster import DocumentCaster
++from graflo.hq.ingestion_parameters import IngestionParams
++from test.hq.test_cast_dispatch import manifest
++
++__all__ = ["manifest"]
++
++
++@pytest.mark.performance
++def test_cast_fusion_throughput_preserves_values(manifest) -> None:
++    documents = 10_000
++    batch_size = 1_000
++    docs = [
++        {"pid": f"p{i}", "name": f"n{i}", "oid": f"o{i % 7}", "rank": str(i)}
++        for i in range(documents)
++    ]
++    caster = DocumentCaster(manifest.require_ingestion_model())
++    params = IngestionParams(cast_executor="inline", n_cores=1)
++
++    async def cast():
++        return [
++            await caster.cast_batch(
++                docs[offset : offset + batch_size], "r", params=params
++            )
++            for offset in range(0, documents, batch_size)
++        ]
++
++    async def measure():
++        await caster.cast_batch(docs[:batch_size], "r", params=params)
++        samples = []
++        for _ in range(7):
++            gc.collect()
++            wall = time.perf_counter()
++            cpu = time.process_time()
++            results = await cast()
++            samples.append(
++                {
++                    "cpu_seconds": time.process_time() - cpu,
++                    "seconds": time.perf_counter() - wall,
++                }
++            )
++            people = [
++                row for result in results for row in result.graph.vertices["person"]
++            ]
++            assert people == [
++                {"pid": f"p{i}", "name": f"n{i}"} for i in range(documents)
++            ]
++            edges = [
++                row
++                for result in results
++                for row in result.graph.edges["person", "org", "works_at"]
++            ]
++            assert edges == [
++                ({"pid": f"p{i}"}, {"oid": f"o{i % 7}"}, {}) for i in range(documents)
++            ]
++            assert all(not result.failures for result in results)
++            assert all(type(doc["rank"]) is str for doc in docs)
++        return samples
++
++    try:
++        samples = asyncio.run(measure())
++    finally:
++        caster.close()
++    print(
++        json.dumps(
++            {
++                "documents": documents,
++                "batch_size": batch_size,
++                "python": platform.python_version(),
++                "cast_executor": params.cast_executor,
++                "n_cores": params.n_cores,
++                "fusion_sha256": hashlib.sha256(
++                    Path(merge.__file__).read_bytes()
++                ).hexdigest(),
++                "samples": samples,
++                "values_checked": True,
++            }
++        )
++    )
+diff --git a/test/util/test_fusion_equivalence.py b/test/util/test_fusion_equivalence.py
+new file mode 100644
+index 0000000..7ae1447
+--- /dev/null
++++ b/test/util/test_fusion_equivalence.py
+@@ -0,0 +1,318 @@
++"""Fusion must preserve values, aliases and failures across container types."""
++
++from __future__ import annotations
++
++import struct
++from copy import deepcopy
++from typing import Any
++
++import pytest
++from hypothesis import given, settings
++from hypothesis import strategies as st
++
++from graflo.architecture.graph_types import VertexRep
++from graflo.architecture.graph_types.merge import fuse_doc_basis
++from test.hypothesis_budget import examples
++
++
++def _typed(value: Any) -> Any:
++    """Keep ordering and scalar types, including bool/int and float bit patterns."""
++    if isinstance(value, dict):
++        return (type(value), tuple((_typed(k), _typed(v)) for k, v in value.items()))
++    if isinstance(value, (list, tuple)):
++        return (type(value), tuple(_typed(v) for v in value))
++    if isinstance(value, VertexRep):
++        return (type(value), _typed(value.model_dump()))
++    if isinstance(value, float):
++        return (type(value), struct.pack("!d", value))
++    return (type(value), value)
++
++
++@pytest.mark.parametrize("identity", [None, "", 0, False, -0.0, 2**63, "é · 東京"])
++def test_empty_fragments_preserve_typed_values_and_shallow_copy(identity: Any) -> None:
++    payload = [{"value": [False, 0, -0.0, None]}]
++    doc = {"tenant": "t", "id": identity, "payload": payload}
++    docs = [doc, {}, {}, {}]
++    original = deepcopy(docs)
++
++    (result,) = fuse_doc_basis(docs, ("tenant", "id"))
++
++    assert _typed(result) == _typed(doc)
++    assert _typed(docs) == _typed(original)
++    assert result is not doc
++    assert result["payload"] is payload
++    assert list(result) == ["tenant", "id", "payload"]
++
++
++def test_keyless_fragments_still_apply_ordered_union() -> None:
++    docs = [
++        {"zones": [2, 1, 2], "name": "first"},
++        {},
++        {},
++        {"zones": [1, 3], "name": "last"},
++    ]
++    assert fuse_doc_basis(docs, ("id",), ("zones",)) == [
++        {"zones": [2, 1, 3], "name": "last"}
++    ]
++    assert docs[0]["zones"] == [2, 1, 2]
++
++
++def test_keyed_single_observation_does_not_normalize_its_list() -> None:
++    zones = [2, 1, 2]
++    (result,) = fuse_doc_basis([{"id": 0, "zones": zones}, {}, {}], ("id",), ("zones",))
++    assert result["zones"] is zones
++    assert result["zones"] == [2, 1, 2]
++
++
++def test_leading_keyless_fields_keep_the_existing_mutation_and_order() -> None:
++    leading = {"name": "leading", "extra": 1}
++    identified = {"id": "a", "name": "identified"}
++    docs = [leading, {}, identified, {}, {"id": "b"}, {"tail": 2}]
++
++    result = fuse_doc_basis(docs, ("id",))
++
++    assert result == [
++        {"id": "a", "name": "leading", "extra": 1},
++        {"id": "b", "tail": 2},
++    ]
++    assert identified == {"id": "a", "name": "leading", "extra": 1}
++    assert result[0] is not identified
++    assert list(result[0]) == ["id", "name", "extra"]
++
++
++def test_empty_only_observations_still_produce_one_fresh_document() -> None:
++    docs = [{}, {}, {}, {}]
++    (result,) = fuse_doc_basis(docs, ("id",))
++    assert result == {}
++    assert all(result is not doc for doc in docs)
++    empty: list[dict] = []
++    assert fuse_doc_basis(empty, ("id",)) is empty
++
++
++@pytest.mark.parametrize("identity", [[], {}, [1], ([],)])
++def test_empty_fragments_do_not_hide_unhashable_identity_errors(identity: Any) -> None:
++    with pytest.raises(TypeError, match="unhashable type"):
++        fuse_doc_basis([{"id": identity}, {}, {}], ("id",))
++
++
++def test_empty_fragments_do_not_hide_unhashable_union_errors() -> None:
++    with pytest.raises(TypeError, match="unhashable type: 'dict'"):
++        fuse_doc_basis([{"zones": [{}]}, {}, {}], ("id",), ("zones",))
++
++
++def test_custom_identity_hash_is_still_called_in_the_same_order() -> None:
++    class Identity:
++        calls = 0
++
++        def __hash__(self) -> int:
++            self.calls += 1
++            if self.calls == 2:
++                raise ValueError("second hash refused")
++            return 7
++
++    identity = Identity()
++    with pytest.raises(ValueError, match="second hash refused"):
++        fuse_doc_basis([{"id": identity}, {}, {}], ("id",))
++    assert identity.calls == 2
++
++
++def test_identity_callback_cannot_hide_an_invalid_appended_observation() -> None:
++    docs: list[Any] = []
++
++    class Identity:
++        calls = 0
++
++        def __hash__(self) -> int:
++            self.calls += 1
++            if self.calls == 1:
++                docs.append(None)
++            return 7
++
++    docs.append({"id": Identity()})
++    with pytest.raises(TypeError, match="expected dict, got NoneType"):
++        fuse_doc_basis(docs, ("id",))
++
++
++def test_appended_mapping_subclass_keeps_its_items_callback() -> None:
++    docs: list[Any] = []
++
++    class EmptyMapping(dict):
++        def items(self) -> Any:
++            return [("extra", 2)]
++
++    class Identity:
++        calls = 0
++
++        def __hash__(self) -> int:
++            self.calls += 1
++            if self.calls == 1:
++                docs.append(EmptyMapping())
++            return 7
++
++    identity = Identity()
++    docs.append({"id": identity})
++    (result,) = fuse_doc_basis(docs, ("id",))
++    assert result == {"id": identity, "extra": 2}
++
++
++def test_invalid_copy_from_an_appended_mapping_keeps_its_error() -> None:
++    docs: list[Any] = []
++
++    class InvalidCopy(dict):
++        def copy(self) -> Any:
++            return None
++
++    class Identity:
++        calls = 0
++
++        def __hash__(self) -> int:
++            self.calls += 1
++            if self.calls == 1:
++                docs.extend([InvalidCopy(id="other"), {}])
++            return 7
++
++    docs.append({"id": Identity()})
++    with pytest.raises(TypeError, match="expected dict for both target and source"):
++        fuse_doc_basis(docs, ("id",))
++
++
++def test_mapping_subclass_callbacks_and_tags_are_preserved() -> None:
++    class Observed(dict):
++        def copy(self):
++            return Observed({**self, "copied": True})
++
++    original = Observed(id=1)
++    (result,) = fuse_doc_basis([original, {}, {}], ("id",))
++    assert type(result) is Observed
++    assert result == {"id": 1, "copied": True}
++    assert original == {"id": 1}
++    reps = [
++        VertexRep(vertex={"id": 1}, lookup_only=True, find="by_id"),
++        VertexRep(vertex={}, lookup_only=True, find="by_id"),
++        VertexRep(vertex={"id": 1}, lookup_only=False, find="by_id"),
++    ]
++    assert [
++        (r.vertex, r.lookup_only, r.find) for r in fuse_doc_basis(reps, ("id",))
++    ] == [
++        ({"id": 1}, True, "by_id"),
++        ({"id": 1}, False, "by_id"),
++    ]
++
++
++@pytest.mark.parametrize("bad", [None, 1, VertexRep(vertex={"id": 1})])
++def test_invalid_later_observations_are_not_silently_removed(bad: Any) -> None:
++    with pytest.raises(TypeError, match="expected dict"):
++        fuse_doc_basis([{"id": 1}, {}, {}, bad], ("id",))
++
++
++def test_custom_key_names_are_checked_even_for_empty_observations() -> None:
++    class Key:
++        def __hash__(self) -> int:
++            raise RuntimeError("key name refused")
++
++    keys: Any = (Key(),)
++    with pytest.raises(RuntimeError, match="key name refused"):
++        fuse_doc_basis([{}, {}, {}], keys)
++
++
++def test_key_callback_can_fill_an_earlier_empty_observation() -> None:
++    leading: dict[str, int] = {}
++
++    class Key:
++        def __hash__(self) -> int:
++            return hash("id")
++
++        def __eq__(self, other) -> bool:
++            leading["payload"] = 42
++            return other == "id"
++
++    key = Key()
++    (result,) = fuse_doc_basis([leading, {key: 1}], ("id",))
++    assert result["payload"] == 42
++    assert result[key] == 1
++    assert leading == {"payload": 42}
++
++
++def test_list_subclass_is_not_read_more_often() -> None:
++    class ReadOnce(list):
++        reads = 0
++
++        def __len__(self) -> int:
++            self.reads += 1
++            if self.reads > 1:
++                raise RuntimeError("length is read-once")
++            return super().__len__()
++
++    docs = ReadOnce([{"id": 1}, {}, {}])
++    assert fuse_doc_basis(docs, ("id",)) == [{"id": 1}]
++
++
++def test_cyclic_payload_keeps_the_existing_shallow_reference() -> None:
++    doc: dict[str, Any] = {"id": 1}
++    doc["self"] = doc
++    (result,) = fuse_doc_basis([doc, {}, {}], ("id",))
++    assert result is not doc
++    assert result["self"] is doc
++    assert doc["self"] is doc
++
++
++_scalars = st.one_of(
++    st.none(), st.booleans(), st.integers(), st.floats(), st.text(max_size=12)
++)
++_values = st.recursive(
++    _scalars,
++    lambda leaves: st.one_of(
++        st.lists(leaves, max_size=4),
++        st.dictionaries(st.sampled_from(["x", "y"]), leaves, max_size=2),
++    ),
++    max_leaves=12,
++)
++_docs = st.dictionaries(
++    st.sampled_from(["id", "tenant", "zones", "name", "payload"]), _values, max_size=5
++)
++
++
++def _outcome(docs, keys, union):
++    try:
++        return ("value", _typed(fuse_doc_basis(docs, keys, union)))
++    except Exception as error:
++        return ("error", type(error), _typed(error.args))
++
++
++@settings(max_examples=examples(500))
++@given(
++    first=_docs.filter(bool),
++    rest=st.lists(_docs, max_size=8),
++    keys=st.sampled_from([(), ("id",), ("tenant", "id"), ("id", "id")]),
++    union=st.sampled_from([(), ("zones",), ("id", "zones")]),
++)
++def test_empty_observations_are_neutral_for_values_errors_and_mutation(
++    first, rest, keys, union
++) -> None:
++    expanded = deepcopy([first, {}, {}, *rest, {}])
++    compact = deepcopy([doc for doc in [first, *rest] if doc])
++
++    assert _outcome(expanded, keys, union) == _outcome(compact, keys, union)
++    assert _typed([doc for doc in expanded if doc]) == _typed(compact)
++
++
++class _ObservationList(list):
++    """A supported container whose ordinary list behaviour is unchanged."""
++
++
++@settings(max_examples=examples(500))
++@given(
++    docs=st.lists(_docs, max_size=12),
++    keys=st.sampled_from([(), ("id",), ("tenant", "id"), ("id", "id")]),
++    union=st.sampled_from([(), ("zones",), ("id", "zones")]),
++)
++def test_plain_and_subclassed_lists_agree_on_full_fusion(docs, keys, union) -> None:
++    plain = deepcopy(docs)
++    general = _ObservationList(deepcopy(docs))
++    if not docs:
++        # Empty input is returned as-is, including its container type.
++        assert fuse_doc_basis(plain, keys, union) is plain
++        assert fuse_doc_basis(general, keys, union) is general
++        return
++    assert _outcome(plain, keys, union) == _outcome(general, keys, union)
++    assert _typed(plain) == _typed(list(general))
+-- 
+2.56.0
+

@@ -1,0 +1,89 @@
+{
+  "reason": "Large paired variability prompted an execution-placement audit before accepting a performance claim. Threads can run on either allowed logical CPU; retain the earlier cpuset measurements as exploratory and compare with a single-CPU protocol plus A/A control.",
+  "snapshot": [
+    {
+      "source": "/repo",
+      "pid": 602,
+      "threads": [
+        {
+          "tid": 602,
+          "state": "S",
+          "last_cpu": 2,
+          "affinity": [
+            2,
+            3
+          ]
+        },
+        {
+          "tid": 603,
+          "state": "S",
+          "last_cpu": 2,
+          "affinity": [
+            2,
+            3
+          ]
+        },
+        {
+          "tid": 606,
+          "state": "R",
+          "last_cpu": 3,
+          "affinity": [
+            2,
+            3
+          ]
+        },
+        {
+          "tid": 607,
+          "state": "S",
+          "last_cpu": 2,
+          "affinity": [
+            2,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "source": "/candidate",
+      "pid": 604,
+      "threads": [
+        {
+          "tid": 604,
+          "state": "S",
+          "last_cpu": 2,
+          "affinity": [
+            2,
+            3
+          ]
+        },
+        {
+          "tid": 605,
+          "state": "S",
+          "last_cpu": 3,
+          "affinity": [
+            2,
+            3
+          ]
+        },
+        {
+          "tid": 608,
+          "state": "S",
+          "last_cpu": 2,
+          "affinity": [
+            2,
+            3
+          ]
+        },
+        {
+          "tid": 609,
+          "state": "S",
+          "last_cpu": 3,
+          "affinity": [
+            2,
+            3
+          ]
+        }
+      ]
+    }
+  ]
+}

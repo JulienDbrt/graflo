@@ -1,0 +1,207 @@
+{
+  "created_at": "2026-10-29T00:09:17.789817+00:00",
+  "repo_commit": "a20d2459d360e70e3571f14c5353ef0edfb517ed",
+  "repo_status": "",
+  "images": {
+    "c": "falkordb/falkordb@sha256:725b74d400124862c9e0f318c56bfb3c55b97cd7f301d9dfe8685980fb3c8195",
+    "rust": "falkordb/falkordb@sha256:0fb85036662ce3d1206530a38fdf7df5a92b1fb31ad23087f8d4e89038ce0812",
+    "edge": "falkordb/falkordb-server@sha256:3d08d1a1536394210d7f435bcfc777a58ba9d21f58f23cf2b86918772028b941"
+  },
+  "helper_image": "graflo-falkordb-testenv:20261028",
+  "order": [
+    {
+      "trial": 1,
+      "engine": "c"
+    },
+    {
+      "trial": 1,
+      "engine": "rust"
+    },
+    {
+      "trial": 1,
+      "engine": "edge"
+    },
+    {
+      "trial": 2,
+      "engine": "rust"
+    },
+    {
+      "trial": 2,
+      "engine": "edge"
+    },
+    {
+      "trial": 2,
+      "engine": "c"
+    },
+    {
+      "trial": 3,
+      "engine": "edge"
+    },
+    {
+      "trial": 3,
+      "engine": "c"
+    },
+    {
+      "trial": 3,
+      "engine": "rust"
+    }
+  ],
+  "resources": {
+    "server_cpus": "0,1",
+    "server_cpu_quota": 2,
+    "server_memory_bytes": 2147483648,
+    "client_cpus": "2,3",
+    "client_cpu_quota": 2,
+    "client_memory_bytes": 2147483648,
+    "THREAD_COUNT": 2,
+    "OMP_THREAD_COUNT": 2
+  },
+  "scenario": {
+    "initial_source_records": 100000,
+    "initial_items": 100000,
+    "initial_categories": 1000,
+    "initial_edges": 100000,
+    "second_source_records": 100000,
+    "second_updates": 50000,
+    "second_new_items": 50000,
+    "final_items": 150000,
+    "final_categories": 1000,
+    "final_edges": 150000,
+    "source_formats": [
+      "CSV",
+      "JSONL"
+    ],
+    "source_format_split": "50% each, sequential",
+    "batch_size": 1000,
+    "cast_executor": "inline",
+    "n_cores": 1,
+    "max_in_flight_batches": 1,
+    "max_concurrent_db_ops": 1,
+    "max_concurrent_sources": 1,
+    "batch_prefetch": 2
+  },
+  "reads": {
+    "processes": 4,
+    "per_process_target_qps": 25,
+    "target_qps": 100,
+    "warmup_seconds": 2,
+    "pre_ingest_baseline_seconds": 10,
+    "post_ingest_baseline_seconds": 10,
+    "kinds": [
+      "point",
+      "one_hop",
+      "two_hops",
+      "range_sort",
+      "group_count"
+    ],
+    "load_model": "Paced with at most one outstanding query per reader. Achieved rate and scheduling lag are retained; this is not an unbounded open-loop load generator."
+  },
+  "memory": {
+    "sample_interval_seconds": 0.1,
+    "measurements": [
+      "server RSS/HWM",
+      "ingester RSS/HWM",
+      "server cgroup current/peak/anon/file",
+      "client cgroup current/peak/anon/file"
+    ],
+    "client_cgroup_includes_readers": true,
+    "sampling_overhead_included": true
+  },
+  "validation": "Full ordered projection of every Item property and every relationship endpoint after each ingestion; identical canonical SHA256 expected across engines. All reader results checked. Index and unique-constraint catalogues checked.",
+  "timing": "Schema definition, process startup, reader warmup, final validation and PROFILE excluded from ingestion timing. Source reading, transformations, casting and writes included. Component durations can overlap with source prefetch and must not be summed as wall-clock partitions.",
+  "limits": [
+    "Shared ARM64 OrbStack host. Local CPU pinning does not reserve cores from other workloads.",
+    "File-system cache is not flushed; this is not a cold-disk benchmark.",
+    "The graph grows during mixed load; pre-100k and post-150k idle baselines bracket this change.",
+    "No crash recovery, persistence or cross-version migration is tested by this scenario.",
+    "Only batch size 1000 and one casting/DB-write concurrency configuration are compared."
+  ],
+  "publication": "Local only. No push or PR before 2026-10-30 Europe/Madrid.",
+  "harness_sha256": {
+    "benchmark.py": "e7d4d6417c9089246a6ead27278215a61a0059c1f1d07bb4874d09748747bde6",
+    "reader.py": "4a1b3b226939405cec434063cb4bd774adfae703a93e989f5b162ff0408e2507",
+    "scenario.py": "3c787c313ad0b666d40971a38cd9c9c54f80533033b15f5533a97232e0e10474",
+    "run_campaign.py": "90b32d6294bb5f2493700c66c66e418d325179767dc163276d3c1533fbd2f4d1"
+  },
+  "control_plane_fix": {
+    "after_completed_trials": [
+      "c-1",
+      "rust-1",
+      "edge-1"
+    ],
+    "change": "Retry a transient ENOENT/JSON decode error reading the phase-control file on the host bind mount. The retry is outside the query latency interval; queries, pacing, data, resources and ingestion timers are unchanged.",
+    "previous_reader_sha256": "4a1b3b226939405cec434063cb4bd774adfae703a93e989f5b162ff0408e2507",
+    "reader_sha256": "86e6a3c17d709412a79a0a14910edbbff1ccb917f1529b8cf1221de4e4c8319d",
+    "excluded_attempt": "excluded/rust-trial-2-control-file-error"
+  },
+  "environment": {
+    "python": "3.11.13",
+    "architecture": "aarch64",
+    "kernel": "7.2.12-orbstack-00394-gbecdd6130068",
+    "falkordb_client": "1.8.1",
+    "redis_py": "8.1.0",
+    "matplotlib": "3.11.2"
+  },
+  "analysis_sha256": {
+    "benchmark.py": "e7d4d6417c9089246a6ead27278215a61a0059c1f1d07bb4874d09748747bde6",
+    "summarize.py": "2a7d1de3d025bd83267e75b876fc03beb829106d65ab745e515fdea29b430174",
+    "build_report.py": "c36e9af5ac7de18f01f19823fe6514675971741efc62e31230b0595f1ea4ce83",
+    "reader.py": "86e6a3c17d709412a79a0a14910edbbff1ccb917f1529b8cf1221de4e4c8319d",
+    "scenario.py": "3c787c313ad0b666d40971a38cd9c9c54f80533033b15f5533a97232e0e10474",
+    "run_campaign.py": "f74e37a5e4aa750f32cfc2aaaf7d5be7e034a2694a71571dbd1e25ee24c7638d"
+  },
+  "completed_trials": 9,
+  "actual_order": [
+    {
+      "engine": "c",
+      "trial": 1
+    },
+    {
+      "engine": "rust",
+      "trial": 1
+    },
+    {
+      "engine": "edge",
+      "trial": 1
+    },
+    {
+      "engine": "rust",
+      "trial": 2
+    },
+    {
+      "engine": "edge",
+      "trial": 2
+    },
+    {
+      "engine": "c",
+      "trial": 2
+    },
+    {
+      "engine": "edge",
+      "trial": 3
+    },
+    {
+      "engine": "c",
+      "trial": 3
+    },
+    {
+      "engine": "rust",
+      "trial": 3
+    }
+  ],
+  "sampling_observation": {
+    "largest_ingestion_sample_gap_seconds": 2.517050537999239,
+    "interpretation": "Per-phase memory maxima are sampled observations; transient peaks can be missed. Kernel lifetime high-water marks are retained separately."
+  },
+  "persistence_defaults_audited": {
+    "c": {
+      "save": "3600 1 300 100 60 10000",
+      "appendonly": "no"
+    },
+    "rust": {
+      "save": "3600 1 300 100 60 10000",
+      "appendonly": "no"
+    },
+    "probe": "Separate fresh-container native query creating 20,000 nodes increments rdb_changes_since_last_save by 1 on both stable engines. No snapshot or AOF operation is forced in the benchmark. This is not a durability test."
+  }
+}

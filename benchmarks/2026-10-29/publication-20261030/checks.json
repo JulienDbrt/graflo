@@ -1,0 +1,38 @@
+{
+  "publication_date": "2026-10-30",
+  "base": "12431f62124988ddd12a949841ef55d9c956ace3",
+  "compat_head": "686ce68e81e15569e14d5fd1e2caa5c60d8a1b20",
+  "casting_head": "833ca760e1ae2daacd084d8f1a3ddf84a9b0f022",
+  "results": {
+    "c": {
+      "passed": 188,
+      "skipped": 21,
+      "seconds": 5.15
+    },
+    "rust": {
+      "passed": 188,
+      "skipped": 21,
+      "seconds": 77.21
+    },
+    "offline": {
+      "passed": 5212,
+      "skipped": 13,
+      "seconds": 50.42
+    }
+  },
+  "pre_commit": "all hooks passed",
+  "server_options": {
+    "threads": 2,
+    "openmp_threads": 2,
+    "TIMEOUT": 1000,
+    "persistence": "save disabled, appendonly no",
+    "cpu_quota": 2,
+    "memory_bytes": 2147483648
+  },
+  "live_suite_initial_attempt": "Initial TIMEOUT=0 attempts were stopped at unbounded barbell path enumeration on both engines; partial logs retained. Fresh instances with TIMEOUT=1000 were used for the full passing reruns. No test assertions changed.",
+  "rebase": "Only changelog conflict resolved; range-diff confirms the code patch and documentation commit are otherwise unchanged relative to their new base.",
+  "doc_style": "Existing docker/README FalkorDB section and short bold-name changelog bullets only. Detailed protocols, plots and reports are on the evidence branch.",
+  "casting_performance_acceptance": false,
+  "cla_evidence": "https://github.com/growgraph/graflo/pull/397#issuecomment-6474473053",
+  "module_sha256": "712a17506d2af960ac9b90869f53ea72b51617892c37a2b544f1baa1dc6ca933"
+}

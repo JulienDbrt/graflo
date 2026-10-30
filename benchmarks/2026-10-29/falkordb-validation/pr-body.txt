@@ -1,0 +1,25 @@
+## What and why
+
+FalkorDB 4.x can silently clamp an integer parameter outside the signed 64-bit range; 6.0.3 rejects it with a driver error. Validate integer parameters, including nested maps and lists, before sending a query so an overflowing value cannot be written under a different value or leave a partially written batch. Valid 64-bit integers and booleans keep their value and type.
+
+Parameter-parsing failures from the Rust engine now raise `ValueError`, preserving the driver error as the cause. Constraint and Cypher errors keep their driver type. This makes 6.0.3's refusal of subnormal float parameters explicit; it does not add support for those values to the server.
+
+The Docker default moves from 4.22.0 to 4.22.3. Live regressions check composite identities, declared node and edge uniqueness, repeated index creation, false-like indexed keys, cleanup and numeric boundaries against both engines, on top of the index contract merged in #398.
+
+## Validation
+
+Python 3.11.13, uv 0.12.21, locked dependencies (FalkorDB client 1.8.1, redis 8.1.0), Linux aarch64, isolated fresh Docker containers:
+
+- `uv run --frozen pytest test/db/falkordbs`: 184 passed, 21 performance cases skipped on each of `falkordb/falkordb:v4.22.3` and `falkordb/falkordb:6.0.3`.
+- `uv run --frozen pytest test --ignore=test/db -n 4 --dist loadfile`: 5,156 passed, 13 skipped.
+- `uv run --frozen pre-commit run --all-files`: passed, including Ruff, ty and formatting.
+
+Additional local performance validation (`--run-performance -m performance`) passes all 21 cases on both engines. With 2 CPU, 2 GiB and 2 worker/OpenMP threads per server, three fresh-graph trials ingesting 10,000 documents gave median rates of ~148k docs/s on C and ~138k on Rust with schema-defined indexes and batches of 1,000. At a batch size of 10,000, Rust dropped to ~3.4k docs/s. The docs suggest `--batch-size 1000` as a starting point for 6.0.3, to be checked on the actual workload.
+
+The existing 50,000-node limit case takes about 72 seconds on 6.0.3 versus 0.2 seconds on 4.22.3. A separate `RETURN size($data)` probe over 50,000 maps takes ~90 ms on Rust, so parameter parsing alone does not explain the write slowdown. A subsequent native-SDK reproduction and PROFILE locate the slowdown in 6.0.3 MERGE: 10,000 new identities produce 44,974,080 Include Pending records across 1,024-row internal batches. Upstream FalkorDB/FalkorDB#3067 is now merged. The official edge image tied to that merge reduces the same indexed native-SDK call from a median 2,588.53 ms to 38.47 ms over three fresh-graph trials, with zero pending records. The upstream batch-boundary correctness reproducer also passes on C and edge, while 6.0.3 returns the wrong node count. This edge probe is not a full compatibility validation of a new stable release. These local measurements do not establish general performance parity or an in-place upgrade path. The C engine remains the Docker default.
+
+## Checklist
+
+- [x] Tests added; the container-free and affected live suites pass.
+- [x] Relevant docs and `CHANGELOG.md` updated.
+- [x] Growgraph CLA already accepted with this GitHub account.

@@ -1,0 +1,214 @@
+{
+  "date": "2026-10-29 Europe/Madrid",
+  "scope": "Native FalkorDB Python SDK; no GraFlo imports. Fresh graph per timed call.",
+  "resources": {
+    "database_cpu_quota": 2,
+    "database_cpuset": "0,1",
+    "database_memory_bytes": 2147483648,
+    "client_cpu_quota": 2,
+    "client_cpuset": "2,3",
+    "client_memory_bytes": 2147483648,
+    "THREAD_COUNT": 2,
+    "OMP_THREAD_COUNT": 2,
+    "host_shared": true
+  },
+  "query": "UNWIND $data AS row MERGE (n:Item {id: row.id}) ON MATCH SET n += row ON CREATE SET n += row",
+  "payload": "Distinct text identity plus 100-character payload; range index on Item.id.",
+  "stable_rust_6_0_3_merge_new_10000": {
+    "median_seconds": 2.5885290919995896,
+    "min_seconds": 2.575144098999772,
+    "max_seconds": 2.5911251349998565,
+    "samples": 3
+  },
+  "edge_merge_new_10000": {
+    "median_seconds": 0.03846884900031,
+    "min_seconds": 0.03711973200006469,
+    "max_seconds": 0.041951597999286605,
+    "samples": 3
+  },
+  "median_speedup": 67.28896650842685,
+  "edge_merge_new_25000": {
+    "median_seconds": 0.09762740400037728,
+    "min_seconds": 0.09346630600066419,
+    "max_seconds": 0.11325858600048377,
+    "samples": 3
+  },
+  "edge_merge_new_50000": {
+    "median_seconds": 0.20396069999969768,
+    "min_seconds": 0.19306847099960578,
+    "max_seconds": 0.2131069919996662,
+    "samples": 3
+  },
+  "native_profile": {
+    "stable_pending_records": 44974080,
+    "edge_pending_records": 0,
+    "batch_size": 1024,
+    "formula": "sum(min(1024,N-start)*start for start in range(0,N,1024))"
+  },
+  "root_cause": "Stable MergeOp creates one batch before matching the next. IncludePending pairs previously created nodes with every incoming argument row, then a filter discards nonmatches. Unique new identities incur near-quadratic intermediate work.",
+  "boundary_profiles": [
+    {
+      "size": 1023,
+      "seconds": 0.0044378869997672155,
+      "pending_records": 0
+    },
+    {
+      "size": 1024,
+      "seconds": 0.0038037300000723917,
+      "pending_records": 0
+    },
+    {
+      "size": 1025,
+      "seconds": 0.0039688110000497545,
+      "pending_records": 1024
+    },
+    {
+      "size": 1100,
+      "seconds": 0.009282392000386608,
+      "pending_records": 77824
+    },
+    {
+      "size": 1500,
+      "seconds": 0.034022578000076464,
+      "pending_records": 487424
+    },
+    {
+      "size": 2048,
+      "seconds": 0.06797803100016608,
+      "pending_records": 1048576
+    },
+    {
+      "size": 2049,
+      "seconds": 0.06942821599932358,
+      "pending_records": 1050624
+    }
+  ],
+  "correctness": {
+    "c": [
+      {
+        "kind": "boundary_correctness",
+        "size": 2,
+        "nodes": 2,
+        "expected": 2,
+        "passed": true,
+        "engine": "c",
+        "phase": "correctness"
+      },
+      {
+        "kind": "boundary_correctness",
+        "size": 1025,
+        "nodes": 2,
+        "expected": 2,
+        "passed": true,
+        "engine": "c",
+        "phase": "correctness"
+      },
+      {
+        "kind": "boundary_correctness",
+        "size": 3000,
+        "nodes": 2,
+        "expected": 2,
+        "passed": true,
+        "engine": "c",
+        "phase": "correctness"
+      },
+      {
+        "kind": "duplicates_correctness",
+        "size": 3000,
+        "nodes": 7,
+        "expected": 7,
+        "passed": true,
+        "engine": "c",
+        "phase": "correctness"
+      }
+    ],
+    "rust": [
+      {
+        "kind": "boundary_correctness",
+        "size": 2,
+        "nodes": 2,
+        "expected": 2,
+        "passed": true,
+        "engine": "rust",
+        "phase": "correctness"
+      },
+      {
+        "kind": "boundary_correctness",
+        "size": 1025,
+        "nodes": 1,
+        "expected": 2,
+        "passed": false,
+        "engine": "rust",
+        "phase": "correctness"
+      },
+      {
+        "kind": "boundary_correctness",
+        "size": 3000,
+        "nodes": 1,
+        "expected": 2,
+        "passed": false,
+        "engine": "rust",
+        "phase": "correctness"
+      },
+      {
+        "kind": "duplicates_correctness",
+        "size": 3000,
+        "nodes": 7,
+        "expected": 7,
+        "passed": true,
+        "engine": "rust",
+        "phase": "correctness"
+      }
+    ],
+    "edge": [
+      {
+        "kind": "boundary_correctness",
+        "size": 2,
+        "nodes": 2,
+        "expected": 2,
+        "passed": true,
+        "engine": "rust-edge",
+        "phase": "correctness"
+      },
+      {
+        "kind": "boundary_correctness",
+        "size": 1025,
+        "nodes": 2,
+        "expected": 2,
+        "passed": true,
+        "engine": "rust-edge",
+        "phase": "correctness"
+      },
+      {
+        "kind": "boundary_correctness",
+        "size": 3000,
+        "nodes": 2,
+        "expected": 2,
+        "passed": true,
+        "engine": "rust-edge",
+        "phase": "correctness"
+      },
+      {
+        "kind": "duplicates_correctness",
+        "size": 3000,
+        "nodes": 7,
+        "expected": 7,
+        "passed": true,
+        "engine": "rust-edge",
+        "phase": "correctness"
+      }
+    ]
+  },
+  "upstream_pr": "https://github.com/FalkorDB/FalkorDB/pull/3067",
+  "upstream_merge_commit": "b47d6d6a3c563818fec2f2655ad6f92583e2a62f",
+  "upstream_merged_at": "2026-10-28T23:01:57Z",
+  "edge_image_digest": "sha256:3d08d1a1536394210d7f435bcfc777a58ba9d21f58f23cf2b86918772028b941",
+  "image_provenance": "Official promotion job 123153842387 logs map rc-mg-b47d6d6a3c563818fec2f2655ad6f92583e2a62f to this exact edge/edge-rs digest.",
+  "limitations": [
+    "Local ARM64 shared host; three timing samples per confirmed comparison.",
+    "Edge is a development image, not a stable release; no broad compatibility validation of this image.",
+    "Native-SDK timings differ from the earlier GraFlo ingestion protocol; do not combine their absolute times.",
+    "Files with warmup-concurrent in their name are excluded from timing conclusions."
+  ],
+  "publication": "Local only; no push or PR before 2026-10-30 Europe/Madrid."
+}

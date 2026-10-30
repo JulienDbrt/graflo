@@ -1,0 +1,6 @@
+{"kind": "metadata", "modules": [["name", "vectorset", "ver", 1, "path", "", "args", []], ["name", "graph", "ver", 42203, "path", "/var/lib/falkordb/bin/falkordb.so", "args", ["THREAD_COUNT", "2", "OMP_THREAD_COUNT", "2"]]], "engine": "c", "phase": "correctness"}
+{"kind": "boundary_correctness", "size": 2, "nodes": 2, "expected": 2, "passed": true, "engine": "c", "phase": "correctness"}
+{"kind": "boundary_correctness", "size": 1025, "nodes": 2, "expected": 2, "passed": true, "engine": "c", "phase": "correctness"}
+{"kind": "boundary_correctness", "size": 3000, "nodes": 2, "expected": 2, "passed": true, "engine": "c", "phase": "correctness"}
+{"kind": "duplicates_correctness", "size": 3000, "nodes": 7, "expected": 7, "passed": true, "engine": "c", "phase": "correctness"}
+{"kind": "finished", "engine": "c", "phase": "correctness"}

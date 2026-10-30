@@ -1,0 +1,46 @@
+{
+  "base_commit": "12431f62124988ddd12a949841ef55d9c956ace3",
+  "branch": "perf/casting-hot-path",
+  "candidate_files": [
+    "graflo/architecture/graph_types/merge.py"
+  ],
+  "python": "3.11.13",
+  "container": "graflo-cast-profile-20261029",
+  "resources": {
+    "cpu_quota": 2,
+    "cpuset": "2,3",
+    "memory_bytes": 2147483648
+  },
+  "source_paths": {
+    "base": "/repo",
+    "candidate": "/candidate"
+  },
+  "primary_run": "paired-cast-confirmation-cpu2.jsonl",
+  "oracle": "Every raw Pydantic field, scalar type/float bits, mapping/container type/order, alias topology, input mutations and failures. Source-root substitution is restricted to traceback fields. Independent expected values and relation endpoints are also checked.",
+  "warmup_and_validation": "Initialization, warmup, GC-before-run and all serialization/validation are excluded from measured intervals. Normal GC remains enabled during timing. CPU and wall seconds retained.",
+  "interference_policy": "No test, profiling or extra interpreter runs in the measured Docker cgroup during this primary run. Earlier empty-filter run has a one-off import probe and is not evidence for the current candidate.",
+  "harness_sha256": {
+    "micro_fusion.py": "e2ec3a3904797b09a23f3aecd56e343692db49f9e237e822768c2435fcac2880",
+    "paired_cast.py": "b75adfcd9305e70ba782604fd8f3d7d659f70f3035d23a5a68845ee5a8fb9137",
+    "profile_cast.py": "73fe78b696af27828c76d760c643f0b16e6081d137a55a9db7244c1ceb277b4e",
+    "cases.py": "1299fc84ad0e6d6b0e9a93389054d14abf24b18dfa23133f435fcf60e38ab435",
+    "differential_fusion.py": "82032a346b86a3a8f7efc39edd4d94d26cdf3d1f3fdb6c75fc5549014c0c9548",
+    "cast_worker.py": "ea1b60ec98bb34f178f4e81db3d346b49235f5faf87d2f24eeba7bda7d4c500e",
+    "import_probe.py": "b307643d2199d8ef7a28e40b4f84974b0cd6233cce7cd2038a2549549371ba0f"
+  },
+  "publication": "Local only; no push or PR before 2026-10-30 Europe/Madrid.",
+  "protocol_time_utc": "2026-10-29T16:00:12.590231+00:00",
+  "matrix_run": "paired-cast-final-cpu2.jsonl",
+  "aa_run": "paired-cast-final-cpu2-aa.jsonl",
+  "worker_affinity": [
+    2
+  ],
+  "source_sha256": {
+    "graflo/architecture/graph_types/merge.py": "57622c4942ef8b7e4c3f4bafc62d38ab85da5a9d1794cb92f6cf34db77e520cd",
+    "test/util/test_fusion_equivalence.py": "d31519244ccf4793631fb53743763bcb3f737a40088347611c119d333f873807",
+    "test/hq/test_cast_fusion_perf.py": "8de34f8710f4d55299d3ec98acd035e85daca5c04f98bbef2633ce16ab0bfb04",
+    "CHANGELOG.md": "96261d79c4708a77f6393c6be17ee6e577e7a55bc81a70e6300c4e624eaddbc2"
+  },
+  "prior_protocol": "paired-protocol.json",
+  "acceptance": "median CPU time reduction >=3%; lower 95% speedup CI >1 on 12 pairs at 50000 documents; no unexplained functional divergence; flag reliable CPU regression >2%; A/A CI must include1"
+}

@@ -1,0 +1,37 @@
+{
+  "python": "3.11.13 (main, Oct  7 2025, 15:35:52) [Clang 20.1.4 ]",
+  "executable": "/repo/.venv/bin/python",
+  "platform": "Linux-7.2.12-orbstack-00394-gbecdd6130068-aarch64-with-glibc2.41",
+  "machine": "aarch64",
+  "affinity_probe": [
+    2,
+    3
+  ],
+  "packages": {
+    "graflo": "1.24.0",
+    "numpy": "2.4.6",
+    "pandas": "3.1.0",
+    "pydantic": "2.14.1",
+    "falkordb": "1.8.1",
+    "redis": "8.1.0",
+    "hypothesis": "6.170.9",
+    "pytest": "9.1.1",
+    "ty": "0.0.91",
+    "pre-commit": "4.7.0"
+  },
+  "cgroup": {
+    "cpu.max": "200000 100000",
+    "cpuset.cpus.effective": "2-3",
+    "memory.max": "2147483648"
+  },
+  "source_locks": {
+    "/repo": "0d570379766f872a2185c8d42d37582fd1c9ff7522f6fe16cde2da60097df237",
+    "/candidate": "0d570379766f872a2185c8d42d37582fd1c9ff7522f6fe16cde2da60097df237"
+  },
+  "editable_metadata_caveat": "Installed editable distribution metadata is 1.24.0, but imported source is the frozen 1.24.1 baseline or candidate, checked explicitly. Between these upstream versions pyproject.toml and uv.lock only change the Graflo version string; dependencies are unchanged. The venv is mounted read-only and identical on both sides.",
+  "measurement_image_id": "sha256:7f6ac2ad1b991ca69f91c39c5447ec9050e95c0a940747b15ec61daca1a5d4b7",
+  "worker_affinity": [
+    2
+  ],
+  "affinity_probe_note": "affinity_probe is the idle container shell allowed CPU set; actual timed workers report [2] in ready logs."
+}

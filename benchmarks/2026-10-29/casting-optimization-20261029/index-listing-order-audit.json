@@ -1,0 +1,184 @@
+{
+  "raw_row_orders": [
+    {
+      "variant": "base",
+      "trial": 0,
+      "indexes": [
+        [
+          "Category",
+          [
+            "tenant",
+            "id"
+          ]
+        ],
+        [
+          "Item",
+          [
+            "tenant",
+            "id",
+            "score",
+            "seq"
+          ]
+        ]
+      ]
+    },
+    {
+      "variant": "candidate",
+      "trial": 0,
+      "indexes": [
+        [
+          "Category",
+          [
+            "tenant",
+            "id"
+          ]
+        ],
+        [
+          "Item",
+          [
+            "tenant",
+            "id",
+            "score",
+            "seq"
+          ]
+        ]
+      ]
+    },
+    {
+      "variant": "base",
+      "trial": 1,
+      "indexes": [
+        [
+          "Item",
+          [
+            "tenant",
+            "id",
+            "score",
+            "seq"
+          ]
+        ],
+        [
+          "Category",
+          [
+            "tenant",
+            "id"
+          ]
+        ]
+      ]
+    },
+    {
+      "variant": "candidate",
+      "trial": 1,
+      "indexes": [
+        [
+          "Item",
+          [
+            "tenant",
+            "id",
+            "score",
+            "seq"
+          ]
+        ],
+        [
+          "Category",
+          [
+            "tenant",
+            "id"
+          ]
+        ]
+      ]
+    },
+    {
+      "variant": "base",
+      "trial": 2,
+      "indexes": [
+        [
+          "Item",
+          [
+            "tenant",
+            "id",
+            "score",
+            "seq"
+          ]
+        ],
+        [
+          "Category",
+          [
+            "tenant",
+            "id"
+          ]
+        ]
+      ]
+    },
+    {
+      "variant": "candidate",
+      "trial": 2,
+      "indexes": [
+        [
+          "Item",
+          [
+            "tenant",
+            "id",
+            "score",
+            "seq"
+          ]
+        ],
+        [
+          "Category",
+          [
+            "tenant",
+            "id"
+          ]
+        ]
+      ]
+    },
+    {
+      "variant": "base",
+      "trial": 3,
+      "indexes": [
+        [
+          "Category",
+          [
+            "tenant",
+            "id"
+          ]
+        ],
+        [
+          "Item",
+          [
+            "tenant",
+            "id",
+            "score",
+            "seq"
+          ]
+        ]
+      ]
+    },
+    {
+      "variant": "candidate",
+      "trial": 3,
+      "indexes": [
+        [
+          "Category",
+          [
+            "tenant",
+            "id"
+          ]
+        ],
+        [
+          "Item",
+          [
+            "tenant",
+            "id",
+            "score",
+            "seq"
+          ]
+        ]
+      ]
+    }
+  ],
+  "raw_order_identical_across_trials": false,
+  "full_rows_identical_as_set": true,
+  "property_order_identical": true,
+  "explanation": "Unsorted db.indexes listing enumerates labels in different orders, including between two reference trials. Initial strict list comparison raised on base trial1. Raw lists retained; equality of complete rows checked as a set, while property order is preserved. Graph data are not normalized."
+}

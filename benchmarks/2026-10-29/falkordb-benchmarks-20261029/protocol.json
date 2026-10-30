@@ -1,0 +1,145 @@
+{
+  "recorded_at": "2026-10-28T23:14:28.655944+00:00",
+  "measured_code_commit": "3230dfb28d05380b5e0517ec7d6c88fc88f3fe2e",
+  "head_with_documentation": "a20d2459d360e70e3571f14c5353ef0edfb517ed",
+  "connector_sha256": "1bdb9e40b3549ae6ab8d3ae4dce0fbb04b0fb2d2062643f2d93f3218378637c5",
+  "host": {
+    "docker_vcpus": 18,
+    "docker_memory_bytes": 16816517120,
+    "architecture": "aarch64",
+    "kernel": "7.2.12-orbstack-00394-gbecdd6130068",
+    "shared_with_other_workloads": true
+  },
+  "resources": {
+    "database_cpus": "0,1",
+    "database_cpu_quota": 2,
+    "database_memory": "2 GiB",
+    "client_cpus": "2,3",
+    "client_cpu_quota": 2,
+    "client_memory": "2 GiB"
+  },
+  "database_entrypoint": "redis-server",
+  "database_arguments": [
+    "--loadmodule",
+    "/var/lib/falkordb/bin/falkordb.so",
+    "THREAD_COUNT",
+    "2",
+    "OMP_THREAD_COUNT",
+    "2"
+  ],
+  "config": {
+    "c": {
+      "THREAD_COUNT": [
+        "THREAD_COUNT",
+        2
+      ],
+      "OMP_THREAD_COUNT": [
+        "OMP_THREAD_COUNT",
+        2
+      ],
+      "MAX_QUEUED_QUERIES": [
+        "MAX_QUEUED_QUERIES",
+        4294967295
+      ],
+      "TIMEOUT": [
+        "TIMEOUT",
+        0
+      ],
+      "TIMEOUT_DEFAULT": [
+        "TIMEOUT_DEFAULT",
+        0
+      ],
+      "TIMEOUT_MAX": [
+        "TIMEOUT_MAX",
+        0
+      ],
+      "RESULTSET_SIZE": [
+        "RESULTSET_SIZE",
+        -1
+      ]
+    },
+    "rust": {
+      "THREAD_COUNT": [
+        "THREAD_COUNT",
+        2
+      ],
+      "OMP_THREAD_COUNT": [
+        "OMP_THREAD_COUNT",
+        2
+      ],
+      "MAX_QUEUED_QUERIES": [
+        "MAX_QUEUED_QUERIES",
+        10000
+      ],
+      "TIMEOUT": [
+        "TIMEOUT",
+        0
+      ],
+      "TIMEOUT_DEFAULT": [
+        "TIMEOUT_DEFAULT",
+        0
+      ],
+      "TIMEOUT_MAX": [
+        "TIMEOUT_MAX",
+        0
+      ],
+      "RESULTSET_SIZE": [
+        "RESULTSET_SIZE",
+        -1
+      ]
+    }
+  },
+  "images": {
+    "falkordb/falkordb:v4.22.3": "sha256:725b74d400124862c9e0f318c56bfb3c55b97cd7f301d9dfe8685980fb3c8195",
+    "falkordb/falkordb:6.0.3": "sha256:0fb85036662ce3d1206530a38fdf7df5a92b1fb31ad23087f8d4e89038ce0812"
+  },
+  "environment": {
+    "python": "3.11.13",
+    "uv": "0.12.21",
+    "falkordb_client": "1.8.1",
+    "redis_py": "8.1.0",
+    "matplotlib_for_plots": "3.11.2"
+  },
+  "test_environment_image": "graflo-falkordb-testenv:20261028",
+  "test_environment_image_digest": "sha256:7f6ac2ad1b991ca69f91c39c5447ec9050e95c0a940747b15ec61daca1a5d4b7",
+  "suite_command": "uv run --frozen --no-sync pytest test/db/falkordbs -m performance --run-performance --timeout=180 -o cache_dir=/tmp/pytest-bench -o junit_logging=all --capture=tee-sys -v --junitxml=/evidence/suite-ENGINE.xml -p perf_capture",
+  "additional_commands": [
+    "uv run --frozen --no-sync python /evidence/benchmark.py --engine ENGINE --phase realistic --out /evidence/ENGINE-realistic.jsonl",
+    "uv run --frozen --no-sync python /evidence/benchmark.py --engine ENGINE --phase parse --out /evidence/ENGINE-parse.jsonl"
+  ],
+  "measurement_order": [
+    "C suite",
+    "C realistic",
+    "C parameter diagnostic",
+    "Rust suite",
+    "Rust realistic",
+    "Rust parameter diagnostic"
+  ],
+  "measurement_design": {
+    "ingestion_documents_per_trial": 10000,
+    "ingestion_trials": 3,
+    "batch_sizes": [
+      1,
+      100,
+      1000,
+      10000
+    ],
+    "schema_conditions": [
+      "none",
+      "identity uniqueness + range indexes"
+    ],
+    "point_operation_trials": 3,
+    "point_operation_warmups": 20,
+    "point_operations_per_trial": 200,
+    "parameter_sizes": [
+      1000,
+      5000,
+      10000,
+      25000,
+      50000
+    ],
+    "parameter_trials": "3 up to 10000; 1 for 25000 and 50000"
+  },
+  "queue_limit_note": "C defaults to 4294967295 queued queries and Rust to 10000; both limits exceed the benchmark maximum of 50 concurrent clients.",
+  "publication": "local_only; no push or PR before 2026-10-30 Europe/Madrid"
+}

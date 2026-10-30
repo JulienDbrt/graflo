@@ -1,0 +1,53 @@
+Protocole préparé avant modification du code de production — 29 octobre 2026
+
+Branche indépendante : perf/casting-hot-path, worktree ../cast-optimization.
+Référence figée : ../cast-baseline, commit 12431f62124988ddd12a949841ef55d9c956ace3
+(origin/main, après #396). Les commits de compatibilité FalkorDB ne sont pas inclus.
+
+1. Auditer la mesure existante.
+Les 59–75 % précédents sont des durées murales autour du casting complet,
+pas une attribution CPU exclusive. La configuration utilisait un seul processus.
+Le casting parallèle existe déjà : mesurer ce levier avant de proposer du code.
+Les mesures précédentes n'établissent pas une comparaison à débit de lecture
+strictement identique (85–100 req/s atteintes), ni des pics RAM absolus par phase
+(échantillonnage nominal 100 ms, pauses jusqu'à 2,52 s). Ne pas réutiliser ces
+valeurs comme preuve avant/après une modification du runtime.
+
+2. Profiler sans confondre profil et performance.
+Capturer le thread de casting réel et le thread d'assemblage/événement.
+Conserver le profil instrumenté séparément des durées non instrumentées.
+Choisir une modification limitée, sur un coût observé, sans supprimer validation,
+provenance ou erreurs et sans changer la configuration pour fabriquer un gain.
+
+3. Détecter les écarts de comportement.
+Comparer référence et candidat dans des interpréteurs séparés sur les mêmes
+entrées : valeurs ET types, ordre, multiplicités, sommets, relations, attributs,
+attachements, provenance pertinente, erreurs et document fautif, entrées modifiées
+ou non, état partagé entre appels. Ajouter des attentes indépendantes de la
+référence : comparer seulement deux implémentations peut conserver le même bug.
+Couvrir cas simples et imbriqués, clés composites, None/chaînes vides/0/False,
+Unicode, nombres limites, transformations et erreurs tolérées/refusées, filtres,
+routage et appels répétés ; propriétés génératives lorsque le point modifié s'y
+prête. Ne pas considérer une simple égalité de cardinalités comme suffisante.
+Les UUID/diagnostics variables doivent être contrôlés ou signalés explicitement,
+pas effacés silencieusement par une normalisation générale.
+
+4. Mesurer des paires et conserver les contre-exemples.
+Même commit de base, dépendances, Python, affinité, quotas, données et options.
+Référence puis candidat en ordres alternés (AB/BA), initialisation et échauffement
+distingués. Plusieurs répétitions par charge et tailles de lots ; conserver les
+durées brutes et le contexte machine. Les mesures pures de casting excluent E/S,
+base et collecte de télémétrie. Rapporter dispersion, accélérations appariées et
+régressions, même si elles contredisent le scénario principal. Vérifier un effet
+de bout en bout séparément. Aucun seuil temporel fragile ajouté à la CI standard.
+
+5. Conditions pour une PR défendable.
+Aucune divergence inexpliquée dans le corpus et les propriétés testés ; suites
+pertinentes, puis suite hors DB et contrôles du dépôt. Un bénéfice observé doit
+survivre à plusieurs charges, sans régression matérielle dissimulée. Si le gain
+n'est pas robuste, garder l'expérience et écarter la modification. Préciser les
+versions de Python et cas effectivement vérifiés : les tests ne prouvent pas
+l'équivalence pour toute entrée possible.
+
+Publication : tout reste local. Aucun push ni PR avant le 30 octobre 2026
+(Europe/Madrid). Le hook pre-push existant est partagé entre les worktrees.

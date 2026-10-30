@@ -1,0 +1,157 @@
+{
+  "engine": "rust",
+  "trial": 3,
+  "documents_per_ingest": 100000,
+  "graph": "graflobench_rust_3",
+  "initial": {
+    "started": 8644.235358161,
+    "ended": 8665.375243216,
+    "seconds": 21.139885054999468,
+    "documents_per_second": 4730.394689461688,
+    "instrumentation": {
+      "source_read": {
+        "seconds": 1.3598327510044328,
+        "calls": 102,
+        "records": 100000
+      },
+      "cast": {
+        "seconds": 15.766951412006165,
+        "calls": 100,
+        "records": 100000
+      },
+      "write": {
+        "seconds": 5.026017283995316,
+        "calls": 100,
+        "records": 0
+      }
+    }
+  },
+  "mixed": {
+    "started": 8680.113406991,
+    "ended": 8702.154316967,
+    "seconds": 22.040909975999966,
+    "documents_per_second": 4537.017759651873,
+    "instrumentation": {
+      "source_read": {
+        "seconds": 1.3208848590038542,
+        "calls": 102,
+        "records": 100000
+      },
+      "cast": {
+        "seconds": 15.98539607800376,
+        "calls": 100,
+        "records": 100000
+      },
+      "write": {
+        "seconds": 5.842548855986024,
+        "calls": 100,
+        "records": 0
+      }
+    }
+  },
+  "initial_validation": {
+    "items": 100000,
+    "categories": 1000,
+    "edges": 100000,
+    "sha256": "829b4fc78d78ec68dbf6275b4f14588ed97d336b42e4b7bfdf6d8fe02dd629cb",
+    "constraints": [
+      {
+        "type": "UNIQUE",
+        "label": "Item",
+        "properties": [
+          "tenant",
+          "id"
+        ],
+        "entitytype": "NODE",
+        "status": "OPERATIONAL"
+      },
+      {
+        "type": "UNIQUE",
+        "label": "Category",
+        "properties": [
+          "tenant",
+          "id"
+        ],
+        "entitytype": "NODE",
+        "status": "OPERATIONAL"
+      }
+    ],
+    "indexes": [
+      [
+        "Category",
+        [
+          "tenant",
+          "id"
+        ],
+        "NODE"
+      ],
+      [
+        "Item",
+        [
+          "tenant",
+          "id",
+          "score",
+          "seq"
+        ],
+        "NODE"
+      ]
+    ]
+  },
+  "final_validation": {
+    "items": 150000,
+    "categories": 1000,
+    "edges": 150000,
+    "sha256": "3df6da3fbc527d51fa7614f075e0837885aa75826059970e3da5831b3a700ae3",
+    "constraints": [
+      {
+        "type": "UNIQUE",
+        "label": "Item",
+        "properties": [
+          "tenant",
+          "id"
+        ],
+        "entitytype": "NODE",
+        "status": "OPERATIONAL"
+      },
+      {
+        "type": "UNIQUE",
+        "label": "Category",
+        "properties": [
+          "tenant",
+          "id"
+        ],
+        "entitytype": "NODE",
+        "status": "OPERATIONAL"
+      }
+    ],
+    "indexes": [
+      [
+        "Category",
+        [
+          "tenant",
+          "id"
+        ],
+        "NODE"
+      ],
+      [
+        "Item",
+        [
+          "tenant",
+          "id",
+          "score",
+          "seq"
+        ],
+        "NODE"
+      ]
+    ]
+  },
+  "idle_read_started": 8670.065753573,
+  "idle_read_ended": 8680.112856015,
+  "post_read_started": 8702.202994634,
+  "post_read_ended": 8712.246623295,
+  "reader_processes": 4,
+  "target_read_queries_per_second": 100,
+  "read_count": 4308,
+  "read_failures": 0,
+  "passed": true
+}

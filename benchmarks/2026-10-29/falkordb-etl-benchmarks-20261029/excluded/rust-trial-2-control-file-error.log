@@ -1,0 +1,15 @@
+{"kind": "metadata", "engine": "rust", "trial": 2, "time": 8017.531247052, "modules": [["name", "graph", "ver", 60003, "path", "/var/lib/falkordb/bin/falkordb.so", "args", ["THREAD_COUNT", "2", "OMP_THREAD_COUNT", "2"]], ["name", "vectorset", "ver", 1, "path", "", "args", []]], "server_config": {"THREAD_COUNT": ["THREAD_COUNT", 2], "OMP_THREAD_COUNT": ["OMP_THREAD_COUNT", 2], "MAX_QUEUED_QUERIES": ["MAX_QUEUED_QUERIES", 10000], "TIMEOUT": ["TIMEOUT", 0], "RESULTSET_SIZE": ["RESULTSET_SIZE", -1]}, "ingestion_params": {"clear_data": false, "n_cores": 1, "cast_executor": "inline", "max_concurrent_sources": 1, "max_items": null, "batch_size": 1000, "batch_prefetch": 2, "max_in_flight_batches": 1, "dry": false, "init_only": false, "limit_files": null, "resources": null, "connectors": null, "vertices": null, "max_concurrent_db_ops": 1, "datetime_after": null, "datetime_before": null, "datetime_column": null, "strict_references": true, "strict_registry": true, "dynamic_edges": false, "on_doc_error": "skip", "doc_error_sink_path": null, "max_doc_errors": 0, "doc_error_preview_max_bytes": 4096, "doc_error_preview_keys": null, "drop_empty_identity_docs": true}}
+{"kind": "schema_ready", "engine": "rust", "trial": 2, "time": 8017.541719099, "seconds": 0.007538118000411487}
+{"kind": "phase_start", "engine": "rust", "trial": 2, "time": 8017.541955225, "phase": "initial_ingest"}
+{"kind": "phase_finished", "engine": "rust", "trial": 2, "time": 8038.971131834, "phase": "initial_ingest", "seconds": 21.429173358999833, "documents": 100000, "documents_per_second": 4666.535583277736, "instrumentation": {"source_read": {"seconds": 1.2559795050010507, "calls": 102, "records": 100000}, "cast": {"seconds": 15.883697885009497, "calls": 100, "records": 100000}, "write": {"seconds": 5.30782681799883, "calls": 100, "records": 0}}}
+{"kind": "validated", "engine": "rust", "trial": 2, "time": 8041.511048559, "phase": "validation_initial", "items": 100000, "categories": 1000, "edges": 100000, "sha256": "829b4fc78d78ec68dbf6275b4f14588ed97d336b42e4b7bfdf6d8fe02dd629cb", "constraints": [{"type": "UNIQUE", "label": "Category", "properties": ["tenant", "id"], "entitytype": "NODE", "status": "OPERATIONAL"}, {"type": "UNIQUE", "label": "Item", "properties": ["tenant", "id"], "entitytype": "NODE", "status": "OPERATIONAL"}], "indexes": [["Category", ["tenant", "id"], "NODE"], ["Item", ["tenant", "id", "score", "seq"], "NODE"]]}
+{"kind": "phase_start", "engine": "rust", "trial": 2, "time": 8044.008524926, "phase": "idle_reads"}
+{"kind": "failed", "engine": "rust", "trial": 2, "time": 8054.01228429, "error": "RuntimeError('reader exited early')"}
+Traceback (most recent call last):
+  File "/evidence/benchmark.py", line 222, in <module>
+    control('pause');wait_readers('pause');idle_end=time.perf_counter()
+                     ^^^^^^^^^^^^^^^^^^^^^
+  File "/evidence/benchmark.py", line 133, in wait_readers
+    if any(r.poll() is not None for r in readers):raise RuntimeError('reader exited early')
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: reader exited early

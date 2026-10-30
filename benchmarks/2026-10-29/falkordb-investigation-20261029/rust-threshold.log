@@ -1,0 +1,15 @@
+{"kind": "metadata", "modules": [["name", "graph", "ver", 60003, "path", "/var/lib/falkordb/bin/falkordb.so", "args", ["THREAD_COUNT", "2", "OMP_THREAD_COUNT", "2"]], ["name", "vectorset", "ver", 1, "path", "", "args", []]], "engine": "rust", "phase": "threshold"}
+{"size": 1000, "mode": "range", "operation": "merge_new", "seconds": 0.0037473140000656713, "server_ms": 1.734138, "nodes_created": 1000.0, "properties_set": 2000.0, "engine": "rust", "phase": "threshold"}
+{"size": 1500, "mode": "range", "operation": "merge_new", "seconds": 0.037584478999633575, "server_ms": 34.591235, "nodes_created": 1500.0, "properties_set": 3000.0, "engine": "rust", "phase": "threshold"}
+{"size": 2000, "mode": "range", "operation": "merge_new", "seconds": 0.06414696799947706, "server_ms": 60.151616, "nodes_created": 2000.0, "properties_set": 4000.0, "engine": "rust", "phase": "threshold"}
+{"size": 2048, "mode": "range", "operation": "merge_new", "seconds": 0.06744033100039815, "server_ms": 63.468895, "nodes_created": 2048.0, "properties_set": 4096.0, "engine": "rust", "phase": "threshold"}
+{"size": 2500, "mode": "range", "operation": "merge_new", "seconds": 0.12314147599954595, "server_ms": 118.504135, "nodes_created": 2500.0, "properties_set": 5000.0, "engine": "rust", "phase": "threshold"}
+{"size": 3000, "mode": "range", "operation": "merge_new", "seconds": 0.1865194980000524, "server_ms": 181.110335, "nodes_created": 3000.0, "properties_set": 6000.0, "engine": "rust", "phase": "threshold"}
+{"size": 4000, "mode": "range", "operation": "merge_new", "seconds": 0.3619112589994984, "server_ms": 354.677376, "nodes_created": 4000.0, "properties_set": 8000.0, "engine": "rust", "phase": "threshold"}
+{"size": 4096, "mode": "range", "operation": "merge_new", "seconds": 0.3683653210000557, "server_ms": 361.145563, "nodes_created": 4096.0, "properties_set": 8192.0, "engine": "rust", "phase": "threshold"}
+{"size": 4097, "mode": "range", "operation": "merge_new", "seconds": 0.3619381340004111, "server_ms": 354.171759, "nodes_created": 4097.0, "properties_set": 8194.0, "engine": "rust", "phase": "threshold"}
+{"size": 5000, "mode": "range", "operation": "merge_new", "seconds": 0.58045278300051, "server_ms": 568.785138, "nodes_created": 5000.0, "properties_set": 10000.0, "engine": "rust", "phase": "threshold"}
+{"size": 8192, "mode": "range", "operation": "merge_new", "seconds": 1.6528476920002504, "server_ms": 1637.48569, "nodes_created": 8192.0, "properties_set": 16384.0, "engine": "rust", "phase": "threshold"}
+{"size": 8193, "mode": "range", "operation": "merge_new", "seconds": 1.708921749000183, "server_ms": 1694.212985, "nodes_created": 8193.0, "properties_set": 16386.0, "engine": "rust", "phase": "threshold"}
+{"size": 10000, "mode": "range", "operation": "merge_new", "seconds": 2.5513633150003443, "server_ms": 2533.468812, "nodes_created": 10000.0, "properties_set": 20000.0, "engine": "rust", "phase": "threshold"}
+{"kind": "finished", "engine": "rust", "phase": "threshold"}

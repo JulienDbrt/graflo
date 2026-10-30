@@ -1,0 +1,5 @@
+{
+  "status": "incomplete stopped by operator",
+  "reason": "Unbounded adversarial barbell path enumeration with server TIMEOUT=0 stalls both engines. Original successful C validation records 1.01s for this test; publication rerun must set and disclose read-query timeout 1000ms. No application or test assertions changed.",
+  "next_attempt": "Fresh servers, TIMEOUT 1000, both complete suites rerun; original partial logs retained."
+}

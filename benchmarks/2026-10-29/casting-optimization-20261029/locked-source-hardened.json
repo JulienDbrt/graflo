@@ -1,0 +1,6 @@
+{
+  "graflo/architecture/graph_types/merge.py": "57622c4942ef8b7e4c3f4bafc62d38ab85da5a9d1794cb92f6cf34db77e520cd",
+  "test/util/test_fusion_equivalence.py": "d31519244ccf4793631fb53743763bcb3f737a40088347611c119d333f873807",
+  "test/hq/test_cast_fusion_perf.py": "8de34f8710f4d55299d3ec98acd035e85daca5c04f98bbef2633ce16ab0bfb04",
+  "CHANGELOG.md": "96261d79c4708a77f6393c6be17ee6e577e7a55bc81a70e6300c4e624eaddbc2"
+}

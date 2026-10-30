@@ -1,0 +1,66 @@
+{"kind": "metadata", "engine": "pilot-c", "trial": 0, "time": 7558.348926605, "modules": [["name", "graph", "ver", 42203, "path", "/var/lib/falkordb/bin/falkordb.so", "args", ["THREAD_COUNT", "2", "OMP_THREAD_COUNT", "2"]], ["name", "vectorset", "ver", 1, "path", "", "args", []]], "server_config": {"THREAD_COUNT": ["THREAD_COUNT", 2], "OMP_THREAD_COUNT": ["OMP_THREAD_COUNT", 2], "MAX_QUEUED_QUERIES": ["MAX_QUEUED_QUERIES", 4294967295], "TIMEOUT": ["TIMEOUT", 0], "RESULTSET_SIZE": ["RESULTSET_SIZE", -1]}, "ingestion_params": {"clear_data": false, "n_cores": 1, "cast_executor": "inline", "max_concurrent_sources": 1, "max_items": null, "batch_size": 1000, "batch_prefetch": 2, "max_in_flight_batches": 1, "dry": false, "init_only": false, "limit_files": null, "resources": null, "connectors": null, "vertices": null, "max_concurrent_db_ops": 1, "datetime_after": null, "datetime_before": null, "datetime_column": null, "strict_references": true, "strict_registry": true, "dynamic_edges": false, "on_doc_error": "skip", "doc_error_sink_path": null, "max_doc_errors": 0, "doc_error_preview_max_bytes": 4096, "doc_error_preview_keys": null, "drop_empty_identity_docs": true}}
+{"kind": "schema_ready", "engine": "pilot-c", "trial": 0, "time": 7558.355887053, "seconds": 0.004636604000552325}
+{"kind": "phase_start", "engine": "pilot-c", "trial": 0, "time": 7558.356124638, "phase": "initial_ingest"}
+{"kind": "failed", "engine": "pilot-c", "trial": 0, "time": 7558.48960249, "error": "ValueError(\"Required match key 'tenant' is missing or has invalid value in document: {'id': '0', 'seq': 9, 'score': 9.25, 'revision': 1, 'title': '\u00c9l\u00e9ment 9 \u00b7 \u6771\u4eac'}\")"}
+Traceback (most recent call last):
+  File "/evidence/benchmark.py", line 207, in <module>
+    first=run_ingest('initial_ingest')
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/evidence/benchmark.py", line 148, in run_ingest
+    engine.ingest(manifest=manifest,target_db_config=config,ingestion_params=params,
+  File "/repo/graflo/hq/graph_engine.py", line 522, in ingest
+    caster.ingest(
+  File "/repo/graflo/hq/caster.py", line 757, in ingest
+    asyncio.run(
+  File "/root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/repo/graflo/hq/caster.py", line 704, in ingest_data_sources
+    await self._process_source_group(
+  File "/repo/graflo/hq/caster.py", line 594, in _process_source_group
+    await self.process_data_source(
+  File "/repo/graflo/hq/caster.py", line 271, in process_data_source
+    await self._drain_data_source(
+  File "/repo/graflo/hq/caster.py", line 343, in _drain_data_source
+    await _write_batch(*cast(tuple[int, list[dict]], item))
+  File "/repo/graflo/hq/caster.py", line 328, in _write_batch
+    await self.process_batch(
+  File "/repo/graflo/hq/caster.py", line 188, in process_batch
+    await writer.write(
+  File "/evidence/benchmark.py", line 78, in timed_write
+    try:return await original_write(self,*a,**kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/repo/graflo/hq/db_writer.py", line 333, in write
+    await self._push_vertices(gc, conn_conf)
+  File "/repo/graflo/hq/db_writer.py", line 502, in _push_vertices
+    results = await asyncio.gather(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/repo/graflo/hq/db_writer.py", line 500, in _push_one
+    return await asyncio.to_thread(_sync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/lib/python3.11/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/.local/share/uv/python/cpython-3.11.13-linux-aarch64-gnu/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/repo/graflo/hq/db_writer.py", line 489, in _sync
+    db.upsert_docs_batch(
+  File "/repo/graflo/db/falkordb/conn.py", line 720, in upsert_docs_batch
+    sanitized_docs = self._sanitize_batch(docs, match_keys_list)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/repo/graflo/db/falkordb/conn.py", line 336, in _sanitize_batch
+    return [self._sanitize_document(doc, match_keys) for doc in docs]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/repo/graflo/db/falkordb/conn.py", line 336, in <listcomp>
+    return [self._sanitize_document(doc, match_keys) for doc in docs]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/repo/graflo/db/falkordb/conn.py", line 314, in _sanitize_document
+    raise ValueError(
+ValueError: Required match key 'tenant' is missing or has invalid value in document: {'id': '0', 'seq': 9, 'score': 9.25, 'revision': 1, 'title': 'Élément 9 · 東京'}
