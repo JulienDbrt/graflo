@@ -848,6 +848,10 @@ class FalkordbConnection(Connection):
             if merge_props
             else [((), list(sanitized_edges))]
         )
+        if not dry:
+            # Refuse an overflowing later group before writing the first one.
+            for _, group in groups:
+                _validate_integer_parameters(group)
         for absent, group in groups:
             if absent:
                 upsert = rel_absent_upsert_clause(
