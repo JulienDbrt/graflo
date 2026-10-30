@@ -1,0 +1,12 @@
+The first formatting container reported an incomplete string at connector line
+1391 immediately after the host edit. The host file parsed successfully and its
+diff contained only the four preflight lines. Its SHA-256 was
+f4cb2ba14ee382545291915d97789e12ed8533872f027e776b7607a85437986d.
+Repeating the same Ruff formatting command left all three files unchanged and
+passed. No additional source edit was needed. This is consistent with delayed
+bind-mount visibility, previously observed with this OrbStack filesystem.
+That explanation is an inference; the tooling error and source checks are
+recorded rather than treated as an application regression.
+
+All subsequent test interpreters must verify the imported connector path and
+SHA against the frozen host file before running tests.

@@ -48,6 +48,28 @@
       "sha256": "efbaf67055949a17417c8c3559a793f84b3b5a8564eaa481a1a2e0a63bc25241"
     }
   ],
+  "pr400_group_preflight_fix": {
+    "pr400-fix-20261030/README.md": "11ab8bcc4812b8355d40a47d225d3a0f6c3aa1ca034dd057d4ca3354968b4dc6",
+    "pr400-fix-20261030/assert_connector_source.py": "7bc3122c8ce0e9fc5e2ca597b05485fdf4506f05abbe10eb5dc329d2003e0d71",
+    "pr400-fix-20261030/assert_source.py": "a2d7db5f053af24d6b59e5b8fbe67f392d905f67e1e0fe920c84f67fc957add6",
+    "pr400-fix-20261030/c-source-10.json": "ffed7c80451bf218ac1be88f88fac0042e79493c9eb216d3191e16fe7a6d297c",
+    "pr400-fix-20261030/c.log": "b449193106019fd962dbb344ebba375fc844ce206c0824991f13201d2900a01c",
+    "pr400-fix-20261030/collect_results.py": "a6812d32ac637acc1bf0fd49c7fe7f3c54bc9d3e18a3c4502280c54feff13801",
+    "pr400-fix-20261030/offline-source-10.json": "ffed7c80451bf218ac1be88f88fac0042e79493c9eb216d3191e16fe7a6d297c",
+    "pr400-fix-20261030/offline-source-28.json": "ffed7c80451bf218ac1be88f88fac0042e79493c9eb216d3191e16fe7a6d297c",
+    "pr400-fix-20261030/offline-source-31.json": "ffed7c80451bf218ac1be88f88fac0042e79493c9eb216d3191e16fe7a6d297c",
+    "pr400-fix-20261030/offline-source-34.json": "ffed7c80451bf218ac1be88f88fac0042e79493c9eb216d3191e16fe7a6d297c",
+    "pr400-fix-20261030/offline-source-37.json": "ffed7c80451bf218ac1be88f88fac0042e79493c9eb216d3191e16fe7a6d297c",
+    "pr400-fix-20261030/offline.log": "3103da3ecd77ffd6aaabacaab8c273602cef7d55e110287179c6e6806f2f6de8",
+    "pr400-fix-20261030/precommit.log": "04b670e985957ffe5398ebbf8e09f3cd09c92035958d1145e5d38eeaaba31977",
+    "pr400-fix-20261030/regression-before.log": "4db4edb77c1ceae1ccaf7a5e4beb6988df71deb80a4ef897327c327fd652add0",
+    "pr400-fix-20261030/rust-source-10.json": "ffed7c80451bf218ac1be88f88fac0042e79493c9eb216d3191e16fe7a6d297c",
+    "pr400-fix-20261030/rust.log": "7265c888da38955d83f61992d3f73a08a044fdf074bbf14ac248b83d67fee503",
+    "pr400-fix-20261030/summary.json": "854e0417c53370cba9f6231c1b8a1a868c25213dd6270994ddd0b8e37cb671e3",
+    "pr400-fix-20261030/tooling-read-transient.txt": "bbc7d1ecdab1a2b19997b9379e5fd1eafc1b9f87673294429c81dea82facb097",
+    "pr400-fix-20261030/unit-source-10.json": "ffed7c80451bf218ac1be88f88fac0042e79493c9eb216d3191e16fe7a6d297c",
+    "pr400-fix-20261030/unit.log": "06f480cd0816ae9f47b94e8c508a9e1bbb5d11cca9fca48c92e52f61d4aa1b24"
+  },
   "privacy_scan": "No recognized access-token, AWS key-id or private-key patterns found. Data are synthetic. No statistical observations redacted.",
   "publication_day_validation": {
     "publication-20261030/assert_source.py": "a2d7db5f053af24d6b59e5b8fbe67f392d905f67e1e0fe920c84f67fc957add6",

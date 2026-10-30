@@ -59,6 +59,11 @@ processes; secondary workload intervals have no multiple-comparison correction.
 
 ## FalkorDB C / Rust compatibility and write diagnosis
 
+- [PR #400 group-preflight follow-up](pr400-fix-20261030/README.md):
+  the later-group overflow regression fails before the fix and passes after it;
+  31 parameter tests, 194 live tests on each engine and 5,221 offline tests pass.
+  No query is sent for the rejected grouped batch.
+
 - [Compatibility validation](falkordb-validation/README.txt),
   [original test metadata](falkordb-validation/validation.json).
   These measurements identify their original pre-rebase source revision.

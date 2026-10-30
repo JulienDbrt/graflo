@@ -1,0 +1,47 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.13, pytest-9.1.1, pluggy-1.7.0
+cachedir: /tmp/pytest-cache
+rootdir: /repo
+configfile: pytest.ini
+plugins: xdist-3.8.0, timeout-2.4.0, hypothesis-6.170.9, anyio-4.15.1, platformdirs-4.13.5
+timeout: 300.0s
+timeout method: thread
+timeout func_only: False
+collected 31 items
+
+test/backends/test_falkordb_parameters.py::test_valid_integer_parameters_keep_their_value_and_type[-9223372036854775808] PASSED [  3%]
+test/backends/test_falkordb_parameters.py::test_valid_integer_parameters_keep_their_value_and_type[9223372036854775807] PASSED [  6%]
+test/backends/test_falkordb_parameters.py::test_valid_integer_parameters_keep_their_value_and_type[9007199254740993] PASSED [  9%]
+test/backends/test_falkordb_parameters.py::test_valid_integer_parameters_keep_their_value_and_type[0] PASSED [ 12%]
+test/backends/test_falkordb_parameters.py::test_valid_integer_parameters_keep_their_value_and_type[True] PASSED [ 16%]
+test/backends/test_falkordb_parameters.py::test_valid_integer_parameters_keep_their_value_and_type[False] PASSED [ 19%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[scalar-9223372036854775808] PASSED [ 22%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[scalar--9223372036854775809] PASSED [ 25%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[scalar-18446744073709551615] PASSED [ 29%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[list-9223372036854775808] PASSED [ 32%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[list--9223372036854775809] PASSED [ 35%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[list-18446744073709551615] PASSED [ 38%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[tuple-9223372036854775808] PASSED [ 41%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[tuple--9223372036854775809] PASSED [ 45%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[tuple-18446744073709551615] PASSED [ 48%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[map-9223372036854775808] PASSED [ 51%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[map--9223372036854775809] PASSED [ 54%]
+test/backends/test_falkordb_parameters.py::test_overflowing_parameters_are_refused_before_querying[map-18446744073709551615] PASSED [ 58%]
+test/backends/test_falkordb_parameters.py::test_an_overflowing_batch_writes_none_of_its_documents PASSED [ 61%]
+test/backends/test_falkordb_parameters.py::test_an_overflowing_edge_group_sends_no_query[False-9223372036854775808] PASSED [ 64%]
+test/backends/test_falkordb_parameters.py::test_an_overflowing_edge_group_sends_no_query[False--9223372036854775809] PASSED [ 67%]
+test/backends/test_falkordb_parameters.py::test_an_overflowing_edge_group_sends_no_query[False-18446744073709551615] PASSED [ 70%]
+test/backends/test_falkordb_parameters.py::test_an_overflowing_edge_group_sends_no_query[True-9223372036854775808] PASSED [ 74%]
+test/backends/test_falkordb_parameters.py::test_an_overflowing_edge_group_sends_no_query[True--9223372036854775809] PASSED [ 77%]
+test/backends/test_falkordb_parameters.py::test_an_overflowing_edge_group_sends_no_query[True-18446744073709551615] PASSED [ 80%]
+test/backends/test_falkordb_parameters.py::test_valid_edge_groups_are_both_sent PASSED [ 83%]
+test/backends/test_falkordb_parameters.py::test_edge_head_excludes_an_overflowing_later_group PASSED [ 87%]
+test/backends/test_falkordb_parameters.py::test_dry_edge_groups_are_not_numerically_validated_or_sent PASSED [ 90%]
+test/backends/test_falkordb_parameters.py::test_a_server_parameter_refusal_is_a_value_error PASSED [ 93%]
+test/backends/test_falkordb_parameters.py::test_other_server_errors_keep_their_driver_type[unique constraint violation] PASSED [ 96%]
+test/backends/test_falkordb_parameters.py::test_other_server_errors_keep_their_driver_type[Invalid input] PASSED [100%]
+
+============================= slowest 25 durations =============================
+
+(25 durations < 0.005s hidden.  Use -vv to show these durations.)
+============================== 31 passed in 0.06s ==============================
